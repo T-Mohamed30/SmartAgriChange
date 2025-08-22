@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:smartagrichange_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:smartagrichange_mobile/features/weather/domain/entities/weather_entity.dart';
+import 'package:smartagrichange_mobile/features/weather/presentation/providers/weather_provider.dart' as weather_provider;
 import 'domain/entities/analysis_simple.dart';
-import 'presentation/providers/dashboard_provider.dart';
+import 'package:smartagrichange_mobile/features/user_dashboard/presentation/providers/dashboard_provider.dart';
+import 'package:smartagrichange_mobile/features/user_dashboard/presentation/providers/dashboard_provider.dart' show dashboardStatsProvider, recentAnalysesProvider;
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -39,7 +44,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Future<void> _onRefresh() async {
-    ref.read(refreshTriggerProvider.notifier).state++;
+    // Refresh logic will be implemented here
   }
 
   @override
@@ -86,13 +91,33 @@ class _HomePageState extends ConsumerState<HomePage> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Bonjour',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-                  ),
-                  const Text(
-                    'Abdoul Aziz',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final user = ref.watch(userProvider);
+                      final hour = DateTime.now().hour;
+                      
+                      // Récupérer le prénom de manière sécurisée
+                      final prenom = user!.prenom;
+                      final displayName = prenom.isNotEmpty ? prenom : 'Utilisateur';
+                      
+                      
+                      // Déterminer la salutation en fonction de l'heure
+                      final greeting = hour < 12 ? 'Bonjour' : 'Bonsoir';
+                      
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            greeting,
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+                          ),
+                          Text(
+                            displayName,
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -114,66 +139,122 @@ class _HomePageState extends ConsumerState<HomePage> {
           const SizedBox(height: 16),
 
           // Weather Card
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFE7F1FA),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            height: 110,
-            child: Stack(
-              children: [
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: () { _onRefresh(); },
-                    child: Padding(
-                      padding: EdgeInsets.all(4.0),
-                      child: Image.asset('assets/icons/reload.png', height: 20, color: Colors.black),
-                    ),
-                  ),
+          Consumer(
+            builder: (context, ref, _) {
+              final weatherAsync = ref.watch(weather_provider.weatherProvider);
+              
+              return Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE7F1FA),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 16),
-                    child: Image.asset(
-                      'assets/icons/temps_1.png',
-                      height: 96,
-                      width: 96,
-                      fit: BoxFit.contain,
+                height: 110,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () => ref.refresh(weather_provider.weatherProvider),
+                        child: Padding(
+                          padding: EdgeInsets.all(4.0),
+                          child: Image.asset('assets/icons/reload.png', height: 20, color: Colors.black),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 118),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          '22°C',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 16),
+                        child: weatherAsync.when(
+                          data: (weather) {
+                            try {
+                              // Sélectionner l'icône en fonction des conditions météo
+                              String weatherIcon = 'assets/icons/temps_1.png'; // Par défaut
+                              final condition = weather.condition?.toLowerCase() ?? '';
+                              
+                              if (condition.contains('pluie') || condition.contains('rain')) {
+                                weatherIcon = 'assets/icons/temps_5.png';
+                              } else if (condition.contains('nuage') || condition.contains('cloud')) {
+                                weatherIcon = 'assets/icons/temps_2.png';
+                              } else if (condition.contains('orage') || condition.contains('thunder')) {
+                                weatherIcon = 'assets/icons/temps_3.png';
+                              }
+                              
+                              return Image.asset(
+                                weatherIcon,
+                                height: 64,
+                                width: 64,
+                                errorBuilder: (context, error, stackTrace) => 
+                                    Image.asset('assets/icons/temps_1.png', height: 64, width: 64),
+                              );
+                            } catch (e) {
+                              return Image.asset('assets/icons/temps_1.png', height: 64, width: 64);
+                            }
+                          },
+                          loading: () => const CircularProgressIndicator(),
+                          error: (error, stackTrace) {
+                            print('Erreur météo: $error');
+                            return const Text('Météo non disponible');
+                          },
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 118),
+                        child: weatherAsync.when(
+                          data: (weather) => Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${weather.temperature.toStringAsFixed(1)}°C',
+                                style: const TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                weather.condition,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey.shade700,
+                                ),
+                              ),
+                              Text(
+                                weather.location,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              Text(
+                                'Mise à jour: ${DateFormat('HH:mm').format(weather.lastUpdated)}',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                            ],
+                          ),
+                          loading: () => const CircularProgressIndicator(),
+                          error: (error, stack) => Text(
+                            'Erreur météo',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.red.shade700,
+                            ),
                           ),
                         ),
-                        Text(
-                          'Ensoleillé',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
           const SizedBox(height: 16),
 
@@ -224,7 +305,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: _buildStatItem('${stats['capteurs']}', 'Capteurs actifs'),
+                          child: _buildStatItem(stats['capteurs']?.toString() ?? '0', 'Capteurs actifs'),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -235,7 +316,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: _buildStatItem('${stats['champs']}', 'Champs'),
+                          child: _buildStatItem(stats['champs']?.toString() ?? '0', 'Champs'),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -246,7 +327,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: _buildStatItem('${stats['alertes']}', 'Alertes'),
+                          child: _buildStatItem(stats['alertes']?.toString() ?? '0', 'Alertes'),
                         ),
                       ),
                     ],
@@ -288,11 +369,11 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildStatItem(String value, String label) {
+  Widget _buildStatItem(dynamic value, String label) {
     return Column(
       children: [
         Text(
-          value,
+  value.toString(),
           style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color(0xFF007F3D)),
         ),
         Text(
@@ -329,7 +410,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               child: Consumer(
                 builder: (context, ref, child) {
                   final analysesAsync = ref.watch(recentAnalysesProvider);
-
+                  
                   return analysesAsync.when(
                     data: (analyses) => ListView.separated(
                       itemCount: analyses.length,
@@ -383,7 +464,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               if (analysis.parcelle != null)
-                                Text(analysis.parcelle!, style: TextStyle(fontSize: 14, color: statusColor)),
+                                Text(analysis.parcelle ?? 'N/A', style: const TextStyle(fontSize: 14, color: Colors.black)),
                               const SizedBox(width: 8),
                               Icon(Icons.chevron_right, color: Colors.grey.shade400),
                             ],

@@ -4,5 +4,5 @@ class VerifyOtp {
   final AuthRepository repository;
   VerifyOtp(this.repository);
 
-  Future<bool> call(String phone, String otp) => repository.verifyOtp(phone, otp);
+  Future<Map<String, dynamic>?> call(String phone, String otp) => repository.verifyOtp(phone, otp);
 }

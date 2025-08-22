@@ -84,35 +84,44 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       return;
     }
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
-    );
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
 
-    final user = User(
-      nom: nom,
-      prenom: prenom,
-      phone: phone,
-      password: password,
-    );
+      final user = User(
+        nom: nom,
+        prenom: prenom,
+        phone: phone,
+        password: password,
+      );
 
-    await ref.read(registerUserProvider).call(user);
-    
-    // Génération de l'OTP
-    final authRepo = ref.read(authRepositoryProvider);
-    if (authRepo is AuthRepositoryImpl) {
-      authRepo.generateOtp(phone);
+      await ref.read(registerUserProvider).call(user);
+      
+      if (mounted) {
+        Navigator.of(context).pop(); // Fermer le dialogue de chargement
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Inscription réussie! OTP envoyé par SMS')),
+        );
+        
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/auth/otp', arguments: phone);
+        }
+      }
+    } catch (e) {
+      print('Erreur lors de l\'inscription: $e');
+      
+      if (mounted) {
+        Navigator.of(context).pop(); // Fermer le dialogue de chargement en cas d'erreur
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur: ${e.toString()}')),
+        );
+      }
     }
-    
-    await Future.delayed(const Duration(seconds: 1));
-
-    Navigator.of(context).pop();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Inscription réussie! OTP envoyé par SMS')),
-    );
-    Navigator.pushReplacementNamed(context, '/auth/otp', arguments: phone);
   }
 
   @override

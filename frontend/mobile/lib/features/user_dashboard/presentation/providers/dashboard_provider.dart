@@ -45,6 +45,17 @@ final recentAnalysesProvider = FutureProvider<List<Analysis>>((ref) async {
   ];
 });
 
+// Provider pour les statistiques du tableau de bord
+final dashboardStatsProvider = FutureProvider<Map<String, int>>((ref) async {
+  await Future.delayed(const Duration(milliseconds: 300));
+  
+  return {
+    'capteurs': 5,  // Nombre de capteurs actifs
+    'champs': 3,    // Nombre de champs enregistrés
+    'alertes': 2,   // Nombre d'alertes non lues
+  };
+});
+
 // Provider pour la météo
 final weatherProvider = FutureProvider<Weather>((ref) async {
   // Simulation d'appel API météo
@@ -57,17 +68,6 @@ final weatherProvider = FutureProvider<Weather>((ref) async {
     icon: 'assets/icons/temps_1.png',
     lastUpdated: DateTime.now(),
   );
-});
-
-// Provider pour les statistiques
-final dashboardStatsProvider = FutureProvider<Map<String, int>>((ref) async {
-  await Future.delayed(const Duration(milliseconds: 300));
-  
-  return {
-    'capteurs': 12,
-    'champs': 5,
-    'alertes': 2,
-  };
 });
 
 // Provider pour actualiser les données

@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smartagrichange_mobile/features/auth/domain/entities/user.dart';
+import 'package:smartagrichange_mobile/features/auth/presentation/providers/auth_provider.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool passwordVisible = false;
@@ -36,15 +39,36 @@ class _LoginPageState extends State<LoginPage> {
       barrierDismissible: false,
       builder: (_) => const Center(child: CircularProgressIndicator()),
     );
-    await Future.delayed(const Duration(seconds: 1));
-    Navigator.of(context).pop();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Connexion réussie')),
-    );
     
-    // Navigate to home after successful login
-    goToHome();
+    try {
+      // Appel à l'API de connexion
+      final userData = await ref.read(loginUserProvider)(phone, password);
+      
+      if (userData != null && mounted) {
+        // Mettre à jour les informations utilisateur
+        final user = User(
+          nom: userData['nom'] ?? '',
+          prenom: userData['prenom'] ?? '',
+          phone: phone,
+          password: '', // Le mot de passe n'est pas stocké
+        );
+        print('📝 Mise à jour de l\'utilisateur: ${user.toJson()}');
+        ref.read(userProvider.notifier).state = user;
+        
+        // Si la connexion est réussie, naviguer directement vers la page d'accueil
+        if (mounted) {
+          Navigator.of(context).pop();
+          Navigator.pushReplacementNamed(context, '/home');
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur de connexion: ${e.toString()}')),
+        );
+      }
+    }
   }
 
   void goToHome() {
@@ -122,7 +146,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
-                        onPressed: goToHome,
+                        onPressed: _login,
                         child: const Text("Se connecter", style: TextStyle(color: Colors.white)),
                       ),
                     ),
