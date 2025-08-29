@@ -40,9 +40,9 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   // Validation du mot de passe
   bool _isValidPassword(String password) {
-    return password.length >= 8 && 
-           password.contains(RegExp(r'[A-Z]')) &&
-           password.contains(RegExp(r'[0-9]'));
+    return password.length >= 8 &&
+        password.contains(RegExp(r'[A-Z]')) &&
+        password.contains(RegExp(r'[0-9]'));
   }
 
   void _register() async {
@@ -72,7 +72,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
     if (!_isValidPassword(password)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Le mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre')),
+        const SnackBar(
+          content: Text(
+            'Le mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre',
+          ),
+        ),
       );
       return;
     }
@@ -99,27 +103,38 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       );
 
       await ref.read(registerUserProvider).call(user);
-      
+
       if (mounted) {
         Navigator.of(context).pop(); // Fermer le dialogue de chargement
-        
+
+        // Enregistrer l'utilisateur dans le provider pour la page OTP
+        ref.read(userProvider.notifier).state = user;
+
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Inscription réussie! OTP envoyé par SMS')),
+          const SnackBar(
+            content: Text('Inscription réussie! OTP envoyé par SMS'),
+          ),
         );
-        
+
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/auth/otp', arguments: phone);
+          Navigator.pushReplacementNamed(
+            context,
+            '/auth/otp',
+            arguments: phone,
+          );
         }
       }
     } catch (e) {
       print('Erreur lors de l\'inscription: $e');
-      
+
       if (mounted) {
-        Navigator.of(context).pop(); // Fermer le dialogue de chargement en cas d'erreur
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: ${e.toString()}')),
-        );
+        Navigator.of(
+          context,
+        ).pop(); // Fermer le dialogue de chargement en cas d'erreur
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erreur: ${e.toString()}')));
       }
     }
   }

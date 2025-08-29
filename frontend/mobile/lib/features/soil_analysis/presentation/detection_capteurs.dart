@@ -6,34 +6,25 @@ import '../domain/entities/sensor.dart';
 import 'providers/sensor_provider.dart';
 import '../domain/entities/champ.dart';
 import '../domain/entities/parcelle.dart';
+import 'providers/champ_parcelle_provider.dart';
 import 'widgets/sensor_card.dart';
 import 'widgets/selector_card.dart';
 import 'widgets/action_button.dart';
 import 'analysis_screen.dart';
-
-
 
 // Mock providers pour la démonstration
 final selectedChampProvider = StateProvider<Champ?>((ref) => null);
 final selectedParcelleProvider = StateProvider<Parcelle?>((ref) => null);
 
 // Données fictives pour la démonstration
-final List<Champ> mockChamps = [
-  Champ(id: 'c1', name: 'Champ A', location: 'Localité 1'),
-  Champ(id: 'c2', name: 'Champ B', location: 'Localité 2'),
-];
-
-final List<Parcelle> mockParcelles = [
-  Parcelle(id: 'p1', name: 'Parcelle 1', superficie: 5.2, champId: 'c1'),
-  Parcelle(id: 'p2', name: 'Parcelle 2', superficie: 3.1, champId: 'c1'),
-  Parcelle(id: 'p3', name: 'Parcelle 3', superficie: 7.8, champId: 'c2'),
-];
+// ...existing code...
 
 class DetectionCapteursPage extends ConsumerStatefulWidget {
   const DetectionCapteursPage({super.key});
 
   @override
-  ConsumerState<DetectionCapteursPage> createState() => _DetectionCapteursPageState();
+  ConsumerState<DetectionCapteursPage> createState() =>
+      _DetectionCapteursPageState();
 }
 
 class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
@@ -124,7 +115,8 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
           const SizedBox(height: 32),
           ActionButton(
             text: 'Démarrer la détection',
-            onPressed: () => ref.read(sensorActionsProvider.notifier).startSensorDetection(),
+            onPressed: () =>
+                ref.read(sensorActionsProvider.notifier).startSensorDetection(),
           ),
         ],
       ),
@@ -193,11 +185,7 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          Icon(
-            Icons.sensors_off,
-            size: 64,
-            color: Colors.orange.shade400,
-          ),
+          Icon(Icons.sensors_off, size: 64, color: Colors.orange.shade400),
           const SizedBox(height: 16),
           const Text(
             'Aucun capteur détecté',
@@ -212,7 +200,8 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
           const SizedBox(height: 32),
           ActionButton(
             text: 'Actualiser',
-            onPressed: () => ref.read(sensorActionsProvider.notifier).startSensorDetection(),
+            onPressed: () =>
+                ref.read(sensorActionsProvider.notifier).startSensorDetection(),
           ),
           const SizedBox(height: 100),
         ],
@@ -225,11 +214,7 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          Icon(
-            Icons.error_outline,
-            size: 64,
-            color: Colors.red.shade400,
-          ),
+          Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
           const SizedBox(height: 16),
           const Text(
             'Erreur de détection',
@@ -244,7 +229,8 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
           const SizedBox(height: 32),
           ActionButton(
             text: 'Réessayer',
-            onPressed: () => ref.read(sensorActionsProvider.notifier).startSensorDetection(),
+            onPressed: () =>
+                ref.read(sensorActionsProvider.notifier).startSensorDetection(),
           ),
           const SizedBox(height: 100),
         ],
@@ -252,7 +238,6 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
     );
   }
 
-  
   Widget _buildBottomButton() {
     final selected = ref.watch(selectedSensorProvider);
     final champ = ref.watch(selectedChampProvider);
@@ -267,7 +252,9 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
         child: ElevatedButton(
           onPressed: canLaunch
               ? () {
-                  ref.read(sensorActionsProvider.notifier).startAnalysis(
+                  ref
+                      .read(sensorActionsProvider.notifier)
+                      .startAnalysis(
                         sensorId: selected!.id,
                         parcelleId: parcelle?.id,
                       );
@@ -317,7 +304,10 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
     );
   }
 
-  Widget _buildParcelleSelector(BuildContext context, Parcelle? selectedParcelle) {
+  Widget _buildParcelleSelector(
+    BuildContext context,
+    Parcelle? selectedParcelle,
+  ) {
     return Row(
       children: [
         Expanded(
@@ -352,7 +342,9 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)],
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,7 +371,9 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -395,7 +389,9 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
               IconButton(
                 icon: const Icon(Icons.refresh),
                 tooltip: 'Actualiser',
-                onPressed: () => ref.read(sensorActionsProvider.notifier).startSensorDetection(),
+                onPressed: () => ref
+                    .read(sensorActionsProvider.notifier)
+                    .startSensorDetection(),
               ),
             ],
           ),
@@ -410,7 +406,9 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
                 return SensorCard(
                   sensor: sensor,
                   highlighted: selected?.id == sensor.id,
-                  onTap: () => ref.read(sensorActionsProvider.notifier).selectSensor(sensor),
+                  onTap: () => ref
+                      .read(sensorActionsProvider.notifier)
+                      .selectSensor(sensor),
                 );
               },
             ),
@@ -419,8 +417,7 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
       ),
     );
   }
-
-  }
+}
 
 // Widgets pour la sélection de champ et de parcelle
 // Tu peux les placer dans des fichiers séparés pour une meilleure organisation
@@ -428,8 +425,7 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
 class _ChampSelectionSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final champs = mockChamps;
-
+    final champsAsync = ref.watch(champsProvider);
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -449,47 +445,99 @@ class _ChampSelectionSheet extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text('Liste des champs', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                'Liste des champs',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
               Expanded(
-                child: ListView.separated(
-                  itemCount: champs.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final champ = champs[index];
-                    final parcelles = mockParcelles.where((p) => p.champId == champ.id).toList();
-                                        final nbParcelles = parcelles.length;
-
-                    return InkWell(
-                      onTap: () {
-                        ref.read(selectedChampProvider.notifier).state = champ;
-                        ref.read(selectedParcelleProvider.notifier).state = null;
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(champ.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                Text('localité: ${champ.location}', style: const TextStyle(color: Colors.black54)),
-                                const SizedBox(width: 16),
-                                Text('parcelle: $nbParcelles', style: const TextStyle(color: Colors.black54)),
-                              ],
+                child: champsAsync.when(
+                  data: (champs) => ListView.separated(
+                    itemCount: champs.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final champ = champs[index];
+                      return Consumer(
+                        builder: (context, ref, _) {
+                          final parcellesAsync = ref.watch(
+                            parcellesProvider(champ.id),
+                          );
+                          return InkWell(
+                            onTap: () {
+                              ref.read(selectedChampProvider.notifier).state =
+                                  champ;
+                              ref
+                                      .read(selectedParcelleProvider.notifier)
+                                      .state =
+                                  null;
+                              Navigator.pop(context);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.03),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    champ.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      Text(
+                                        'localité: ${champ.location}',
+                                        style: const TextStyle(
+                                          color: Colors.black54,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      parcellesAsync.when(
+                                        data: (parcelles) => Text(
+                                          'parcelles: ${parcelles.length}',
+                                          style: const TextStyle(
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                        loading: () => const Text(
+                                          'parcelles: ...',
+                                          style: TextStyle(
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                        error: (e, _) => const Text(
+                                          'parcelles: ?',
+                                          style: TextStyle(
+                                            color: Colors.black54,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) =>
+                      Center(child: Text('Erreur de chargement des champs')),
                 ),
               ),
               const SizedBox(height: 12),
@@ -518,8 +566,7 @@ class _ParcelleSelectionSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final parcellesPourChamp = mockParcelles.where((p) => p.champId == champ.id).toList();
-
+    final parcellesAsync = ref.watch(parcellesProvider(champ.id));
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -539,41 +586,64 @@ class _ParcelleSelectionSheet extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              Text('Liste des parcelles de ${champ.name}', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(
+                'Liste des parcelles de ${champ.name}',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 12),
               Expanded(
-                child: ListView.separated(
-                  itemCount: parcellesPourChamp.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final parcelle = parcellesPourChamp[index];
-                    return InkWell(
-                      onTap: () {
-                        ref.read(selectedParcelleProvider.notifier).state = parcelle;
-                        Navigator.pop(context);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)],
+                child: parcellesAsync.when(
+                  data: (parcelles) => ListView.separated(
+                    itemCount: parcelles.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final parcelle = parcelles[index];
+                      return InkWell(
+                        onTap: () {
+                          ref.read(selectedParcelleProvider.notifier).state =
+                              parcelle;
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.03),
+                                blurRadius: 6,
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                parcelle.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'superficie: ${parcelle.superficie} ha',
+                                style: const TextStyle(color: Colors.black54),
+                              ),
+                            ],
+                          ),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(parcelle.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                Text('superficie: ${parcelle.superficie} ha', style: const TextStyle(color: Colors.black54)),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) =>
+                      Center(child: Text('Erreur de chargement des parcelles')),
                 ),
               ),
               const SizedBox(height: 12),
@@ -584,7 +654,8 @@ class _ParcelleSelectionSheet extends ConsumerWidget {
                   showModalBottomSheet(
                     context: context,
                     isScrollControlled: true,
-                    builder: (_) => CreateParcelleBottomSheet(champId: champ.id),
+                    builder: (_) =>
+                        CreateParcelleBottomSheet(champId: champ.id),
                   );
                 },
               ),
@@ -615,14 +686,16 @@ class _CreateChampBottomSheetState extends State<CreateChampBottomSheet> {
     super.dispose();
   }
 
-  void _saveChamp() {
+  void _saveChamp() async {
     if (_formKey.currentState!.validate()) {
-      final newChamp = Champ(
-        id: DateTime.now().toString(),
-        name: _nameController.text,
-        location: _locationController.text,
+      final name = _nameController.text;
+      final location = _locationController.text;
+      final container = ProviderScope.containerOf(context, listen: false);
+      await container.read(
+        createChampProvider({'name': name, 'location': location}).future,
       );
-      mockChamps.add(newChamp);
+      // Rafraîchir la liste des champs
+      container.refresh(champsProvider);
       Navigator.pop(context);
     }
   }
@@ -651,7 +724,12 @@ class _CreateChampBottomSheetState extends State<CreateChampBottomSheet> {
     final double bottomPadding = bottomInset > 0 ? bottomInset + 16.0 : 24.0;
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: bottomPadding),
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: bottomPadding,
+        ),
         child: SizedBox(
           height: MediaQuery.of(context).size.height * 0.6,
           child: Column(
@@ -668,7 +746,10 @@ class _CreateChampBottomSheetState extends State<CreateChampBottomSheet> {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text('Créer un champ', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                'Créer un champ',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
               Expanded(
                 child: SingleChildScrollView(
@@ -715,10 +796,12 @@ class _CreateChampBottomSheetState extends State<CreateChampBottomSheet> {
 // Formulaire pour la création d'une nouvelle parcelle (bottom sheet)
 class CreateParcelleBottomSheet extends StatefulWidget {
   final String champId;
-  const CreateParcelleBottomSheet({required this.champId, Key? key}) : super(key: key);
+  const CreateParcelleBottomSheet({required this.champId, Key? key})
+    : super(key: key);
 
   @override
-  State<CreateParcelleBottomSheet> createState() => _CreateParcelleBottomSheetState();
+  State<CreateParcelleBottomSheet> createState() =>
+      _CreateParcelleBottomSheetState();
 }
 
 class _CreateParcelleBottomSheetState extends State<CreateParcelleBottomSheet> {
@@ -733,15 +816,21 @@ class _CreateParcelleBottomSheetState extends State<CreateParcelleBottomSheet> {
     super.dispose();
   }
 
-  void _saveParcelle() {
+  void _saveParcelle() async {
     if (_formKey.currentState!.validate()) {
-      final newParcelle = Parcelle(
-        id: DateTime.now().toString(),
-        name: _nameController.text,
-        superficie: double.tryParse(_superficieController.text) ?? 0.0,
-        champId: widget.champId,
+      final name = _nameController.text;
+      final superficie = double.tryParse(_superficieController.text) ?? 0.0;
+      final champId = widget.champId;
+      final container = ProviderScope.containerOf(context, listen: false);
+      await container.read(
+        createParcelleProvider({
+          'name': name,
+          'superficie': superficie,
+          'champId': champId,
+        }).future,
       );
-      mockParcelles.add(newParcelle);
+      // Rafraîchir la liste des parcelles pour ce champ
+      container.refresh(parcellesProvider(champId));
       Navigator.pop(context);
     }
   }
@@ -771,7 +860,12 @@ class _CreateParcelleBottomSheetState extends State<CreateParcelleBottomSheet> {
 
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: bottomPadding),
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: bottomPadding,
+        ),
         child: SizedBox(
           height: MediaQuery.of(context).size.height * 0.6,
           child: Column(
@@ -788,7 +882,10 @@ class _CreateParcelleBottomSheetState extends State<CreateParcelleBottomSheet> {
                 ),
               ),
               const SizedBox(height: 12),
-              const Text('Créer une parcelle', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                'Créer une parcelle',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
               Expanded(
                 child: SingleChildScrollView(
@@ -810,9 +907,13 @@ class _CreateParcelleBottomSheetState extends State<CreateParcelleBottomSheet> {
                         TextFormField(
                           controller: _superficieController,
                           decoration: _dec('Superficie (en ha)'),
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           validator: (value) {
-                            if (value == null || value.isEmpty || double.tryParse(value) == null) {
+                            if (value == null ||
+                                value.isEmpty ||
+                                double.tryParse(value) == null) {
                               return 'Veuillez entrer une superficie valide';
                             }
                             return null;

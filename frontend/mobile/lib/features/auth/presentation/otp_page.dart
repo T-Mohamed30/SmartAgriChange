@@ -17,27 +17,51 @@ class _OtpPageState extends ConsumerState<OtpPage> {
 
   Future<void> _verifyOtp() async {
     if (_isLoading) return;
-    
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final result = await ref.read(verifyOtpProvider).call(widget.phone, otpController.text);
-      
+      // Récupérer les infos utilisateur depuis le provider
+      final user = ref.read(userProvider);
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Informations utilisateur manquantes. Veuillez recommencer l\'inscription.',
+            ),
+          ),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final result = await ref
+          .read(verifyOtpProvider)
+          .call(
+            widget.phone,
+            otpController.text,
+            user.nom,
+            user.prenom,
+            user.password,
+          );
+
       if (!mounted) return;
-      
+
       if (result != null) {
         // Mettre à jour l'utilisateur connecté
-        final user = User(
+        final updatedUser = User(
           nom: result['nom'] ?? '',
           prenom: result['prenom'] ?? '',
           phone: widget.phone,
           password: '', // Le mot de passe n'est pas nécessaire ici
         );
-        print('📝 Mise à jour de l\'utilisateur: ${user.toJson()}');
-        ref.read(userProvider.notifier).state = user;
-        
+        print('📝 Mise à jour de l\'utilisateur: ${updatedUser.toJson()}');
+        ref.read(userProvider.notifier).state = updatedUser;
+
         // Nettoyer le contrôleur avant la navigation
         otpController.clear();
         // Naviguer vers la page d'accueil
@@ -49,9 +73,9 @@ class _OtpPageState extends ConsumerState<OtpPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: ${e.toString()}')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erreur: ${e.toString()}')));
     } finally {
       if (mounted) {
         setState(() {
@@ -69,7 +93,10 @@ class _OtpPageState extends ConsumerState<OtpPage> {
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const Text('Vérification OTP', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+              const Text(
+                'Vérification OTP',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              ),
               Text('Un code a été envoyé au ${widget.phone}'),
               const SizedBox(height: 24),
               TextField(
@@ -110,7 +137,10 @@ class _OtpPageState extends ConsumerState<OtpPage> {
                         )
                       : const Text(
                           'Vérifier',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
               ),
