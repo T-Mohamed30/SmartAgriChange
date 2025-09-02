@@ -57,7 +57,7 @@ class MyApp extends StatelessWidget {
       cardColor: cardBg,
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: Colors.white,
+        backgroundColor: scaffoldBg,
         foregroundColor: textColor,
         elevation: 0,
         titleTextStyle: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/entities/champ.dart';
 import 'providers/champ_parcelle_provider.dart';
 import 'detection_capteurs.dart';
-// Tous les imports doivent être en haut du fichier
+
 
 // Widget ChampCard pour affichage identique à SensorCard
 class ChampCard extends StatelessWidget {
@@ -69,21 +69,6 @@ class ParcelleCount extends ConsumerWidget {
   }
 }
 
-// Page de création de champ (à remplacer par le vrai formulaire)
-class CreateChampPage extends StatelessWidget {
-  const CreateChampPage({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Créer un champ')),
-      body: const Center(
-        child: Text('Formulaire de création de champ ici'),
-      ), // À remplacer par le vrai formulaire
-    );
-  }
-}
-
 class ChampsListPage extends ConsumerWidget {
   const ChampsListPage({Key? key}) : super(key: key);
 
@@ -92,8 +77,7 @@ class ChampsListPage extends ConsumerWidget {
     final champsAsync = ref.watch(champsProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Liste des champs', textAlign: TextAlign.center),
-        centerTitle: true,
+        title: const Text('Liste des champs', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
       ),
       body: SafeArea(
         child: Padding(
@@ -200,6 +184,19 @@ class ChampsListPage extends ConsumerWidget {
           ),
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            builder: (_) => const CreateChampBottomSheet(),
+          );
+        },
+        backgroundColor: const Color(0xFF007F3D),
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: Colors.white),
+        elevation: 8,
+      )
     );
   }
 }
@@ -213,7 +210,28 @@ class ParcellesListPage extends ConsumerWidget {
     final parcellesAsync = ref.watch(parcellesProvider(champ.id));
     return Scaffold(
       appBar: AppBar(
-        title: Text('Parcelles de ${champ.name}', textAlign: TextAlign.center),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 12, top: 8, bottom: 8), // espace du bord gauche et vertical
+
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ),
+        title: Text('${champ.name}', textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -254,79 +272,35 @@ class ParcellesListPage extends ConsumerWidget {
                             const SizedBox(height: 6),
                             Text(
                               'Superficie: ${parcelle.superficie} ha',
-                                child: Container(
-                                  alignment: Alignment.bottomRight,
-                                  child: FloatingActionButton(
-                                    backgroundColor: const Color(0xFF007F3D),
-                                    child: const Icon(Icons.add),
-                                    onPressed: () {
-                                      showModalBottomSheet(
-                                        context: context,
-                                        @override
-                                        Widget build(BuildContext context, WidgetRef ref) {
-                                          final parcellesAsync = ref.watch(parcellesProvider(champ.id));
-                                          return Scaffold(
-                                            appBar: AppBar(
-                                              title: Text('Parcelles de ${champ.name}', textAlign: TextAlign.center),
-                                              centerTitle: true,
-                                            ),
-                                            body: SafeArea(
-                                              child: Padding(
-                                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                                                child: parcellesAsync.when(
-                                                  data: (parcelles) => ListView.separated(
-                                                    itemCount: parcelles.length,
-                                                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                                                    itemBuilder: (context, index) {
-                                                      final parcelle = parcelles[index];
-                                                      return Container(
-                                                        padding: const EdgeInsets.all(12),
-                                                        decoration: BoxDecoration(
-                                                          color: Colors.white,
-                                                          borderRadius: BorderRadius.circular(10),
-                                                          boxShadow: [
-                                                            BoxShadow(
-                                                              color: Colors.black.withOpacity(0.03),
-                                                              blurRadius: 6,
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        child: Column(
-                                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                                          children: [
-                                                            Text(
-                                                              parcelle.name,
-                                                              style: const TextStyle(
-                                                                fontWeight: FontWeight.w600,
-                                                                fontSize: 16,
-                                                              ),
-                                                            ),
-                                                            const SizedBox(height: 6),
-                                                            Text(
-                                                              'Superficie: ${parcelle.superficie} ha',
-                                                              style: const TextStyle(color: Colors.black54),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      );
-                                                    },
-                                                  ),
-                                                  loading: () => const Center(child: CircularProgressIndicator()),
-                                                  error: (error, stack) => Center(child: Text('Erreur: $error')),
-                                                ),
-                                              ),
-                                            ),
-                                            floatingActionButton: FloatingActionButton(
-                                              onPressed: () {
-                                                showModalBottomSheet(
-                                                  context: context,
-                                                  isScrollControlled: true,
-                                                  builder: (_) => CreateParcelleBottomSheet(champId: champ.id),
-                                                );
-                                              },
-                                              backgroundColor: const Color(0xFF007F3D),
-                                              shape: const CircleBorder(),
-                                              child: const Icon(Icons.add, color: Colors.white),
-                                              elevation: 8,
-                                            ),
-                                          );
+                              style: const TextStyle(color: Colors.black54),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) => Center(child: Text('Erreur: $error')),
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            builder: (_) => CreateParcelleBottomSheet(champId: champ.id),
+          );
+        },
+        backgroundColor: const Color(0xFF007F3D),
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: Colors.white),
+        elevation: 8,
+      )
+    );
+  }
+}
