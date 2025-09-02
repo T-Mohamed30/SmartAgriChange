@@ -140,7 +140,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       height: 50,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Color(0xFF007F3D),
+                          backgroundColor: const Color(0xFF007F3D),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -151,8 +151,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Row(
-                      children: const [
+                    const Row(
+                      children: [
                         Expanded(child: Divider(thickness: 1)),
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 8),
@@ -184,7 +184,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text("Vous êtes nouveau ?"),
+                        const Text("Vous êtes nouveau ?"),
                         GestureDetector(
                           onTap: () {
                             Navigator.pushNamed(context, '/auth/register');

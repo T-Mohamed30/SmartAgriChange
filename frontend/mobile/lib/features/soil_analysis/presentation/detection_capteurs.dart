@@ -134,23 +134,23 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
   Widget _buildSearchingState() {
     return Container(
       padding: const EdgeInsets.all(20),
-      child: Column(
+      child: const Column(
         children: [
-          const Text(
+          Text(
             'Recherche en cours...',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 24),
-          const CircularProgressIndicator(
+          SizedBox(height: 24),
+          CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF007F3D)),
           ),
-          const SizedBox(height: 24),
-          const Text(
+          SizedBox(height: 24),
+          Text(
             'Recherche de capteurs dans votre zone.\nAssurez-vous que vos capteurs sont allumés.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 16),
           ),
-          const SizedBox(height: 200),
+          SizedBox(height: 200),
         ],
       ),
     );
@@ -268,7 +268,7 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
           onPressed: canLaunch
               ? () {
                   ref.read(sensorActionsProvider.notifier).startAnalysis(
-                        sensorId: selected!.id,
+                        sensorId: selected.id,
                         parcelleId: parcelle?.id,
                       );
                   Navigator.pushNamed(
@@ -598,7 +598,7 @@ class _ParcelleSelectionSheet extends ConsumerWidget {
 
 // Formulaire pour la création d'un nouveau champ (bottom sheet)
 class CreateChampBottomSheet extends StatefulWidget {
-  const CreateChampBottomSheet({Key? key}) : super(key: key);
+  const CreateChampBottomSheet({super.key});
   @override
   State<CreateChampBottomSheet> createState() => _CreateChampBottomSheetState();
 }
@@ -715,7 +715,7 @@ class _CreateChampBottomSheetState extends State<CreateChampBottomSheet> {
 // Formulaire pour la création d'une nouvelle parcelle (bottom sheet)
 class CreateParcelleBottomSheet extends StatefulWidget {
   final String champId;
-  const CreateParcelleBottomSheet({required this.champId, Key? key}) : super(key: key);
+  const CreateParcelleBottomSheet({required this.champId, super.key});
 
   @override
   State<CreateParcelleBottomSheet> createState() => _CreateParcelleBottomSheetState();

@@ -29,7 +29,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) => _buildAnalyzeBottomSheet(),
@@ -62,10 +62,10 @@ class _HomePageState extends ConsumerState<HomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAnalyzeBottomSheet,
-        backgroundColor: Color(0xFF007F3D),
-        shape: CircleBorder(),
-        child: Image.asset('assets/icons/plus.png', color: Colors.white),
+        backgroundColor: const Color(0xFF007F3D),
+        shape: const CircleBorder(),
         elevation: 8,
+        child: Image.asset('assets/icons/plus.png', color: Colors.white),
       ),
       bottomNavigationBar: Theme(
         data: Theme.of(context).copyWith(
@@ -109,18 +109,18 @@ class _HomePageState extends ConsumerState<HomePage> {
                         children: [
                           Text(
                             greeting,
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
                           ),
                           Text(
                             displayName,
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                           ),
                         ],
                       );
                     },
                   ),
                   const SizedBox(height: 4),
-                  Text(
+                  const Text(
                     'Prêt à booster votre prochaine récolte ?',
                     style: TextStyle(fontSize: 14, color: Colors.black),
                   ),
@@ -158,7 +158,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                         borderRadius: BorderRadius.circular(16),
                         onTap: () => ref.refresh(weather_provider.weatherProvider),
                         child: Padding(
-                          padding: EdgeInsets.all(4.0),
+                          padding: const EdgeInsets.all(4.0),
                           child: Image.asset('assets/icons/reload.png', height: 20, color: Colors.black),
                         ),
                       ),
@@ -172,7 +172,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                             try {
                               // Sélectionner l'icône en fonction des conditions météo
                               String weatherIcon = 'assets/icons/temps_1.png'; // Par défaut
-                              final condition = weather.condition?.toLowerCase() ?? '';
+                              final condition = weather.condition.toLowerCase() ?? '';
                               
                               if (condition.contains('pluie') || condition.contains('rain')) {
                                 weatherIcon = 'assets/icons/temps_5.png';
@@ -273,7 +273,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               children: [
                 Image.asset('assets/icons/interface-alert-information-circle--information-frame-info-more-help-point-circle--Streamline-Core.png', height: 20),
                 const SizedBox(width: 8),
-                Expanded(
+                const Expanded(
                   child: Text(
                     'Penser à irriguer la parcelle 2 ce soir.',
                     style: TextStyle(fontSize: 14, color: Colors.black, fontWeight: FontWeight.bold),
@@ -656,7 +656,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       // color: const Color(0xFF007F3D),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: Color(0xFF007F3D),
+        color: const Color(0xFF007F3D),
       ),
       alignment: Alignment.center,
       child: Column(

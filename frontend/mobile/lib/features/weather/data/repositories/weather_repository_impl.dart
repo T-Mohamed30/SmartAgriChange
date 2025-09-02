@@ -11,9 +11,9 @@ class WeatherRepository {
   Future<WeatherData> getWeather(String city) async {
     try {
       // Coordonnées de Ouagadougou, Burkina Faso
-      final double lat = 12.3714;
-      final double lon = -1.5197;
-      final String locationName = 'Ouagadougou';
+      const double lat = 12.3714;
+      const double lon = -1.5197;
+      const String locationName = 'Ouagadougou';
       
       // Récupérer les données météo
       final weatherUrl = Uri.parse(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CropDetailScreen extends StatelessWidget {
-  const CropDetailScreen({Key? key}) : super(key: key);
+  const CropDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -34,8 +34,8 @@ class CropDetailScreen extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: const [
+                const Row(
+                  children: [
                     Icon(Icons.eco_outlined, color: Colors.black),
                     SizedBox(width: 8),
                     Text('Conditions idéales', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),

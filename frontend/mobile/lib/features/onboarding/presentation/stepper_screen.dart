@@ -11,7 +11,7 @@ class StepperScreen extends StatefulWidget {
 class _StepperScreenState extends State<StepperScreen> {
   int currentIndex = 0;
   Timer? _timer;
-  PageController _pageController = PageController();
+  final PageController _pageController = PageController();
 
   final List<Map<String, String>> steps = [
     {

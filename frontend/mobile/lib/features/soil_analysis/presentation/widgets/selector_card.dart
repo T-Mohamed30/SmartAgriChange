@@ -4,7 +4,7 @@ class SelectorCard extends StatelessWidget {
   final String title;
   final String label;
   final VoidCallback? onTap;
-  const SelectorCard({required this.title, required this.label, this.onTap, Key? key}) : super(key: key);
+  const SelectorCard({required this.title, required this.label, this.onTap, super.key});
 
   @override
   Widget build(BuildContext context) {

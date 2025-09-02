@@ -16,7 +16,7 @@ class AnalysisArgs {
 }
 
 class AnalysisScreen extends ConsumerStatefulWidget {
-  const AnalysisScreen({Key? key}) : super(key: key);
+  const AnalysisScreen({super.key});
 
   @override
   ConsumerState<AnalysisScreen> createState() => _AnalysisScreenState();
@@ -102,12 +102,12 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Row(
+                    const Row(
                       children: [
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
-                            children: const [
+                            children: [
                               Text('Azote (N)'),
                               SizedBox(height: 4),
                               Text('0 mg/kg', style: TextStyle(fontWeight: FontWeight.w700)),
@@ -117,7 +117,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
-                            children: const [
+                            children: [
                               Text('Phosphore (P)'),
                               SizedBox(height: 4),
                               Text('0 mg/kg', style: TextStyle(fontWeight: FontWeight.w700)),
@@ -127,7 +127,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
-                            children: const [
+                            children: [
                               Text('Potassium (K)'),
                               SizedBox(height: 4),
                               Text('0 mg/kg', style: TextStyle(fontWeight: FontWeight.w700)),
@@ -146,9 +146,9 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
+                child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text('Descrpition', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                     SizedBox(height: 8),
                     Text(
@@ -447,14 +447,14 @@ class _FloatingIcon extends StatelessWidget {
   final double size;
 
   const _FloatingIcon({
-    Key? key,
+    super.key,
     required this.controller,
     required this.asset,
     required this.baseLeft,
     required this.baseBottom,
     required this.travel,
     required this.size,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

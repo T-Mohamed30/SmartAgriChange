@@ -8,7 +8,7 @@ class SensorRepositoryImpl implements SensorRepository {
   Timer? _timer;
 
   // initial mock list
-  List<Sensor> _sensors = List.generate(4, (i) {
+  final List<Sensor> _sensors = List.generate(4, (i) {
     return Sensor(
       id: 's$i',
       name: 'Capteur #A1${i+1}',

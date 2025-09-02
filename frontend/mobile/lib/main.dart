@@ -30,10 +30,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = const Color(0xFF007F3D);
-    final textColor = const Color(0xFF333333);
-    final scaffoldBg = const Color(0xFFF5F5F5);
-    final cardBg = Colors.white;
+    const primary = Color(0xFF007F3D);
+    const textColor = Color(0xFF333333);
+    const scaffoldBg = Color(0xFFF5F5F5);
+    const cardBg = Colors.white;
 
     final baseTextTheme = GoogleFonts.interTextTheme();
     final textTheme = baseTextTheme.apply(
@@ -89,11 +89,11 @@ class MyApp extends StatelessWidget {
         },
         
         // Routes protégées
-        '/home': (context) => AuthGuard(child: const HomePage()),
-        '/user_dashboard/home': (context) => AuthGuard(child: const HomePage()),
-        '/soil_analysis/detection_capteurs': (context) => AuthGuard(child: const DetectionCapteursPage()),
-        '/soil_analysis/analysis': (context) => AuthGuard(child: const AnalysisScreen()),
-        '/soil_analysis/crop_detail': (context) => AuthGuard(child: const CropDetailScreen()),
+        '/home': (context) => const AuthGuard(child: HomePage()),
+        '/user_dashboard/home': (context) => const AuthGuard(child: HomePage()),
+        '/soil_analysis/detection_capteurs': (context) => const AuthGuard(child: DetectionCapteursPage()),
+        '/soil_analysis/analysis': (context) => const AuthGuard(child: AnalysisScreen()),
+        '/soil_analysis/crop_detail': (context) => const AuthGuard(child: CropDetailScreen()),
       },
     );
   }

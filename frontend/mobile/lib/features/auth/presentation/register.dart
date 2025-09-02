@@ -236,8 +236,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       ),
                     ),
                     const SizedBox(height: 24),
-                    Row(
-                      children: const [
+                    const Row(
+                      children: [
                         Expanded(child: Divider(thickness: 1)),
                         Padding(
                           padding: EdgeInsets.symmetric(horizontal: 8),

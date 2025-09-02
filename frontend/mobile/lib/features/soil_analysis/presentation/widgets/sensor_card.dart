@@ -15,7 +15,7 @@ class SensorCard extends StatelessWidget {
   final VoidCallback? onTap;
   final bool highlighted;
 
-  const SensorCard({required this.sensor, this.onTap, this.highlighted = false, Key? key}) : super(key: key);
+  const SensorCard({required this.sensor, this.onTap, this.highlighted = false, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +45,7 @@ class SensorCard extends StatelessWidget {
                       Text(statusLabel(sensor.status)),
                       const SizedBox(width: 12),
                       if (sensor.batteryLevel != null) ...[
-                        Icon(Icons.battery_std, size: 16),
+                        const Icon(Icons.battery_std, size: 16),
                         const SizedBox(width: 4),
                         Text('${sensor.batteryLevel}%'),
                       ],
