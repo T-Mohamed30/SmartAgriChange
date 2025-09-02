@@ -21,6 +21,7 @@ if (env === 'offline') {
     .catch(err => console.error('❌ Erreur de connexion SQLite :', err));
 
 } else {
+
   // Mode ONLINE : PostgreSQL
   sequelize = new Sequelize(
     process.env.PG_DATABASE,

@@ -1,16 +1,17 @@
-require('dotenv').config();
 const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors');
-const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 const session = require('express-session');
+const cors = require('cors');
+require('dotenv').config();
+const bodyParser = require('body-parser');
+const morgan = require('morgan');
 const MemoryStore = require('memorystore')(session);
 
 // Configuration CORS pour autoriser les requêtes du frontend
 const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
-      'http://localhost:3000', 
+      'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:5000',
       'http://127.0.0.1:5000',
@@ -21,28 +22,28 @@ const corsOptions = {
       'http://10.0.2.2:5000',
       'http://10.0.2.2:8080'
     ];
-    
+
     // En développement, accepter toutes les origines
     if (process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
-    
+
     // En production, vérifier l'origine
     if (origin && allowedOrigins.indexOf(origin) === -1) {
       const msg = `L'origine ${origin} n'est pas autorisée par CORS`;
       console.error(msg);
       return callback(new Error(msg), false);
     }
-    
+
     return callback(null, true);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With', 
-    'Accept', 
-    'Cookie', 
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Cookie',
     'Set-Cookie',
     'X-CSRF-Token'
   ],
@@ -54,6 +55,7 @@ const corsOptions = {
 
 // Instance express
 const app = express();
+app.use(cookieParser());
 
 // Middleware
 app.use(morgan('dev'));
@@ -83,18 +85,18 @@ const sessionConfig = {
   store: new MemoryStore({
     checkPeriod: 86400000, // Nettoyer les entrées expirées toutes les 24h
   }),
-  cookie: { 
+  cookie: {
     secure: false, // Désactivé pour le développement
     maxAge: 24 * 60 * 60 * 1000, // 24 heures
     httpOnly: true,
-    sameSite: 'lax',
-    path: '/',
-    domain: 'localhost'
+    sameSite: 'none', // Permet le cookie cross-origin en dev
+    path: '/'
+    // NE PAS mettre domain en dev
   },
   name: 'smartagri.sid',
   rolling: true,
   unset: 'destroy',
-  proxy: true // Important pour le bon fonctionnement derrière un proxy
+  // proxy: true // À activer uniquement derrière un proxy ou en production avec HTTPS
 };
 
 // Configuration spécifique pour la production
@@ -170,20 +172,20 @@ app.get(`${API_PREFIX}/health`, (req, res) => {
 
 // Gestion des erreurs 404
 app.use((req, res) => {
-  res.status(404).json({ 
+  res.status(404).json({
     success: false,
     message: 'Route non trouvée',
-    path: req.originalUrl 
+    path: req.originalUrl
   });
 });
 
 // Gestion des erreurs globales
 app.use((err, req, res, next) => {
   console.error('Erreur:', err.stack);
-  
+
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Erreur interne du serveur';
-  
+
   res.status(statusCode).json({
     success: false,
     message,
