@@ -10,9 +10,8 @@ import 'domain/entities/analysis_simple.dart';
 import 'package:smartagrichange_mobile/features/user_dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:smartagrichange_mobile/features/user_dashboard/presentation/providers/dashboard_provider.dart'
     show dashboardStatsProvider, recentAnalysesProvider;
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../soil_analysis/presentation/champs_list_page.dart';
+import '../account/presentation/account_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -59,6 +58,9 @@ class _HomePageState extends ConsumerState<HomePage> {
     switch (_selectedIndex) {
       case 1:
         page = ChampsListPage();
+        break;
+      case 3:
+        page = AccountPage();
         break;
       default:
         page = Column(

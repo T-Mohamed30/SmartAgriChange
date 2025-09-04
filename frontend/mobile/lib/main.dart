@@ -13,6 +13,7 @@ import 'features/auth/presentation/login.dart';
 import 'features/auth/presentation/otp_page.dart';
 import 'features/soil_analysis/presentation/analysis_screen.dart';
 import 'features/soil_analysis/presentation/crop_detail_screen.dart';
+import 'features/account/presentation/account_page.dart';
 
 void main() {
   runApp(
@@ -87,6 +88,7 @@ class MyApp extends StatelessWidget {
           final phone = ModalRoute.of(context)?.settings.arguments as String? ?? '';
           return OtpPage(phone: phone);
         },
+        '/account': (context) => const AccountPage(),
         
         // Routes protégées
         '/home': (context) => const AuthGuard(child: HomePage()),

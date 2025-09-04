@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../user_dashboard/domain/entities/analysis_simple.dart';
 import '../../../user_dashboard/domain/entities/weather_simple.dart';
+import '../../../soil_analysis/presentation/providers/champ_parcelle_provider.dart';
 
 // Provider pour les analyses récentes
 final recentAnalysesProvider = FutureProvider<List<Analysis>>((ref) async {
@@ -46,29 +47,23 @@ final recentAnalysesProvider = FutureProvider<List<Analysis>>((ref) async {
 });
 
 // Provider pour les statistiques du tableau de bord
-final dashboardStatsProvider = FutureProvider<Map<String, int>>((ref) async {
-  await Future.delayed(const Duration(milliseconds: 300));
-  
-  return {
-    'capteurs': 5,  // Nombre de capteurs actifs
-    'champs': 3,    // Nombre de champs enregistrés
-    'alertes': 2,   // Nombre d'alertes non lues
-  };
-});
+final dashboardStatsProvider = Provider<AsyncValue<Map<String, int>>>((ref) {
+  // Récupérer les données des champs
+  final champsAsync = ref.watch(champsProvider);
 
-// Provider pour la météo
-final weatherProvider = FutureProvider<Weather>((ref) async {
-  // Simulation d'appel API météo
-  await Future.delayed(const Duration(milliseconds: 500));
-  
-  return Weather(
-    temperature: 22.0,
-    condition: 'sunny',
-    description: 'Ensoleillé',
-    icon: 'assets/icons/temps_1.png',
-    lastUpdated: DateTime.now(),
+  return champsAsync.when(
+    data: (champs) {
+      return AsyncValue.data({
+        'capteurs': 5,  // Nombre de capteurs actifs
+        'champs': champs.length,  // Nombre réel de champs enregistrés
+        'alertes': 2,   // Nombre d'alertes non lues
+      });
+    },
+    loading: () => const AsyncValue.loading(),
+    error: (error, stack) => AsyncValue.error(error, stack),
   );
 });
+
 
 // Provider pour actualiser les données
 final refreshTriggerProvider = StateProvider<int>((ref) => 0);
@@ -77,11 +72,10 @@ final refreshTriggerProvider = StateProvider<int>((ref) => 0);
 final dashboardDataProvider = FutureProvider<bool>((ref) async {
   // Écoute le trigger de rafraîchissement
   ref.watch(refreshTriggerProvider);
-  
+
   // Invalide tous les autres providers pour les forcer à se recharger
   ref.invalidate(recentAnalysesProvider);
-  ref.invalidate(weatherProvider);
   ref.invalidate(dashboardStatsProvider);
-  
+
   return true;
-}); 
+});

@@ -183,6 +183,109 @@ const authController = {
         error: process.env.NODE_ENV === 'development' ? err.message : undefined
       });
     }
+  },
+
+  updateProfile: async (req, res) => {
+    try {
+      const { nom, prenom } = req.body;
+      const userId = req.user.id;
+
+      // Préparer les champs à mettre à jour
+      const updateData = {};
+
+      if (nom !== undefined) updateData.nom = nom;
+      if (prenom !== undefined) updateData.prenom = prenom;
+
+      // Vérifier qu'il y a au moins un champ à mettre à jour
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Aucun champ à mettre à jour."
+        });
+      }
+
+      // Mettre à jour l'utilisateur
+      const [updated] = await User.update(updateData, { where: { id: userId } });
+
+      if (!updated) {
+        return res.status(404).json({
+          success: false,
+          message: "Utilisateur non trouvé."
+        });
+      }
+
+      // Récupérer l'utilisateur mis à jour (sans le mot de passe)
+      const updatedUser = await User.findByPk(userId, {
+        attributes: { exclude: ['mot_de_passe'] }
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Profil mis à jour avec succès.",
+        user: updatedUser
+      });
+    } catch (err) {
+      console.error('Erreur lors de la mise à jour du profil:', err);
+      return res.status(500).json({
+        success: false,
+        message: "Erreur lors de la mise à jour du profil.",
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      });
+    }
+  },
+
+  changePassword: async (req, res) => {
+    try {
+      const { mot_de_passe_actuel, nouveau_mot_de_passe } = req.body;
+      const userId = req.user.id;
+
+      // Vérifier que les champs sont présents
+      if (!mot_de_passe_actuel || !nouveau_mot_de_passe) {
+        return res.status(400).json({
+          success: false,
+          message: "Mot de passe actuel et nouveau mot de passe requis."
+        });
+      }
+
+      // Récupérer l'utilisateur
+      const user = await User.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "Utilisateur non trouvé."
+        });
+      }
+
+      // Vérifier le mot de passe actuel
+      const isMatch = await bcrypt.compare(mot_de_passe_actuel, user.mot_de_passe);
+      if (!isMatch) {
+        return res.status(401).json({
+          success: false,
+          message: "Mot de passe actuel incorrect."
+        });
+      }
+
+      // Hasher le nouveau mot de passe
+      const hashedPassword = await bcrypt.hash(nouveau_mot_de_passe, 10);
+
+      // Mettre à jour le mot de passe
+      await User.update(
+        { mot_de_passe: hashedPassword },
+        { where: { id: userId } }
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Mot de passe changé avec succès."
+      });
+    } catch (err) {
+      console.error('Erreur lors du changement de mot de passe:', err);
+      return res.status(500).json({
+        success: false,
+        message: "Erreur lors du changement de mot de passe.",
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined
+      });
+    }
   }
   ,
   // LOGIN UTILISATEUR
