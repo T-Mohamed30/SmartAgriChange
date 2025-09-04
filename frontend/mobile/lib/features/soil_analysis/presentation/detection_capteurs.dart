@@ -5,14 +5,11 @@ import 'providers/sensor_provider.dart';
 import '../domain/entities/champ.dart';
 import '../domain/entities/parcelle.dart';
 import 'providers/champ_parcelle_provider.dart';
+import 'providers/selection_providers.dart' as selection_providers;
 import 'widgets/sensor_card.dart';
 import 'widgets/selector_card.dart';
 import 'widgets/action_button.dart';
 import 'analysis_screen.dart';
-
-// Providers for selected champ and parcelle
-final selectedChampProvider = StateProvider<Champ?>((ref) => null);
-final selectedParcelleProvider = StateProvider<Parcelle?>((ref) => null);
 
 class DetectionCapteursPage extends ConsumerStatefulWidget {
   const DetectionCapteursPage({super.key});
@@ -113,30 +110,12 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
       padding: const EdgeInsets.all(20),
       child: const Column(
         children: [
-<<<<<<< HEAD
-          Text(
-            'Recherche en cours...',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 24),
-          CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF007F3D)),
-          ),
-          SizedBox(height: 24),
-          Text(
-            'Recherche de capteurs dans votre zone.\nAssurez-vous que vos capteurs sont allumés.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 16),
-          ),
-          SizedBox(height: 200),
-=======
           const Text('Recherche en cours...', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 24),
           const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF007F3D))),
           const SizedBox(height: 24),
           const Text('Recherche de capteurs dans votre zone.\nAssurez-vous que vos capteurs sont allumés.', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
           const SizedBox(height: 200),
->>>>>>> features/champs-parcelles
         ],
       ),
     );
@@ -144,8 +123,8 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
 
   Widget _buildFoundState() {
     final sensorsAsync = ref.watch(detectedSensorsStreamProvider);
-    final selectedChamp = ref.watch(selectedChampProvider);
-    final selectedParcelle = ref.watch(selectedParcelleProvider);
+    final selectedChamp = ref.watch(selection_providers.selectedChampProvider);
+    final selectedParcelle = ref.watch(selection_providers.selectedParcelleProvider);
 
     return sensorsAsync.when(
       data: (sensors) => Padding(
@@ -212,8 +191,8 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
 
   Widget _buildBottomButton() {
     final selectedSensor = ref.watch(selectedSensorProvider);
-    final selectedChamp = ref.watch(selectedChampProvider);
-    final selectedParcelle = ref.watch(selectedParcelleProvider);
+    final selectedChamp = ref.watch(selection_providers.selectedChampProvider);
+    final selectedParcelle = ref.watch(selection_providers.selectedParcelleProvider);
     final canLaunch = selectedSensor != null && (selectedChamp == null || selectedParcelle != null);
 
     return Padding(
@@ -247,6 +226,8 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
     return SelectorCard(
       title: 'Champ',
       label: selectedChamp?.name ?? 'Choisir un champ',
+      isSelected: selectedChamp != null,
+      onRemove: selectedChamp != null ? () => ref.read(selection_providers.selectedChampProvider.notifier).state = null : null,
       onTap: () => _showChampSelectionSheet(context),
     );
   }
@@ -263,8 +244,10 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
     return SelectorCard(
       title: 'Parcelle',
       label: selectedParcelle?.name ?? 'Choisir une parcelle',
+      isSelected: selectedParcelle != null,
+      onRemove: selectedParcelle != null ? () => ref.read(selection_providers.selectedParcelleProvider.notifier).state = null : null,
       onTap: () {
-        final selectedChamp = ref.read(selectedChampProvider);
+        final selectedChamp = ref.read(selection_providers.selectedChampProvider);
         if (selectedChamp != null) {
           _showParcelleSelectionSheet(context, selectedChamp);
         }
@@ -391,8 +374,8 @@ class _ChampCard extends ConsumerWidget {
     final parcellesAsync = ref.watch(parcellesProvider(champ.id));
     return InkWell(
       onTap: () {
-        ref.read(selectedChampProvider.notifier).state = champ;
-        ref.read(selectedParcelleProvider.notifier).state = null;
+        ref.read(selection_providers.selectedChampProvider.notifier).state = champ;
+        ref.read(selection_providers.selectedParcelleProvider.notifier).state = null;
         Navigator.pop(context);
       },
       child: Container(
@@ -469,7 +452,7 @@ class _ParcelleCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return InkWell(
       onTap: () {
-        ref.read(selectedParcelleProvider.notifier).state = parcelle;
+        ref.read(selection_providers.selectedParcelleProvider.notifier).state = parcelle;
         Navigator.pop(context);
       },
       child: Container(
@@ -492,12 +475,7 @@ class _ParcelleCard extends ConsumerWidget {
   }
 }
 
-<<<<<<< HEAD
-// Formulaire pour la création d'un nouveau champ (bottom sheet)
-class CreateChampBottomSheet extends StatefulWidget {
-=======
 class CreateChampBottomSheet extends ConsumerStatefulWidget {
->>>>>>> features/champs-parcelles
   const CreateChampBottomSheet({super.key});
   @override
   ConsumerState<CreateChampBottomSheet> createState() => _CreateChampBottomSheetState();

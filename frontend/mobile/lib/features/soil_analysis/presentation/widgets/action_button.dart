@@ -2,17 +2,12 @@ import 'package:flutter/material.dart';
 
 class ActionButton extends StatelessWidget {
   final String text;
-<<<<<<< HEAD
-  final VoidCallback onPressed;
-  const ActionButton({required this.text, required this.onPressed, super.key});
-=======
   final VoidCallback? onPressed;
   const ActionButton({
     required this.text, 
     this.onPressed, 
     Key? key
   }) : super(key: key);
->>>>>>> features/champs-parcelles
 
   @override
   Widget build(BuildContext context) {
