@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../auth/presentation/providers/auth_provider.dart';
+import '../../auth/domain/entities/user.dart';
 import '../../soil_analysis/presentation/widgets/action_button.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -70,7 +71,15 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         final data = jsonDecode(response.body);
         if (data['success']) {
           // Update the user provider with new data
-          ref.read(userProvider.notifier).state = data['user'];
+          final userData = data['user'];
+          final updatedUser = User(
+            nom: userData['nom'] ?? '',
+            prenom: userData['prenom'] ?? '',
+            phone: userData['phone'] ?? '',
+            password: '', // Keep existing password or empty for security
+          );
+          ref.read(userProvider.notifier).state = updatedUser;
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Profil mis à jour avec succès')),
           );
@@ -171,7 +180,6 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                 ),
                 readOnly: true, // Phone number shouldn't be editable
-                enabled: false,
               ),
               const SizedBox(height: 32),
               ActionButton(

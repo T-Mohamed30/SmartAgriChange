@@ -67,4 +67,39 @@ class ChampParcelleRepository {
       champId: json['champId'].toString(),
     );
   }
+
+  Future<Champ> updateChamp(String id, String name, String location) async {
+    final response = await dio.put(
+      '$baseUrl/champs/$id',
+      data: {'name': name, 'location': location},
+    );
+    final json = response.data;
+    return Champ(
+      id: json['id'].toString(),
+      name: json['name'],
+      location: json['location'],
+    );
+  }
+
+  Future<void> deleteChamp(String id) async {
+    await dio.delete('$baseUrl/champs/$id');
+  }
+
+  Future<Parcelle> updateParcelle(String id, String name, double superficie, String champId) async {
+    final response = await dio.put(
+      '$baseUrl/parcelles/$id',
+      data: {'name': name, 'superficie': superficie, 'champId': champId},
+    );
+    final json = response.data;
+    return Parcelle(
+      id: json['id'].toString(),
+      name: json['name'],
+      superficie: double.tryParse(json['superficie'].toString()) ?? 0.0,
+      champId: json['champId'].toString(),
+    );
+  }
+
+  Future<void> deleteParcelle(String id) async {
+    await dio.delete('$baseUrl/parcelles/$id');
+  }
 }

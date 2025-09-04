@@ -46,3 +46,32 @@ final createParcelleProvider =
         params['champId'] as String,
       );
     });
+
+final updateChampProvider = FutureProvider.family<Champ, Map<String, dynamic>>((ref, params) async {
+  final repo = ref.read(champParcelleRepositoryProvider);
+  return await repo.updateChamp(
+    params['id'] as String,
+    params['name'] as String,
+    params['location'] as String,
+  );
+});
+
+final deleteChampProvider = FutureProvider.family<void, String>((ref, champId) async {
+  final repo = ref.read(champParcelleRepositoryProvider);
+  await repo.deleteChamp(champId);
+});
+
+final updateParcelleProvider = FutureProvider.family<Parcelle, Map<String, dynamic>>((ref, params) async {
+  final repo = ref.read(champParcelleRepositoryProvider);
+  return await repo.updateParcelle(
+    params['id'] as String,
+    params['name'] as String,
+    params['superficie'] as double,
+    params['champId'] as String,
+  );
+});
+
+final deleteParcelleProvider = FutureProvider.family<void, String>((ref, parcelleId) async {
+  final repo = ref.read(champParcelleRepositoryProvider);
+  await repo.deleteParcelle(parcelleId);
+});
