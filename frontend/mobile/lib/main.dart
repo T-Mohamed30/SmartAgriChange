@@ -14,6 +14,8 @@ import 'features/auth/presentation/otp_page.dart';
 import 'features/soil_analysis/presentation/analysis_screen.dart';
 import 'features/soil_analysis/presentation/crop_detail_screen.dart';
 import 'features/account/presentation/account_page.dart';
+import 'features/plant_analysis/presentation/plant_scanner_screen.dart';
+import 'features/plant_analysis/presentation/plant_detail_page.dart';
 
 void main() {
   runApp(
@@ -96,6 +98,12 @@ class MyApp extends StatelessWidget {
         '/soil_analysis/detection_capteurs': (context) => const AuthGuard(child: DetectionCapteursPage()),
         '/soil_analysis/analysis': (context) => const AuthGuard(child: AnalysisScreen()),
         '/soil_analysis/crop_detail': (context) => const AuthGuard(child: CropDetailScreen()),
+        '/plant_analysis/scanner': (context) => const AuthGuard(child: PlantScannerScreen()),
+        '/plant_analysis/detail': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {};
+          final imagePath = args['imagePath'] as String? ?? '';
+          return AuthGuard(child: PlantDetailPage(imagePath: imagePath));
+        },
       },
     );
   }

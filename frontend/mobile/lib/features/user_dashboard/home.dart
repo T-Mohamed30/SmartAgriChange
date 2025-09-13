@@ -848,11 +848,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Scanne de plante démarr��e'),
-                      ),
-                    );
+                    Navigator.pushNamed(context, '/plant_analysis/scanner');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFE5F8EC),
