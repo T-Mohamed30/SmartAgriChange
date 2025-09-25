@@ -358,7 +358,9 @@ class _CalendarBottomSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedChamp = ref.watch(selection_providers.selectedChampProvider);
-    final selectedParcelle = ref.watch(selection_providers.selectedParcelleProvider);
+    final selectedParcelle = ref.watch(
+      selection_providers.selectedParcelleProvider,
+    );
     final selectedDate = ref.watch(selection_providers.selectedDateProvider);
 
     return SafeArea(
@@ -371,8 +373,12 @@ class _CalendarBottomSheet extends ConsumerWidget {
             children: [
               Center(
                 child: Container(
-                  width: 100, height: 16,
-                  decoration: BoxDecoration(color: Colors.black, borderRadius: BorderRadius.circular(8)),
+                  width: 100,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
@@ -395,28 +401,59 @@ class _CalendarBottomSheet extends ConsumerWidget {
               const SizedBox(height: 16),
               SelectorCard(
                 title: 'Champs',
-                label: selectedChamp != null ? selectedChamp.name : 'Choisir un champ',
+                label: selectedChamp != null
+                    ? selectedChamp.name
+                    : 'Choisir un champ',
                 isSelected: selectedChamp != null,
                 onTap: () => _showChampSelectionSheet(context, ref),
-                onRemove: selectedChamp != null ? () {
-                  ref.read(selection_providers.selectedChampProvider.notifier).state = null;
-                  ref.read(selection_providers.selectedParcelleProvider.notifier).state = null;
-                } : null,
+                onRemove: selectedChamp != null
+                    ? () {
+                        ref
+                                .read(
+                                  selection_providers
+                                      .selectedChampProvider
+                                      .notifier,
+                                )
+                                .state =
+                            null;
+                        ref
+                                .read(
+                                  selection_providers
+                                      .selectedParcelleProvider
+                                      .notifier,
+                                )
+                                .state =
+                            null;
+                      }
+                    : null,
               ),
               const SizedBox(height: 12),
               SelectorCard(
                 title: 'Parcelles',
-                label: selectedParcelle != null ? selectedParcelle.name : 'Choisir une parcelle',
+                label: selectedParcelle != null
+                    ? selectedParcelle.name
+                    : 'Choisir une parcelle',
                 isSelected: selectedParcelle != null,
                 onTap: () => _showParcelleSelectionSheet(context, ref),
-                onRemove: selectedParcelle != null ? () {
-                  ref.read(selection_providers.selectedParcelleProvider.notifier).state = null;
-                } : null,
+                onRemove: selectedParcelle != null
+                    ? () {
+                        ref
+                                .read(
+                                  selection_providers
+                                      .selectedParcelleProvider
+                                      .notifier,
+                                )
+                                .state =
+                            null;
+                      }
+                    : null,
               ),
               const SizedBox(height: 12),
               Consumer(
                 builder: (context, ref, _) {
-                  final selectedDate = ref.watch(selection_providers.selectedDateProvider);
+                  final selectedDate = ref.watch(
+                    selection_providers.selectedDateProvider,
+                  );
                   return DateSelectorCard(
                     title: 'Date de début',
                     selectedDate: selectedDate,
@@ -428,12 +465,26 @@ class _CalendarBottomSheet extends ConsumerWidget {
                         lastDate: DateTime(2100),
                       );
                       if (pickedDate != null) {
-                        ref.read(selection_providers.selectedDateProvider.notifier).state = pickedDate;
+                        ref
+                                .read(
+                                  selection_providers
+                                      .selectedDateProvider
+                                      .notifier,
+                                )
+                                .state =
+                            pickedDate;
                       }
                     },
                     onRemove: selectedDate != null
                         ? () {
-                            ref.read(selection_providers.selectedDateProvider.notifier).state = null;
+                            ref
+                                    .read(
+                                      selection_providers
+                                          .selectedDateProvider
+                                          .notifier,
+                                    )
+                                    .state =
+                                null;
                           }
                         : null,
                   );
@@ -443,7 +494,16 @@ class _CalendarBottomSheet extends ConsumerWidget {
               ActionButton(
                 text: 'Générer',
                 onPressed: () {
-                  // TODO: Implement generate action
+                  // Close the sheet and navigate to the calendar screen
+                  Navigator.pop(context);
+                  final cropName =
+                      (ModalRoute.of(context)?.settings.arguments as String?) ??
+                      'Culture';
+                  Navigator.pushNamed(
+                    context,
+                    '/soil_analysis/calendar',
+                    arguments: {'cropName': cropName},
+                  );
                 },
               ),
             ],
@@ -474,7 +534,7 @@ class _CalendarBottomSheet extends ConsumerWidget {
 }
 
 class _ChampSelectionSheet extends ConsumerWidget {
-  const _ChampSelectionSheet({super.key});
+  const _ChampSelectionSheet();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -491,7 +551,8 @@ class _ChampSelectionSheet extends ConsumerWidget {
           },
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => const Center(child: Text('Erreur de chargement des champs')),
+        error: (e, s) =>
+            const Center(child: Text('Erreur de chargement des champs')),
       ),
       actionButton: ActionButton(
         text: 'Créer un champ',
@@ -517,8 +578,10 @@ class _ChampCard extends ConsumerWidget {
     final parcellesAsync = ref.watch(parcellesProvider(champ.id));
     return InkWell(
       onTap: () {
-        ref.read(selection_providers.selectedChampProvider.notifier).state = champ;
-        ref.read(selection_providers.selectedParcelleProvider.notifier).state = null;
+        ref.read(selection_providers.selectedChampProvider.notifier).state =
+            champ;
+        ref.read(selection_providers.selectedParcelleProvider.notifier).state =
+            null;
         Navigator.pop(context);
       },
       child: Container(
@@ -526,21 +589,38 @@ class _ChampCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)],
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(champ.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+            Text(
+              champ.name,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
             const SizedBox(height: 6),
             Row(
               children: [
-                Text('localité: ${champ.location}', style: const TextStyle(color: Colors.black54)),
+                Text(
+                  'localité: ${champ.location}',
+                  style: const TextStyle(color: Colors.black54),
+                ),
                 const SizedBox(width: 16),
                 parcellesAsync.when(
-                  data: (parcelles) => Text('parcelles: ${parcelles.length}', style: const TextStyle(color: Colors.black54)),
-                  loading: () => const Text('parcelles: ...', style: TextStyle(color: Colors.black54)),
-                  error: (e, _) => const Text('parcelles: ?', style: TextStyle(color: Colors.black54)),
+                  data: (parcelles) => Text(
+                    'parcelles: ${parcelles.length}',
+                    style: const TextStyle(color: Colors.black54),
+                  ),
+                  loading: () => const Text(
+                    'parcelles: ...',
+                    style: TextStyle(color: Colors.black54),
+                  ),
+                  error: (e, _) => const Text(
+                    'parcelles: ?',
+                    style: TextStyle(color: Colors.black54),
+                  ),
                 ),
               ],
             ),
@@ -570,7 +650,8 @@ class _ParcelleSelectionSheet extends ConsumerWidget {
           },
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => const Center(child: Text('Erreur de chargement des parcelles')),
+        error: (e, s) =>
+            const Center(child: Text('Erreur de chargement des parcelles')),
       ),
       actionButton: ActionButton(
         text: 'Créer une parcelle',
@@ -579,7 +660,8 @@ class _ParcelleSelectionSheet extends ConsumerWidget {
           showModalBottomSheet(
             context: context,
             isScrollControlled: true,
-            builder: (_) => detection_capteurs.CreateParcelleBottomSheet(champId: champ.id),
+            builder: (_) =>
+                detection_capteurs.CreateParcelleBottomSheet(champId: champ.id),
           );
         },
       ),
@@ -595,7 +677,8 @@ class _ParcelleCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return InkWell(
       onTap: () {
-        ref.read(selection_providers.selectedParcelleProvider.notifier).state = parcelle;
+        ref.read(selection_providers.selectedParcelleProvider.notifier).state =
+            parcelle;
         Navigator.pop(context);
       },
       child: Container(
@@ -603,14 +686,22 @@ class _ParcelleCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)],
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(parcelle.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+            Text(
+              parcelle.name,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
             const SizedBox(height: 6),
-            Text('superficie: ${parcelle.superficie} ha', style: const TextStyle(color: Colors.black54)),
+            Text(
+              'superficie: ${parcelle.superficie} ha',
+              style: const TextStyle(color: Colors.black54),
+            ),
           ],
         ),
       ),
@@ -643,12 +734,22 @@ class _ModalSheet extends StatelessWidget {
             children: [
               Center(
                 child: Container(
-                  width: 100, height: 5,
-                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(8)),
+                  width: 100,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
-              Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 12),
               Expanded(child: body),
               const SizedBox(height: 12),

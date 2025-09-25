@@ -21,7 +21,14 @@ const Tache = sequelize.define('Tache', {
     allowNull: false,
     defaultValue: 1
   },
-  materiel_requis: DataTypes.ARRAY(DataTypes.STRING),
+  materiel_requis: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    get() {
+      const v = this.getDataValue('materiel_requis');
+      return v == null ? [] : v;
+    }
+  },
   etape_culture_id: {
     type: DataTypes.UUID,
     allowNull: false,

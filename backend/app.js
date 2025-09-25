@@ -2,6 +2,7 @@ const express = require('express');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
@@ -169,6 +170,9 @@ app.use(`${API_PREFIX}/capteurs`, capteurRoutes);
 app.get(`${API_PREFIX}/health`, (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// Serve uploaded files (images, etc.)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Gestion des erreurs 404
 app.use((req, res) => {

@@ -291,12 +291,21 @@ const authController = {
   // LOGIN UTILISATEUR
   login: async (req, res) => {
     try {
-      const { telephone, mot_de_passe } = req.body;
+      let { telephone, mot_de_passe } = req.body;
+      // Defensive: trim inputs
+      if (typeof telephone === 'string') telephone = telephone.trim();
+      if (typeof mot_de_passe === 'string') mot_de_passe = mot_de_passe.trim();
       if (!telephone || !mot_de_passe) {
         return res.status(400).json({
           success: false,
           message: "Téléphone et mot de passe requis."
         });
+      }
+      // Always log minimal, masked info to help debug login issues (no raw passwords)
+      try {
+        console.log(`LOGIN ATTEMPT: incomingTelephone='${telephone}', mot_de_passe_length=${mot_de_passe ? mot_de_passe.length : 0}`);
+      } catch (e) {
+        console.log('LOGIN ATTEMPT: error logging incoming data', e);
       }
       const user = await User.findOne({ where: { telephone } });
       if (!user) {
@@ -305,7 +314,20 @@ const authController = {
           message: "Utilisateur non trouvé."
         });
       }
+      // Log masked stored hash snippet and DB telephone for diagnosis (no full hash printed)
+      try {
+        const hashSample = user.mot_de_passe ? String(user.mot_de_passe).slice(0, 6) + '...' : 'null';
+        console.log(`LOGIN: userFound id=${user.id}, telephone_db='${user.telephone}', storedHashSample=${hashSample}`);
+      } catch (e) {
+        console.log('LOGIN: error reading stored hash', e);
+      }
+
       const isMatch = await bcrypt.compare(mot_de_passe, user.mot_de_passe);
+      try {
+        console.log(`LOGIN: bcrypt.compare result = ${isMatch}`);
+      } catch (e) {
+        console.log('LOGIN: error logging compare result', e);
+      }
       if (!isMatch) {
         return res.status(401).json({
           success: false,

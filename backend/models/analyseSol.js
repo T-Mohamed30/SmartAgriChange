@@ -10,6 +10,30 @@ const AnalyseSol = sequelize.define('AnalyseSol', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
+  parcelle_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'parcelles',
+      key: 'id'
+    }
+  },
+  utilisateur_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  capteur_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'capteurs',
+      key: 'id'
+    }
+  },
   ph: DataTypes.FLOAT,
   humidite: DataTypes.FLOAT,
   temperature: DataTypes.FLOAT,

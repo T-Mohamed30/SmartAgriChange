@@ -10,7 +10,7 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
   // Pour émulateur Android : 'http://10.0.2.2:3000'
   // Pour émulateur iOS : 'http://localhost:3000'
   // Pour appareil physique : 'http://<votre-ip-locale>:3000'
-  return RemoteAuthRepository(baseUrl: 'http://localhost:3000/api');
+  return RemoteAuthRepository(baseUrl: 'http://172.16.7.71:3000/api');
 });
 
 final registerUserProvider = Provider((ref) => RegisterUser(ref.read(authRepositoryProvider)));

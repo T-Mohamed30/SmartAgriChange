@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 class AppConfig {
   // Configuration de l'API
-  static const String _defaultApiUrl = 'http://localhost:3000/api';
+  static const String _defaultApiUrl = 'http://172.16.7.71:3000/api';
   static const String _defaultWebSocketUrl = 'ws://localhost:3000';
   
   // Récupérer l'URL de l'API en fonction de la plateforme

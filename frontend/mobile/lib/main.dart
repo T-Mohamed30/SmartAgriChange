@@ -13,6 +13,7 @@ import 'features/auth/presentation/login.dart';
 import 'features/auth/presentation/otp_page.dart';
 import 'features/soil_analysis/presentation/analysis_screen.dart';
 import 'features/soil_analysis/presentation/crop_detail_screen.dart';
+import 'features/soil_analysis/presentation/crop_calendar_screen.dart';
 import 'features/account/presentation/account_page.dart';
 import 'features/plant_analysis/presentation/plant_scanner_screen.dart';
 import 'features/plant_analysis/presentation/plant_detail_page.dart';
@@ -63,14 +64,21 @@ class MyApp extends StatelessWidget {
         backgroundColor: scaffoldBg,
         foregroundColor: textColor,
         elevation: 0,
-        titleTextStyle: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        titleTextStyle: textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.w600,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
           foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          textStyle: textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: textTheme.labelLarge?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
       iconTheme: IconThemeData(color: textColor),
@@ -87,22 +95,37 @@ class MyApp extends StatelessWidget {
         '/auth/register': (context) => const RegisterPage(),
         '/auth/login': (context) => const LoginPage(),
         '/auth/otp': (context) {
-          final phone = ModalRoute.of(context)?.settings.arguments as String? ?? '';
+          final phone =
+              ModalRoute.of(context)?.settings.arguments as String? ?? '';
           return OtpPage(phone: phone);
         },
         '/account': (context) => const AccountPage(),
-        
+
         // Routes protégées
         '/home': (context) => const AuthGuard(child: HomePage()),
         '/user_dashboard/home': (context) => const AuthGuard(child: HomePage()),
-        '/soil_analysis/detection_capteurs': (context) => const AuthGuard(child: DetectionCapteursPage()),
-        '/soil_analysis/analysis': (context) => const AuthGuard(child: AnalysisScreen()),
-        '/soil_analysis/crop_detail': (context) => const AuthGuard(child: CropDetailScreen()),
-        '/plant_analysis/scanner': (context) => const AuthGuard(child: PlantScannerScreen()),
+        '/soil_analysis/detection_capteurs': (context) =>
+            const AuthGuard(child: DetectionCapteursPage()),
+        '/soil_analysis/analysis': (context) =>
+            const AuthGuard(child: AnalysisScreen()),
+        '/soil_analysis/crop_detail': (context) =>
+            const AuthGuard(child: CropDetailScreen()),
+        '/soil_analysis/calendar': (context) {
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>? ??
+              {};
+          return AuthGuard(child: CropCalendarScreen(key: UniqueKey()));
+        },
+        '/plant_analysis/scanner': (context) =>
+            const AuthGuard(child: PlantScannerScreen()),
         '/plant_analysis/detail': (context) {
-          final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {};
-          final imagePath = args['imagePath'] as String? ?? '';
-          return AuthGuard(child: PlantDetailPage(imagePath: imagePath));
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>? ??
+              {};
+          final analysisId = args['analysisId'] as int?;
+          return AuthGuard(child: PlantDetailPage(analysisId: analysisId));
         },
       },
     );

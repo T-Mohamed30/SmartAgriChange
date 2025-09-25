@@ -28,6 +28,18 @@ const Culture = sequelize.define('Culture', {
   potassium_max: DataTypes.FLOAT,
   type_engrais: DataTypes.STRING,
   duree_cycle_semaines: DataTypes.INTEGER,
+  rendement_moyen: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  besoins_eau: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  resistance_secheresse: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   saison_ideale: DataTypes.ENUM('Saison des pluies', 'Saison sèche fraîche', 'Saison sèche chaude')
 });
 

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../data/repositories/champ_parcelle_repository_impl.dart';
+import '../../../core/network/api_endpoints.dart';
 import '../../domain/entities/champ.dart';
 import '../../domain/entities/parcelle.dart';
 
@@ -12,7 +13,7 @@ final champParcelleRepositoryProvider = Provider<ChampParcelleRepository>((
   // Adapter l'URL à ton backend
   return ChampParcelleRepository(
     dio: dio,
-    baseUrl: 'http://localhost:3000/api',
+    baseUrl: '${ApiEndpoints.baseUrl}/api',
   );
 });
 
@@ -47,7 +48,10 @@ final createParcelleProvider =
       );
     });
 
-final updateChampProvider = FutureProvider.family<Champ, Map<String, dynamic>>((ref, params) async {
+final updateChampProvider = FutureProvider.family<Champ, Map<String, dynamic>>((
+  ref,
+  params,
+) async {
   final repo = ref.read(champParcelleRepositoryProvider);
   return await repo.updateChamp(
     params['id'] as String,
@@ -56,22 +60,29 @@ final updateChampProvider = FutureProvider.family<Champ, Map<String, dynamic>>((
   );
 });
 
-final deleteChampProvider = FutureProvider.family<void, String>((ref, champId) async {
+final deleteChampProvider = FutureProvider.family<void, String>((
+  ref,
+  champId,
+) async {
   final repo = ref.read(champParcelleRepositoryProvider);
   await repo.deleteChamp(champId);
 });
 
-final updateParcelleProvider = FutureProvider.family<Parcelle, Map<String, dynamic>>((ref, params) async {
-  final repo = ref.read(champParcelleRepositoryProvider);
-  return await repo.updateParcelle(
-    params['id'] as String,
-    params['name'] as String,
-    params['superficie'] as double,
-    params['champId'] as String,
-  );
-});
+final updateParcelleProvider =
+    FutureProvider.family<Parcelle, Map<String, dynamic>>((ref, params) async {
+      final repo = ref.read(champParcelleRepositoryProvider);
+      return await repo.updateParcelle(
+        params['id'] as String,
+        params['name'] as String,
+        params['superficie'] as double,
+        params['champId'] as String,
+      );
+    });
 
-final deleteParcelleProvider = FutureProvider.family<void, String>((ref, parcelleId) async {
+final deleteParcelleProvider = FutureProvider.family<void, String>((
+  ref,
+  parcelleId,
+) async {
   final repo = ref.read(champParcelleRepositoryProvider);
   await repo.deleteParcelle(parcelleId);
 });

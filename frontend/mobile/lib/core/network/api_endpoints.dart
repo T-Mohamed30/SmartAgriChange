@@ -2,7 +2,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiEndpoints {
   // Base URL
-  static const String baseUrl = 'http://localhost:3000';
+  // For Android emulator (Android Studio/AVD) use 10.0.2.2 to reach host machine localhost
+  // For iOS simulator use http://localhost:3000
+  // Change this before building to a real host or production URL.
+  static const String baseUrl = 'http://10.0.2.2:3000';
 
   // Headers
   static const Map<String, String> headers = {
@@ -29,9 +32,11 @@ class ApiEndpoints {
   static String deleteField(String id) => '/api/champs/$id';
 
   // Parcelle endpoints
-  static String getParcellesByChamp(String champId) => '/api/champs/$champId/parcelles';
+  static String getParcellesByChamp(String champId) =>
+      '/api/champs/$champId/parcelles';
   static String getParcelleById(String id) => '/api/parcelles/$id';
-  static String createParcelle(String champId) => '/api/champs/$champId/parcelles';
+  static String createParcelle(String champId) =>
+      '/api/champs/$champId/parcelles';
   static String updateParcelle(String id) => '/api/parcelles/$id';
   static String deleteParcelle(String id) => '/api/parcelles/$id';
 
@@ -39,7 +44,7 @@ class ApiEndpoints {
   static const String sensors = '/api/sensors';
   static const String detectSensors = '/api/sensors/detect';
   static const String sensorAnalysis = '/api/sensors/analyze';
-  
+
   // Soil analysis endpoints
   static const String soilAnalysis = '/api/soil-analysis';
 
@@ -47,15 +52,13 @@ class ApiEndpoints {
   static Future<Map<String, String>> getAuthHeaders() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('auth_token');
-    
+
     if (token != null) {
-      return {
-        ...headers,
-        'Authorization': 'Bearer $token',
-      };
+      return {...headers, 'Authorization': 'Bearer $token'};
     }
     return headers;
   }
+
   static const String connectToSensor = '/sensors/connect';
   static const String startAnalysis = '/sensors/analyze';
   static String getSensorData(String sensorId) => '/sensors/$sensorId/data';
@@ -63,12 +66,14 @@ class ApiEndpoints {
   // Analysis endpoints
   static String getAnalysisHistory() => '/analysis/history';
   static String getAnalysisById(String id) => '/analysis/$id';
-  static String getAnalysisByParcelle(String parcelleId) => '/analysis/parcelle/$parcelleId';
+  static String getAnalysisByParcelle(String parcelleId) =>
+      '/analysis/parcelle/$parcelleId';
   static String createAnalysis() => '/analysis';
 
   // Weather endpoints
   static const String getWeather = '/weather';
-  static String getWeatherForecast(String location) => '/weather/forecast?location=$location';
+  static String getWeatherForecast(String location) =>
+      '/weather/forecast?location=$location';
 
   // Helper methods
   static String buildUrl(String endpoint) {

@@ -1,21 +1,84 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
+import 'plant_full_detail_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/plant_analysis_api.dart';
+import '../models/plant_analysis_models.dart';
 
-class PlantDetailPage extends StatelessWidget {
-  final String imagePath;
-  // Add other necessary fields like plant name, anomaly details, etc.
+class PlantDetailPage extends StatefulWidget {
+  final int? analysisId;
 
-  const PlantDetailPage({Key? key, required this.imagePath}) : super(key: key);
+  const PlantDetailPage({Key? key, required this.analysisId}) : super(key: key);
+
+  @override
+  State<PlantDetailPage> createState() => _PlantDetailPageState();
+}
+
+class _PlantDetailPageState extends State<PlantDetailPage> {
+  AnalysePlante? _analyse;
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAnalyse();
+  }
+
+  Future<void> _loadAnalyse() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token') ?? '';
+
+    if (widget.analysisId == null) {
+      setState(() {
+        _error = 'Aucune analyse spécifiée';
+        _loading = false;
+      });
+      return;
+    }
+
+    try {
+      final analyse = await PlantAnalysisApi.getAnalysePlanteById(
+        widget.analysisId!,
+        token,
+      );
+      setState(() {
+        _analyse = analyse;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Erreur lors du chargement: $e';
+        _loading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // For demonstration, static data is used. Replace with dynamic data as needed.
+    if (_loading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Analyse')),
+        body: Center(child: Text(_error!)),
+      );
+    }
+
+    final imagePath = _analyse?.imageUrl ?? '';
+    final espece = _analyse?.planteIdentifiee?.nomCommun ?? 'Inconnu';
+    final confiance = _analyse?.confianceIdentification ?? 0.0;
+    final anomalies = _analyse?.anomaliesDetectees ?? [];
+    final maladies = _analyse?.maladiesDetectees ?? [];
+
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Image with red bounding boxes using captured image or fallback
+            // Image
             Stack(
               children: [
                 ClipRRect(
@@ -23,7 +86,7 @@ class PlantDetailPage extends StatelessWidget {
                     bottomLeft: Radius.circular(8),
                     bottomRight: Radius.circular(8),
                   ),
-                  child: kIsWeb
+                  child: kIsWeb || imagePath.startsWith('http')
                       ? Image.network(
                           imagePath,
                           width: double.infinity,
@@ -44,7 +107,6 @@ class PlantDetailPage extends StatelessWidget {
                           height: 300,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
-                            // Fallback to asset image if file loading fails
                             return Image.asset(
                               'assets/images/mango_leaf.jpg',
                               width: double.infinity,
@@ -54,7 +116,6 @@ class PlantDetailPage extends StatelessWidget {
                           },
                         ),
                 ),
-                // Back button on top left of image
                 Positioned(
                   top: 40,
                   left: 16,
@@ -66,54 +127,6 @@ class PlantDetailPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                // Another button on top right of image (placeholder)
-                Positioned(
-                  top: 40,
-                  right: 16,
-                  child: CircleAvatar(
-                    backgroundColor: Colors.white,
-                    child: IconButton(
-                      icon: const Icon(Icons.info_outline, color: Colors.black),
-                      onPressed: () {
-                        // TODO: Implement action for this button
-                      },
-                    ),
-                  ),
-                ),
-                // Example red boxes
-                // Positioned(
-                //   left: 50,
-                //   top: 50,
-                //   width: 100,
-                //   height: 150,
-                //   child: Container(
-                //     decoration: BoxDecoration(
-                //       border: Border.all(color: Colors.red, width: 3),
-                //     ),
-                //   ),
-                // ),
-                // Positioned(
-                //   left: 180,
-                //   top: 30,
-                //   width: 50,
-                //   height: 80,
-                //   child: Container(
-                //     decoration: BoxDecoration(
-                //       border: Border.all(color: Colors.red, width: 3),
-                //     ),
-                //   ),
-                // ),
-                // Positioned(
-                //   left: 250,
-                //   top: 100,
-                //   width: 40,
-                //   height: 60,
-                //   child: Container(
-                //     decoration: BoxDecoration(
-                //       border: Border.all(color: Colors.red, width: 3),
-                //     ),
-                //   ),
-                // ),
               ],
             ),
             const SizedBox(height: 16),
@@ -122,33 +135,42 @@ class PlantDetailPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'manguier',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text.rich(
-                    TextSpan(
-                      text: 'Nom latin : ',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: 'Maguifera Indica',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF007F3D),
-                          ),
-                        ),
-                      ],
+                  Text(
+                    espece,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
                   ),
+                  const SizedBox(height: 8),
+                  Text('Confiance: ${(confiance * 100).toStringAsFixed(0)}%'),
                   const SizedBox(height: 12),
+                  if (anomalies.isNotEmpty) ...[
+                    const Text(
+                      'Anomalies détectées',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    for (final a in anomalies) ListTile(title: Text(a)),
+                    const SizedBox(height: 12),
+                  ],
+                  if (maladies.isNotEmpty) ...[
+                    const Text(
+                      'Maladies détectées',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    for (final m in maladies) ListTile(title: Text(m)),
+                    const SizedBox(height: 12),
+                  ],
                   ElevatedButton(
                     onPressed: () {
-                      // Navigate to detailed plant info page or show modal
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              PlantFullDetailPage(imagePath: imagePath),
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
@@ -165,132 +187,11 @@ class PlantDetailPage extends StatelessWidget {
                     ),
                     child: const Text('Détail de la plante'),
                   ),
-                  const SizedBox(height: 16),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade700,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      children: const [
-                        Text(
-                          'Anomalie(s) detecte',
-                          style: TextStyle(color: Colors.white, fontSize: 16),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Tache brune (anthracnose)',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  DefaultTabController(
-                    length: 3,
-                    child: Column(
-                      children: [
-                        TabBar(
-                          labelColor: Colors.green.shade800,
-                          unselectedLabelColor: Colors.grey,
-                          tabs: const [
-                            Tab(text: 'Infos'),
-                            Tab(text: 'Solutions'),
-                            Tab(text: 'Préventions'),
-                          ],
-                        ),
-                        SizedBox(
-                          height: 200,
-                          child: TabBarView(
-                            children: [
-                              _buildDescriptionTab(),
-                              _buildSolutionsTab(),
-                              _buildPreventionsTab(),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildDescriptionTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'La "maladie des taches brunes" sur le manguier, aussi appelée anthracnose, est une maladie fongique courante causée par le champignon Colletotrichum gloeosporioides. Elle se manifeste par des lésions sombres et enfoncées sur les feuilles, les fleurs et les fruits, souvent entourées d\'un halo jaune. Les conditions chaudes et humides, notamment pendant la saison des pluies, favorisent sa propagation.',
-            style: TextStyle(fontSize: 14),
-          ),
-          const SizedBox(height: 12),
-          ExpansionTile(
-            title: const Text('Symptômes'),
-            children: const [
-              ListTile(
-                title: Text(
-                  'Taches sombres et enfoncées sur les feuilles, fleurs et fruits',
-                  style: TextStyle(fontSize: 14),
-                ),
-              ),
-              ListTile(
-                title: Text(
-                  'Présence d\'un halo jaune autour des lésions',
-                  style: TextStyle(fontSize: 14),
-                ),
-              ),
-            ],
-          ),
-          ExpansionTile(
-            title: const Text('Causes'),
-            children: const [
-              ListTile(
-                title: Text(
-                  'Champignon Colletotrichum gloeosporioides',
-                  style: TextStyle(fontSize: 14),
-                ),
-              ),
-              ListTile(
-                title: Text(
-                  'Conditions chaudes et humides favorisant la propagation',
-                  style: TextStyle(fontSize: 14),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSolutionsTab() {
-    return Center(
-      child: Text(
-        'Solutions content goes here.',
-        style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
-      ),
-    );
-  }
-
-  Widget _buildPreventionsTab() {
-    return Center(
-      child: Text(
-        'Préventions content goes here.',
-        style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
       ),
     );
   }

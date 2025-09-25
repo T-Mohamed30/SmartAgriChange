@@ -5,12 +5,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../../auth/presentation/providers/auth_provider.dart';
 import '../../soil_analysis/presentation/widgets/action_button.dart';
+import '../../../core/network/api_endpoints.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
 
   @override
-  ConsumerState<ChangePasswordScreen> createState() => _ChangePasswordScreenState();
+  ConsumerState<ChangePasswordScreen> createState() =>
+      _ChangePasswordScreenState();
 }
 
 class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
@@ -52,13 +54,15 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
       if (token == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Session expirée. Veuillez vous reconnecter.')),
+          const SnackBar(
+            content: Text('Session expirée. Veuillez vous reconnecter.'),
+          ),
         );
         return;
       }
 
       final response = await http.put(
-        Uri.parse('http://localhost:3000/api/auth/change-password'),
+        Uri.parse('${ApiEndpoints.buildUrl('/api/auth/change-password')}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -78,18 +82,22 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           Navigator.of(context).pop();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(data['message'] ?? 'Erreur lors du changement de mot de passe')),
+            SnackBar(
+              content: Text(
+                data['message'] ?? 'Erreur lors du changement de mot de passe',
+              ),
+            ),
           );
         }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erreur serveur')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Erreur serveur')));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -121,7 +129,11 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
             ),
           ),
         ),
-        title: const Text('Changer mon mot de passe', textAlign: TextAlign.center, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        title: const Text(
+          'Changer mon mot de passe',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
         centerTitle: true,
       ),
       body: Padding(
@@ -136,11 +148,18 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 decoration: InputDecoration(
                   hintText: 'Mot de passe actuel',
                   prefixIcon: const Icon(Icons.lock),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _currentPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      _currentPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                       color: Colors.grey,
                     ),
                     onPressed: () {
@@ -164,11 +183,18 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 decoration: InputDecoration(
                   hintText: 'Nouveau mot de passe',
                   prefixIcon: const Icon(Icons.lock_outline),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _newPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      _newPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                       color: Colors.grey,
                     ),
                     onPressed: () {
@@ -195,11 +221,18 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 decoration: InputDecoration(
                   hintText: 'Confirmer le nouveau mot de passe',
                   prefixIcon: const Icon(Icons.lock_outline),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _confirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      _confirmPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                       color: Colors.grey,
                     ),
                     onPressed: () {
