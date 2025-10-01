@@ -6,8 +6,8 @@ class ActionButton extends StatelessWidget {
   const ActionButton({
     required this.text, 
     this.onPressed, 
-    Key? key
-  }) : super(key: key);
+    super.key
+  });
 
   @override
   Widget build(BuildContext context) {

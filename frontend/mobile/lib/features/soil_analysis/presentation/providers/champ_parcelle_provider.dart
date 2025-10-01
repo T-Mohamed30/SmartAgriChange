@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../data/repositories/champ_parcelle_repository_impl.dart';
-import '../../../core/network/api_endpoints.dart';
+import '../../../../core/network/api_endpoints.dart';
 import '../../domain/entities/champ.dart';
 import '../../domain/entities/parcelle.dart';
 

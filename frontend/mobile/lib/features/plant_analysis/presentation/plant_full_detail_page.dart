@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/plant_analysis_api.dart';
+import '../models/plant_analysis_models.dart';
 
 class PlantFullDetailPage extends StatefulWidget {
-  final String imagePath;
+  final int plantId;
+  final String? imagePath;
 
-  const PlantFullDetailPage({super.key, required this.imagePath});
+  const PlantFullDetailPage({super.key, required this.plantId, this.imagePath});
 
   @override
   State<PlantFullDetailPage> createState() => _PlantFullDetailPageState();
@@ -14,6 +18,10 @@ class PlantFullDetailPage extends StatefulWidget {
 class _PlantFullDetailPageState extends State<PlantFullDetailPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+
+  Plante? _plante;
+  bool _loading = true;
+  String? _error;
 
   // Exemple d'images — remplace par tes vraies images ou URLs
   final List<String> gallery = [
@@ -27,6 +35,31 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 5, vsync: this);
+    _fetchPlant();
+  }
+
+  Future<void> _fetchPlant() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token');
+      if (token == null) {
+        setState(() {
+          _error = 'Token not found';
+          _loading = false;
+        });
+        return;
+      }
+      final plante = await PlantAnalysisApi.getPlanteDetails(widget.plantId, token);
+      setState(() {
+        _plante = plante;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
   }
 
   @override
@@ -44,26 +77,31 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
         SizedBox(
           height: imageHeight,
           width: double.infinity,
-          child: kIsWeb
-              ? Image.network(
-                  widget.imagePath,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Image.asset(
-                      'assets/images/mango_leaf.jpg',
+          child: widget.imagePath != null && widget.imagePath!.isNotEmpty
+              ? (kIsWeb || widget.imagePath!.startsWith('http')
+                  ? Image.network(
+                      widget.imagePath!,
                       fit: BoxFit.cover,
-                    );
-                  },
-                )
-              : Image.file(
-                  File(widget.imagePath),
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Image.asset(
-                      'assets/images/mango_leaf.jpg',
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.asset(
+                          'assets/images/mango_leaf.jpg',
+                          fit: BoxFit.cover,
+                        );
+                      },
+                    )
+                  : Image.file(
+                      File(widget.imagePath!),
                       fit: BoxFit.cover,
-                    );
-                  },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.asset(
+                          'assets/images/mango_leaf.jpg',
+                          fit: BoxFit.cover,
+                        );
+                      },
+                    ))
+              : Image.asset(
+                  'assets/images/mango_leaf.jpg',
+                  fit: BoxFit.cover,
                 ),
         ),
 
@@ -139,15 +177,15 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text(
-                  'manguier',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  _plante?.nomCommun ?? 'Plante',
+                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
-                  'Nom latin : Mangifera Indica',
-                  style: TextStyle(fontSize: 14, color: Colors.black54),
+                  'Nom latin : ${_plante?.nomScientifique ?? 'Non spécifié'}',
+                  style: const TextStyle(fontSize: 14, color: Colors.black54),
                 ),
               ],
             ),
@@ -166,16 +204,16 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
         padding: const EdgeInsets.all(14.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            InfoRow(label: 'Nom scientifique', value: 'Mangifera indica'),
-            SizedBox(height: 8),
-            InfoRow(label: 'Nom local', value: 'Mangue (Burkina : "Manga")'),
-            SizedBox(height: 8),
-            InfoRow(label: 'Famille botanique', value: 'Anacardiaceae'),
-            SizedBox(height: 8),
-            InfoRow(label: 'Type', value: 'Arbre fruitier tropical'),
-            SizedBox(height: 8),
-            InfoRow(label: 'Cycle de vie', value: 'Pérenne (50–100 ans)'),
+          children: [
+            InfoRow(label: 'Nom scientifique', value: _plante?.nomScientifique ?? ''),
+            const SizedBox(height: 8),
+            InfoRow(label: 'Nom local', value: _plante?.nomCommun ?? ''),
+            const SizedBox(height: 8),
+            InfoRow(label: 'Famille botanique', value: _plante?.familleBotanique ?? ''),
+            const SizedBox(height: 8),
+            InfoRow(label: 'Type', value: _plante?.type ?? ''),
+            const SizedBox(height: 8),
+            InfoRow(label: 'Cycle de vie', value: _plante?.cycleVie ?? ''),
           ],
         ),
       ),
@@ -183,7 +221,10 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
   }
 
   Widget _buildMorphology() {
-    final List<String> items = [
+    final List<String> items = _plante?.attributs
+        ?.where((a) => a.type == 'morphologie')
+        .map((a) => a.nom)
+        .toList() ?? [
       'Racines',
       'Tronc',
       'Feuilles',
@@ -251,6 +292,7 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
   }
 
   Widget _buildPhotoGallery() {
+    final List<String> photos = _plante?.galeriePhotos ?? gallery;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -269,27 +311,27 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
               height: 88,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: gallery.length,
+                itemCount: photos.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    gallery[index],
-                    width: 120,
-                    height: 88,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Image.asset(
-                        'assets/images/mango_leaf.jpg',
-                        width: 120,
-                        height: 88,
-                        fit: BoxFit.cover,
-                      );
-                    },
-                  ),
-                );
-              },
+                itemBuilder: (context, index) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      photos[index],
+                      width: 120,
+                      height: 88,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.asset(
+                          'assets/images/mango_leaf.jpg',
+                          width: 120,
+                          height: 88,
+                          fit: BoxFit.cover,
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 10),
@@ -464,6 +506,16 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_error != null) {
+      return Scaffold(
+        body: Center(child: Text('Error: $_error')),
+      );
+    }
     // Page principale avec TabBar
     return Scaffold(
       body: Column(

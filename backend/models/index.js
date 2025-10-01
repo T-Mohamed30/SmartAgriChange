@@ -1,52 +1,36 @@
 const sequelize = require('../config/database');
 
-// Import des modèles
+// Import des modèles conservés
 const User = require('./user');
 const Champ = require('./champs');
 const Parcelle = require('./parcelle');
 const Capteur = require('./capteur');
-const AnalyseSol = require('./analyseSol');
-const Culture = require('./culture');
-const RecommendationCulture = require('./recommendationCulture');
-const CampagneAgricole = require('./campagneAgricole');
 
-// ----------------- Relations -----------------
+// Nouveaux modèles
+const Plante = require('./plante');
+const AttributPlante = require('./attribut_plante');
+const AnalysePlante = require('./analyse_plante');
+const Anomalie = require('./anomalie');
+const SolutionAnomalie = require('./solution_anomalie');
+const CategorieAnomalie = require('./categorie_anomalie');
+const AnalyseAnomalie = require('./analyse_anomalie');
+const Image = require('./image');
 
-// User -> Champ : 1–N
+// Relations minimales
 User.hasMany(Champ, { foreignKey: 'id_utilisateur', onDelete: 'CASCADE' });
 Champ.belongsTo(User, { foreignKey: 'id_utilisateur' });
 
-// Champ -> Parcelle : 1–N
 Champ.hasMany(Parcelle, { foreignKey: 'id_champ', onDelete: 'CASCADE' });
 Parcelle.belongsTo(Champ, { foreignKey: 'id_champ' });
 
-// Parcelle -> AnalyseSol : 1–N
-Parcelle.hasMany(AnalyseSol, { foreignKey: 'id_parcelle', onDelete: 'SET NULL' });
-AnalyseSol.belongsTo(Parcelle, { foreignKey: 'id_parcelle' });
+// Relations plantes
+Plante.hasMany(AttributPlante, { foreignKey: 'id_plante', as: 'attributs' });
+AttributPlante.belongsTo(Plante, { foreignKey: 'id_plante', as: 'plante' });
 
-// User -> AnalyseSol : 1–N
-User.hasMany(AnalyseSol, { foreignKey: 'id_utilisateur', onDelete: 'SET NULL' });
-AnalyseSol.belongsTo(User, { foreignKey: 'id_utilisateur' });
+Plante.hasMany(Image, { foreignKey: 'entite_id', scope: { entite_type: 'plante' }, as: 'images' });
 
-// Capteur -> AnalyseSol : 1–N
-Capteur.hasMany(AnalyseSol, { foreignKey: 'id_capteur', onDelete: 'SET NULL' });
-AnalyseSol.belongsTo(Capteur, { foreignKey: 'id_capteur' });
-
-// AnalyseSol -> RecommendationCulture : 1–N
-AnalyseSol.hasMany(RecommendationCulture, { foreignKey: 'id_analyse_sol', onDelete: 'CASCADE' });
-RecommendationCulture.belongsTo(AnalyseSol, { foreignKey: 'id_analyse_sol' });
-
-// Culture -> RecommendationCulture : 1–N
-Culture.hasMany(RecommendationCulture, { foreignKey: 'id_culture', onDelete: 'CASCADE' });
-RecommendationCulture.belongsTo(Culture, { foreignKey: 'id_culture' });
-
-// Parcelle -> CampagneAgricole : 1–N
-Parcelle.hasMany(CampagneAgricole, { foreignKey: 'id_parcelle', onDelete: 'CASCADE' });
-CampagneAgricole.belongsTo(Parcelle, { foreignKey: 'id_parcelle' });
-
-// Culture -> CampagneAgricole : 1–N
-Culture.hasMany(CampagneAgricole, { foreignKey: 'id_culture', onDelete: 'CASCADE' });
-CampagneAgricole.belongsTo(Culture, { foreignKey: 'id_culture' });
+AnalysePlante.belongsTo(Plante, { foreignKey: 'id_plante', as: 'plante' });
+AnalysePlante.belongsTo(User, { foreignKey: 'id_utilisateur', as: 'utilisateur' });
 
 // Export des modèles
 module.exports = {
@@ -55,8 +39,12 @@ module.exports = {
   Champ,
   Parcelle,
   Capteur,
-  AnalyseSol,
-  Culture,
-  RecommendationCulture,
-  CampagneAgricole
+  Plante,
+  AttributPlante,
+  AnalysePlante,
+  Anomalie,
+  SolutionAnomalie,
+  CategorieAnomalie,
+  AnalyseAnomalie,
+  Image
 };

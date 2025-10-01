@@ -62,7 +62,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
       }
 
       final response = await http.put(
-        Uri.parse('${ApiEndpoints.buildUrl('/api/auth/change-password')}'),
+        Uri.parse(ApiEndpoints.buildUrl('/api/auth/change-password')),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',

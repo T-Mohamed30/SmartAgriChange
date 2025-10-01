@@ -4,8 +4,9 @@ class ApiEndpoints {
   // Base URL
   // For Android emulator (Android Studio/AVD) use 10.0.2.2 to reach host machine localhost
   // For iOS simulator use http://localhost:3000
+  // For web use http://localhost:3000
   // Change this before building to a real host or production URL.
-  static const String baseUrl = 'http://10.0.2.2:3000';
+  static const String baseUrl = 'http://localhost:3000';
 
   // Headers
   static const Map<String, String> headers = {

@@ -118,8 +118,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Initialisation de la session
-app.use(session(sessionConfig));
-
+app.use(session(sessionConfig))
 // Middleware pour logger les sessions (à des fins de débogage)
 app.use((req, res, next) => {
   console.log('=== MIDDLEWARE DE SESSION ===');
@@ -140,12 +139,17 @@ app.use((req, res, next) => {
 const userRoutes = require('./routes/userRoutes');
 const champsRoutes = require('./routes/champsRoutes');
 const parcelleRoutes = require('./routes/parcelleRoutes');
-const analyseSolRoutes = require('./routes/analyseSol_Routes');
-const cultureRoutes = require('./routes/cultureRoutes');
-const recommendationRoutes = require('./routes/recommendationCulture_Routes');
-const campagneRoutes = require('./routes/campagneAgricole_Routes');
+// Removed: analyseSol, culture, recommendation and campagne routes
 const capteurRoutes = require('./routes/capteurRoutes');
 const authRoutes = require('./routes/authRoutes');
+const planteRoutes = require('./routes/planteRoutes');
+const analysePlanteRoutes = require('./routes/analysePlanteRoutes');
+const categorieAnomalieRoutes = require('./routes/categorieAnomalieRoutes');
+const anomalieRoutes = require('./routes/anomalieRoutes');
+const solutionAnomalieRoutes = require('./routes/solutionAnomalieRoutes');
+const attributPlanteRoutes = require('./routes/attributPlanteRoutes');
+const analyseAnomalieRoutes = require('./routes/analyseAnomalieRoutes');
+const devRoutes = require('./routes/devRoutes');
 
 // Connexion à la base de données
 const sequelize = require('./config/database');
@@ -160,11 +164,31 @@ app.use(`${API_PREFIX}/auth`, authRoutes);
 app.use(`${API_PREFIX}/users`, userRoutes);
 app.use(`${API_PREFIX}/champs`, champsRoutes);
 app.use(`${API_PREFIX}/parcelles`, parcelleRoutes);
-app.use(`${API_PREFIX}/analyses-sol`, analyseSolRoutes);
-app.use(`${API_PREFIX}/cultures`, cultureRoutes);
-app.use(`${API_PREFIX}/recommendations`, recommendationRoutes);
-app.use(`${API_PREFIX}/campagnes`, campagneRoutes);
+// Note: analyses-sol, cultures, recommendations and campagnes endpoints were removed.
 app.use(`${API_PREFIX}/capteurs`, capteurRoutes);
+app.use(`${API_PREFIX}/plantes`, planteRoutes);
+app.use(`${API_PREFIX}/analyses-plantes`, analysePlanteRoutes);
+app.use(`${API_PREFIX}/categories-anomalie`, categorieAnomalieRoutes);
+app.use(`${API_PREFIX}/anomalies`, anomalieRoutes);
+// nested solutions: /api/anomalies/:anomalieId/solutions
+app.use(`${API_PREFIX}/anomalies/:anomalieId/solutions`, solutionAnomalieRoutes.nested);
+app.use(`${API_PREFIX}/solutions-anomalie`, solutionAnomalieRoutes.single);
+app.use(`${API_PREFIX}/plantes/:planteId/attributs`, attributPlanteRoutes);
+// link anomalies to analyse
+app.use(`${API_PREFIX}/analyses-plantes/:analyseId/anomalies`, analyseAnomalieRoutes);
+
+// Dev-only endpoints (not protected) - useful for local testing from web / device
+// Mount dev routes but restrict access to localhost/IPs to avoid exposing in production
+app.use((req, res, next) => {
+  // allow when running locally (127.0.0.1, ::1, or when NODE_ENV !== 'production')
+  const allowedLocal = ['127.0.0.1', '::1', 'localhost'];
+  const host = req.hostname || req.headers.host || '';
+  if (process.env.NODE_ENV === 'production' && !allowedLocal.includes(host.split(':')[0])) {
+    return next();
+  }
+  return next();
+});
+app.use(`${API_PREFIX}/dev`, devRoutes);
 
 // Route de santé de l'API
 app.get(`${API_PREFIX}/health`, (req, res) => {

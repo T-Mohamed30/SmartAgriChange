@@ -79,8 +79,8 @@ class _HomePageState extends ConsumerState<HomePage> {
               onPressed: _showAnalyzeBottomSheet,
               backgroundColor: Color(0xFF007F3D),
               shape: CircleBorder(),
-              child: Image.asset('assets/icons/plus.png', color: Colors.white),
               elevation: 8,
+              child: Image.asset('assets/icons/plus.png', color: Colors.white),
             )
           : null,
       bottomNavigationBar: Theme(
@@ -202,7 +202,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                               String weatherIcon =
                                   'assets/icons/temps_1.png'; // Par défaut
                               final condition =
-                                  weather.condition?.toLowerCase() ?? '';
+                                  weather.condition.toLowerCase() ?? '';
 
                               if (condition.contains('pluie') ||
                                   condition.contains('rain')) {

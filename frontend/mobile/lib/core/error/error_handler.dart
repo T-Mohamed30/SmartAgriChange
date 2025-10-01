@@ -150,7 +150,6 @@ class _ErrorHandlerBuilder extends StatefulWidget {
   final void Function(Object, StackTrace) onError;
 
   const _ErrorHandlerBuilder({
-    super.key,
     required this.child,
     required this.onError,
   });

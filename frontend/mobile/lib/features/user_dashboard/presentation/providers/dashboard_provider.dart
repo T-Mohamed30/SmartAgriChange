@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../user_dashboard/domain/entities/analysis_simple.dart';
-import '../../../user_dashboard/domain/entities/weather_simple.dart';
 import '../../../soil_analysis/presentation/providers/champ_parcelle_provider.dart';
 
 // Provider pour les analyses récentes

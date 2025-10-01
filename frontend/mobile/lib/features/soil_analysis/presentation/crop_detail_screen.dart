@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/entities/champ.dart';
 import '../domain/entities/parcelle.dart';
+import '../application/analysis_service.dart';
 import 'providers/champ_parcelle_provider.dart';
 import 'providers/selection_providers.dart' as selection_providers;
 import 'widgets/selector_card.dart';
 import 'widgets/action_button.dart';
 import 'detection_capteurs.dart' as detection_capteurs;
 
-class CropDetailScreen extends StatelessWidget {
+class CropDetailScreen extends ConsumerWidget {
   const CropDetailScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cropName =
         (ModalRoute.of(context)?.settings.arguments as String?) ?? 'Culture';
     final percentage = 87; // Example percentage, this should come from data
@@ -21,6 +22,9 @@ class CropDetailScreen extends StatelessWidget {
 
     final conditions =
         _conditionsByCrop[cropName.toLowerCase()] ?? _defaultConditions;
+
+    // Get soil data from provider
+    final soilData = ref.watch(soilDataProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -130,22 +134,22 @@ class CropDetailScreen extends StatelessWidget {
                                 _resultRow(
                                   'assets/icons/renewable-energy 1.png',
                                   'Conductivité',
-                                  '0 us/cm',
+                                  soilData != null ? '${soilData.ec.toStringAsFixed(1)} us/cm' : '0 us/cm',
                                 ),
                                 const SizedBox(height: 16),
                                 _resultRow(
                                   'assets/icons/celsius 1.png',
                                   'Température',
-                                  '0 °C',
+                                  soilData != null ? '${soilData.temperature.toStringAsFixed(1)} °C' : '0 °C',
                                 ),
                                 const SizedBox(height: 16),
                                 _resultRow(
                                   'assets/icons/humidity 1.png',
                                   'Humidité',
-                                  '0 %',
+                                  soilData != null ? '${soilData.humidity.toStringAsFixed(1)} %' : '0 %',
                                 ),
                                 const SizedBox(height: 16),
-                                _resultRow('assets/icons/ph.png', 'PH', '0'),
+                                _resultRow('assets/icons/ph.png', 'PH', soilData != null ? soilData.ph.toStringAsFixed(1) : '0'),
                                 const SizedBox(height: 16),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
@@ -175,9 +179,9 @@ class CropDetailScreen extends StatelessWidget {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceEvenly,
                                   children: [
-                                    _nutrientColumn('Azote (N)', '0 mg/kg'),
-                                    _nutrientColumn('Phosphore (P)', '0 mg/kg'),
-                                    _nutrientColumn('Potassium (K)', '0 mg/kg'),
+                                    _nutrientColumn('Azote (N)', soilData != null ? '${soilData.nitrogen.toStringAsFixed(0)} mg/kg' : '0 mg/kg'),
+                                    _nutrientColumn('Phosphore (P)', soilData != null ? '${soilData.phosphorus.toStringAsFixed(0)} mg/kg' : '0 mg/kg'),
+                                    _nutrientColumn('Potassium (K)', soilData != null ? '${soilData.potassium.toStringAsFixed(0)} mg/kg' : '0 mg/kg'),
                                   ],
                                 ),
                               ],
@@ -221,7 +225,7 @@ class CropDetailScreen extends StatelessWidget {
                         ),
                         children: [
                           const Divider(height: 1, thickness: 1),
-                          Container(
+                          SizedBox(
                             width: double.infinity,
                             child: _priorityCard(
                               'Haute priorité',
@@ -230,7 +234,7 @@ class CropDetailScreen extends StatelessWidget {
                               Colors.red,
                             ),
                           ),
-                          Container(
+                          SizedBox(
                             width: double.infinity,
                             child: _priorityCard(
                               'Moyenne priorité',
@@ -353,7 +357,7 @@ class CropDetailScreen extends StatelessWidget {
 }
 
 class _CalendarBottomSheet extends ConsumerWidget {
-  const _CalendarBottomSheet({super.key});
+  const _CalendarBottomSheet();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -633,7 +637,7 @@ class _ChampCard extends ConsumerWidget {
 
 class _ParcelleSelectionSheet extends ConsumerWidget {
   final Champ champ;
-  const _ParcelleSelectionSheet({required this.champ, super.key});
+  const _ParcelleSelectionSheet({required this.champ});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

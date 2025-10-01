@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math' as math;
 
+import '../application/analysis_service.dart';
+
 class AnalysisArgs {
   final String sensorId;
   final String sensorName;
@@ -42,6 +44,8 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
         _showResults = true;
       });
       _controller.stop();
+      // Trigger data simulation and AI call
+      ref.read(analysisServiceProvider).fetchDataAndAnalyze();
     });
   }
 
@@ -52,13 +56,8 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
   }
 
   Widget _buildDataDisplay(AnalysisArgs? args) {
-    final List<Map<String, dynamic>> recommendations = [
-      {'name': 'Tomate', 'compat': 80},
-      {'name': 'Riz', 'compat': 65},
-      {'name': 'Sésame', 'compat': 50},
-      {'name': 'Maïs', 'compat': 45},
-      {'name': 'Arachide', 'compat': 40},
-    ];
+    final recommendations = ref.watch(recommendationsProvider);
+    final soilData = ref.watch(soilDataProvider);
     return Padding(
           padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
           child: Column(
@@ -74,13 +73,13 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                 const SizedBox(height: 16),
               ],
 
-              _metricRow('Conductivité', '0 us/cm', 'assets/icons/renewable-energy 1.png'),
+              _metricRow('Conductivité', soilData != null ? '${soilData.ec.toStringAsFixed(1)} us/cm' : '0 us/cm', 'assets/icons/renewable-energy 1.png'),
               const SizedBox(height: 16),
-              _metricRow('Température', '0 °C', 'assets/icons/celsius 1.png'),
+              _metricRow('Température', soilData != null ? '${soilData.temperature.toStringAsFixed(1)} °C' : '0 °C', 'assets/icons/celsius 1.png'),
               const SizedBox(height: 16),
-              _metricRow('Humidité', '0 %', 'assets/icons/humidity 1.png'),
+              _metricRow('Humidité', soilData != null ? '${soilData.humidity.toStringAsFixed(1)} %' : '0 %', 'assets/icons/humidity 1.png'),
               const SizedBox(height: 16),
-              _metricRow('Ph', '0', 'assets/icons/ph.png'),
+              _metricRow('Ph', soilData != null ? soilData.ph.toStringAsFixed(1) : '0', 'assets/icons/ph.png'),
 
               const SizedBox(height: 24),
 
@@ -102,7 +101,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                       ],
                     ),
                     const SizedBox(height: 12),
-                    const Row(
+                    Row(
                       children: [
                         Expanded(
                           child: Column(
@@ -110,7 +109,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                             children: [
                               Text('Azote (N)'),
                               SizedBox(height: 4),
-                              Text('0 mg/kg', style: TextStyle(fontWeight: FontWeight.w700)),
+                              Text(soilData != null ? '${soilData.nitrogen.toStringAsFixed(0)} mg/kg' : '0 mg/kg', style: TextStyle(fontWeight: FontWeight.w700)),
                             ],
                           ),
                         ),
@@ -120,7 +119,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                             children: [
                               Text('Phosphore (P)'),
                               SizedBox(height: 4),
-                              Text('0 mg/kg', style: TextStyle(fontWeight: FontWeight.w700)),
+                              Text(soilData != null ? '${soilData.phosphorus.toStringAsFixed(0)} mg/kg' : '0 mg/kg', style: TextStyle(fontWeight: FontWeight.w700)),
                             ],
                           ),
                         ),
@@ -130,7 +129,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                             children: [
                               Text('Potassium (K)'),
                               SizedBox(height: 4),
-                              Text('0 mg/kg', style: TextStyle(fontWeight: FontWeight.w700)),
+                              Text(soilData != null ? '${soilData.potassium.toStringAsFixed(0)} mg/kg' : '0 mg/kg', style: TextStyle(fontWeight: FontWeight.w700)),
                             ],
                           ),
                         ),
@@ -154,7 +153,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                     Text(
                       'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor.',
                       style: TextStyle(color: Colors.black87),
-                    ),             
+                    ),
                   ],
                 ),
               ),
@@ -172,51 +171,53 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                       const Text('Nos Recommendations', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 12),
                       Expanded(
-                        child: ListView.separated(
-                          itemCount: recommendations.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 8),
-                          itemBuilder: (context, index) {
-                            final item = recommendations[index];
-                            return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE5F8EC),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item['name'] as String,
-                                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        child: recommendations.isEmpty
+                          ? const Center(child: Text('Chargement des recommandations...'))
+                          : ListView.separated(
+                              itemCount: recommendations.length,
+                              separatorBuilder: (_, __) => const SizedBox(height: 8),
+                              itemBuilder: (context, index) {
+                                final item = recommendations[index];
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE5F8EC),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              item.culture.name,
+                                              style: const TextStyle(fontWeight: FontWeight.w700),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text('compatibilité: ${item.compatibilityScore.toStringAsFixed(1)}%'),
+                                          ],
                                         ),
-                                        const SizedBox(height: 2),
-                                        Text('compatibilité: ${item['compat']}%'),
-                                      ],
-                                    ),
+                                      ),
+                                      InkWell(
+                                        borderRadius: BorderRadius.circular(16),
+                                        onTap: () {
+                                          Navigator.pushNamed(
+                                            context,
+                                            '/soil_analysis/crop_detail',
+                                            arguments: item.culture.name,
+                                          );
+                                        },
+                                        child: const Padding(
+                                          padding: EdgeInsets.all(4.0),
+                                          child: Icon(Icons.chevron_right, color: Colors.black),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  InkWell(
-                                    borderRadius: BorderRadius.circular(16),
-                                    onTap: () {
-                                      Navigator.pushNamed(
-                                        context,
-                                        '/soil_analysis/crop_detail',
-                                        arguments: item['name'] as String,
-                                      );
-                                    },
-                                    child: const Padding(
-                                      padding: EdgeInsets.all(4.0),
-                                      child: Icon(Icons.chevron_right, color: Colors.black),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
+                                );
+                              },
+                            ),
                       ),
                     ],
                   ),
@@ -447,7 +448,6 @@ class _FloatingIcon extends StatelessWidget {
   final double size;
 
   const _FloatingIcon({
-    super.key,
     required this.controller,
     required this.asset,
     required this.baseLeft,

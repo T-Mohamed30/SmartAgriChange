@@ -110,12 +110,12 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
       padding: const EdgeInsets.all(20),
       child: const Column(
         children: [
-          const Text('Recherche en cours...', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 24),
-          const CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF007F3D))),
-          const SizedBox(height: 24),
-          const Text('Recherche de capteurs dans votre zone.\nAssurez-vous que vos capteurs sont allumés.', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
-          const SizedBox(height: 200),
+          Text('Recherche en cours...', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          SizedBox(height: 24),
+          CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF007F3D))),
+          SizedBox(height: 24),
+          Text('Recherche de capteurs dans votre zone.\nAssurez-vous que vos capteurs sont allumés.', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+          SizedBox(height: 200),
         ],
       ),
     );
@@ -202,15 +202,15 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
         onPressed: canLaunch
             ? () {
                 ref.read(sensorActionsProvider.notifier).startAnalysis(
-                      sensorId: selectedSensor!.id,
+                      sensorId: selectedSensor.id,
                       parcelleId: selectedParcelle?.id,
                     );
                 Navigator.pushNamed(
                   context,
                   '/soil_analysis/analysis',
                   arguments: AnalysisArgs(
-                    sensorId: selectedSensor!.id,
-                    sensorName: selectedSensor!.name,
+                    sensorId: selectedSensor.id,
+                    sensorName: selectedSensor.name,
                     champName: selectedChamp?.name,
                     parcelleName: selectedParcelle?.name,
                   ),

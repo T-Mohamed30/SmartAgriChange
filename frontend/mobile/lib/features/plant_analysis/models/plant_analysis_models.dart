@@ -60,6 +60,7 @@ class Plante {
   final List<String>? galeriePhotos;
   final bool estActive;
   final List<Maladie>? maladies;
+  final List<AttributPlante>? attributs;
 
   Plante({
     required this.id,
@@ -73,6 +74,7 @@ class Plante {
     this.galeriePhotos,
     required this.estActive,
     this.maladies,
+    this.attributs,
   });
 
   factory Plante.fromJson(Map<String, dynamic> json) {
@@ -92,6 +94,35 @@ class Plante {
       maladies: json['Maladies'] != null
           ? (json['Maladies'] as List).map((m) => Maladie.fromJson(m)).toList()
           : null,
+      attributs: json['attributs'] != null
+          ? (json['attributs'] as List).map((a) => AttributPlante.fromJson(a)).toList()
+          : null,
+    );
+  }
+}
+
+class AttributPlante {
+  final int id;
+  final String nom;
+  final String? valeur;
+  final String? type;
+  final int planteId;
+
+  AttributPlante({
+    required this.id,
+    required this.nom,
+    this.valeur,
+    this.type,
+    required this.planteId,
+  });
+
+  factory AttributPlante.fromJson(Map<String, dynamic> json) {
+    return AttributPlante(
+      id: json['id'],
+      nom: json['nom'],
+      valeur: json['valeur'],
+      type: json['type'],
+      planteId: json['plante_id'],
     );
   }
 }

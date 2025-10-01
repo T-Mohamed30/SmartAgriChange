@@ -17,19 +17,19 @@ class SwipeableCard extends StatelessWidget {
   final String itemId;
 
   const SwipeableCard({
-    Key? key,
+    super.key,
     required this.child,
     required this.onEdit,
     required this.onDelete,
     required this.itemName,
     required this.itemType,
     required this.itemId,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Dismissible(
-      key: Key('${itemType}_${itemId}'),
+      key: Key('${itemType}_$itemId'),
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
@@ -85,7 +85,7 @@ class SwipeableCard extends StatelessWidget {
             builder: (BuildContext context) {
               return AlertDialog(
                 title: Text('Supprimer ${itemType == 'champ' ? 'le champ' : 'la parcelle'}'),
-                content: Text('Êtes-vous sûr de vouloir supprimer "${itemName}" ?'),
+                content: Text('Êtes-vous sûr de vouloir supprimer "$itemName" ?'),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(false),
@@ -123,13 +123,13 @@ class LongPressCard extends StatefulWidget {
   final String itemType; // 'champ' or 'parcelle'
 
   const LongPressCard({
-    Key? key,
+    super.key,
     required this.child,
     required this.onEdit,
     required this.onDelete,
     required this.itemName,
     required this.itemType,
-  }) : super(key: key);
+  });
 
   @override
   State<LongPressCard> createState() => _LongPressCardState();
@@ -333,8 +333,7 @@ class _LongPressCardState extends State<LongPressCard> {
 class ChampCard extends StatelessWidget {
   final Champ champ;
   final VoidCallback? onTap;
-  const ChampCard({required this.champ, this.onTap, Key? key})
-    : super(key: key);
+  const ChampCard({required this.champ, this.onTap, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -373,7 +372,7 @@ class ChampCard extends StatelessWidget {
 // Widget pour afficher le nombre de parcelles
 class ParcelleCount extends ConsumerWidget {
   final String champId;
-  const ParcelleCount({required this.champId, Key? key}) : super(key: key);
+  const ParcelleCount({required this.champId, super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -394,7 +393,7 @@ class ParcelleCount extends ConsumerWidget {
 }
 
 class ChampsListPage extends ConsumerWidget {
-  const ChampsListPage({Key? key}) : super(key: key);
+  const ChampsListPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -571,8 +570,8 @@ class ChampsListPage extends ConsumerWidget {
         },
         backgroundColor: const Color(0xFF007F3D),
         shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white),
         elevation: 8,
+        child: const Icon(Icons.add, color: Colors.white),
       )
     );
   }
@@ -580,7 +579,7 @@ class ChampsListPage extends ConsumerWidget {
 
 class ParcellesListPage extends ConsumerWidget {
   final Champ champ;
-  const ParcellesListPage({required this.champ, Key? key}) : super(key: key);
+  const ParcellesListPage({required this.champ, super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -608,7 +607,7 @@ class ParcellesListPage extends ConsumerWidget {
             ),
           ),
         ),
-        title: Text('${champ.name}', textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        title: Text(champ.name, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -728,8 +727,8 @@ class ParcellesListPage extends ConsumerWidget {
         },
         backgroundColor: const Color(0xFF007F3D),
         shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white),
         elevation: 8,
+        child: const Icon(Icons.add, color: Colors.white),
       )
     );
   }

@@ -9,7 +9,7 @@ import '../models/plant_analysis_models.dart';
 class PlantDetailPage extends StatefulWidget {
   final int? analysisId;
 
-  const PlantDetailPage({Key? key, required this.analysisId}) : super(key: key);
+  const PlantDetailPage({super.key, required this.analysisId});
 
   @override
   State<PlantDetailPage> createState() => _PlantDetailPageState();
@@ -24,6 +24,143 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
   void initState() {
     super.initState();
     _loadAnalyse();
+  }
+
+  Future<void> _showAnomalieDetails(String anomalieName) async {
+    // Fetch list and try to find by name (backend exposes /api/anomalies and /api/anomalies/:id)
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+      final list = await PlantAnalysisApi.getAllAnomalies();
+      Navigator.of(context).pop();
+
+      // Try to find exact match (case-insensitive)
+      final match = list.cast<Map<String, dynamic>?>().firstWhere(
+        (e) =>
+            e != null &&
+            (e['nom'] as String).toLowerCase() == anomalieName.toLowerCase(),
+        orElse: () => null,
+      );
+
+      if (match == null) {
+        // Show a simple dialog with the name if not found
+        await showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: Text(anomalieName),
+            content: const Text('Détails non disponibles pour cette anomalie.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: const Text('Fermer'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
+      final id = match['id'] as int;
+      final details = await PlantAnalysisApi.getAnomalieById(id);
+
+      // Show bottom sheet with details
+      if (!mounted) return;
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (ctx) {
+          final desc = details['description'] ?? '';
+          final symptomes = details['symptomes'] != null
+              ? (details['symptomes'] is String
+                    ? [details['symptomes']]
+                    : List<String>.from(details['symptomes']))
+              : [];
+          final causes = details['causes'] != null
+              ? (details['causes'] is String
+                    ? [details['causes']]
+                    : List<String>.from(details['causes']))
+              : [];
+          final solutions = details['solutions'] != null
+              ? List<Map<String, dynamic>>.from(details['solutions'])
+              : [];
+
+          return DraggableScrollableSheet(
+            expand: false,
+            initialChildSize: 0.7,
+            builder: (_, controller) => SingleChildScrollView(
+              controller: controller,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      details['nom'] ?? anomalieName,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (desc.isNotEmpty) Text(desc),
+                    const SizedBox(height: 12),
+                    if (symptomes.isNotEmpty) ...[
+                      const Text(
+                        'Symptômes',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 6),
+                      for (final s in symptomes) ListTile(title: Text(s)),
+                    ],
+                    if (causes.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Causes',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 6),
+                      for (final c in causes) ListTile(title: Text(c)),
+                    ],
+                    if (solutions.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Solutions',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 6),
+                      for (final sol in solutions)
+                        Card(
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          child: ListTile(
+                            title: Text(sol['type_solution'] ?? ''),
+                            subtitle: Text(sol['contenu'] ?? ''),
+                          ),
+                        ),
+                    ],
+                    const SizedBox(height: 24),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        child: const Text('Fermer'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    } catch (e) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Erreur: $e')));
+    }
   }
 
   Future<void> _loadAnalyse() async {
@@ -151,7 +288,14 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
                       'Anomalies détectées',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    for (final a in anomalies) ListTile(title: Text(a)),
+                    for (final a in anomalies)
+                      ListTile(
+                        title: Text(a),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                        onTap: () async {
+                          await _showAnomalieDetails(a);
+                        },
+                      ),
                     const SizedBox(height: 12),
                   ],
                   if (maladies.isNotEmpty) ...[
@@ -164,13 +308,16 @@ class _PlantDetailPageState extends State<PlantDetailPage> {
                   ],
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              PlantFullDetailPage(imagePath: imagePath),
-                        ),
-                      );
+                      final plantId = _analyse?.planteIdentifiee?.id;
+                      if (plantId != null) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                PlantFullDetailPage(plantId: plantId, imagePath: imagePath),
+                          ),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,

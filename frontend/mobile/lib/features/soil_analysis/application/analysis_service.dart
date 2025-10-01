@@ -3,38 +3,26 @@ import 'dart:developer' as dev;
 import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:smartagrichange_mobile/features/soil_analysis/data/datasources/mock_culture_datasource.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/culture.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/recommendation.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/sensor.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/sensor_detection_state.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/soil_data.dart';
+import 'package:dio/dio.dart';
 
 // PROVIDERS
-// 1. Fournisseur pour l'état de la détection (UI State)
 final detectionStateProvider = StateProvider<SensorDetectionState>((ref) => SensorDetectionState.idle);
-
-// 2. Fournisseur pour la liste des capteurs détectés
 final detectedSensorsProvider = StateProvider<List<Sensor>>((ref) => []);
-
-// 3. Fournisseur pour le capteur sélectionné
 final selectedSensorProvider = StateProvider<Sensor?>((ref) => null);
-
-// 4. Fournisseur pour les données du sol (après analyse du capteur)
 final soilDataProvider = StateProvider<SoilData?>((ref) => null);
-
-// 5. Fournisseur pour les recommandations générées
 final recommendationsProvider = StateProvider<List<Recommendation>>((ref) => []);
 
-// 6. Service d'analyse (contiendra la logique métier)
 final analysisServiceProvider = Provider((ref) => AnalysisService(ref));
 
-// ANALYSIS SERVICE
 class AnalysisService {
   final Ref _ref;
   AnalysisService(this._ref);
 
-  // Simule la détection de capteurs
   Future<void> startSensorDetection() async {
     _ref.read(detectionStateProvider.notifier).state = SensorDetectionState.searching;
     dev.log('Recherche de capteurs en cours...');
@@ -59,90 +47,130 @@ class AnalysisService {
     dev.log('Capteur sélectionné: ${sensor.name}');
   }
 
-  // Simule la récupération des données du capteur et lance l'analyse
   Future<void> fetchDataAndAnalyze() async {
     dev.log('Récupération des données du sol...');
     await Future.delayed(const Duration(seconds: 2));
 
-    // Simuler des données de sol
+    // Simuler des données aléatoires pour p, k, humidité, température, azote, ec, ph
+    final double p = 10 + Random().nextDouble() * 20;
+    final double k = 20 + Random().nextDouble() * 40;
+    final double humidity = 40 + Random().nextDouble() * 30;
+    final double temperature = 15 + Random().nextDouble() * 15;
+    final double nitrogen = 130 + Random().nextDouble() * 20;
+    final double ec = 1.5 + Random().nextDouble() * 0.5;
+    final double ph = 6.5 + Random().nextDouble() * 0.5;
+
     final soilData = SoilData(
-      ph: 6.5 + Random().nextDouble() * 0.5,
-      temperature: 22 + Random().nextDouble() * 5,
-      humidity: 70 + Random().nextDouble() * 10,
-      ec: 1.5 + Random().nextDouble() * 0.5,
-      nitrogen: 130 + Random().nextDouble() * 20,
-      phosphorus: 90 + Random().nextDouble() * 20,
-      potassium: 160 + Random().nextDouble() * 20,
+      ph: ph,
+      temperature: temperature,
+      humidity: humidity,
+      ec: ec,
+      nitrogen: nitrogen,
+      phosphorus: p,
+      potassium: k,
     );
     _ref.read(soilDataProvider.notifier).state = soilData;
-    dev.log('Données du sol reçues: $soilData');
+    dev.log('Données du sol simulées: p=$p, k=$k, humidité=$humidity, température=$temperature, azote=$nitrogen, ec=$ec, ph=$ph');
 
-    // Lancer le moteur d'analyse
-    _runAnalysisEngine(soilData);
+    // Appeler l'API IA pour obtenir les recommandations
+    await _callCropRecommendationApi(p, k, humidity, temperature);
   }
 
-  // Le moteur d'analyse principal
-  void _runAnalysisEngine(SoilData soilData) {
-    final cultures = MockCultureDataSource.cultures;
-    final List<Recommendation> recommendations = [];
+  Future<void> _callCropRecommendationApi(double p, double k, double humidity, double temperature) async {
+    // Essayer d'abord avec Dio configuré pour éviter les problèmes CORS
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: 'http://localhost:8000',
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        // Désactiver les vérifications CORS pour cette requête
+        extra: {'withCredentials': false},
+      ),
+    );
 
-    for (var culture in cultures) {
-      double score = 0;
-      List<String> actions = [];
+    try {
+      final response = await dio.post(
+        '/api/v1/predict/probabilities',
+        data: {
+          'p': p,
+          'k': k,
+          'humidity': humidity,
+          'temperature': temperature,
+          'top_n': 5,
+        },
+        options: Options(
+          // Forcer le bypass des vérifications CORS
+          extra: {'withCredentials': false},
+        ),
+      );
 
-      // Comparaison pour chaque paramètre
-      if (soilData.ph >= culture.minPh && soilData.ph <= culture.maxPh) {
-        score++;
+      if (response.statusCode == 200) {
+        final List<dynamic> probs = response.data['probabilities'] ?? [];
+        final List<Recommendation> recommendations = probs.map((item) {
+          // Map English crop names to French names
+          final Map<String, String> cropNameMap = {
+            'rice': 'Riz',
+            'maize': 'Maïs',
+            'chickpea': 'Pois chiche',
+            'kidneybeans': 'Haricot rouge',
+            'pigeonpeas': 'Pois cajan',
+            'mothbeans': 'Haricot papillon',
+            'mungbean': 'Haricot mungo',
+            'blackgram': 'Haricot noir',
+            'lentil': 'Lentille',
+            'pomegranate': 'Grenade',
+            'banana': 'Banane',
+            'mango': 'Mangue',
+            'grapes': 'Raisin',
+            'watermelon': 'Pastèque',
+            'muskmelon': 'Melon',
+            'apple': 'Pomme',
+            'orange': 'Orange',
+            'papaya': 'Papaye',
+            'coconut': 'Noix de coco',
+            'cotton': 'Coton',
+            'jute': 'Jute',
+            'coffee': 'Café',
+          };
+
+          final String cropEnglish = item['crop'] ?? 'Inconnu';
+          final String cropFrench = cropNameMap[cropEnglish.toLowerCase()] ?? cropEnglish;
+
+          return Recommendation(
+            culture: Culture(
+              name: cropFrench,
+              minPh: 0,
+              maxPh: 14,
+              minTemp: 0,
+              maxTemp: 50,
+              minHumidity: 0,
+              maxHumidity: 100,
+              minNitrogen: 0,
+              maxNitrogen: 200,
+              minPhosphorus: 0,
+              maxPhosphorus: 200,
+              minPotassium: 0,
+              maxPotassium: 200,
+              description: 'Culture recommandée par IA',
+              rendement: 'Variable',
+            ),
+            compatibilityScore: (item['probability'] ?? 0) * 100,
+            explanation: 'Probabilité: ${(item['probability'] ?? 0) * 100}%',
+            correctiveActions: [],
+          );
+        }).toList();
+
+        _ref.read(recommendationsProvider.notifier).state = recommendations;
+        dev.log('Recommandations IA reçues: ${recommendations.length} cultures.');
       } else {
-        actions.add('Ajuster le pH (actuel: ${soilData.ph.toStringAsFixed(1)}, idéal: ${culture.minPh}-${culture.maxPh})');
+        dev.log('Erreur API IA: statut ${response.statusCode}');
       }
-
-      if (soilData.temperature >= culture.minTemp && soilData.temperature <= culture.maxTemp) {
-        score++;
-      } else {
-        actions.add('Contrôler la température du sol.');
-      }
-
-      if (soilData.humidity >= culture.minHumidity && soilData.humidity <= culture.maxHumidity) {
-        score++;
-      } else {
-        actions.add('Ajuster l\'irrigation pour l\'humidité.');
-      }
-
-      if (soilData.nitrogen >= culture.minNitrogen && soilData.nitrogen <= culture.maxNitrogen) {
-        score++;
-      } else {
-        actions.add('Corriger l\'apport en azote.');
-      }
-
-      if (soilData.phosphorus >= culture.minPhosphorus && soilData.phosphorus <= culture.maxPhosphorus) {
-        score++;
-      } else {
-        actions.add('Corriger l\'apport en phosphore.');
-      }
-
-      if (soilData.potassium >= culture.minPotassium && soilData.potassium <= culture.maxPotassium) {
-        score++;
-      } else {
-        actions.add('Corriger l\'apport en potassium.');
-      }
-
-      final compatibility = (score / 6) * 100;
-
-      if (compatibility > 50) { // Seuil pour recommander
-        recommendations.add(Recommendation(
-          culture: culture,
-          compatibilityScore: compatibility,
-          explanation: 'Cette culture est ${compatibility.toStringAsFixed(0)}% compatible avec votre sol.',
-          correctiveActions: actions,
-        ));
-      }
+    } catch (e) {
+      dev.log('Erreur lors de l\'appel API IA: $e');
     }
-
-    // Trier par score de compatibilité
-    recommendations.sort((a, b) => b.compatibilityScore.compareTo(a.compatibilityScore));
-
-    _ref.read(recommendationsProvider.notifier).state = recommendations;
-    dev.log('Analyse terminée. ${recommendations.length} recommandations générées.');
   }
 }

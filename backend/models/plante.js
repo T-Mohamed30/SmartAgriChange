@@ -7,47 +7,42 @@ const Plante = sequelize.define('Plante', {
     primaryKey: true,
     autoIncrement: true
   },
-  nom_scientifique: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: true
-  },
-  nom_commun: {
+  nom: {
     type: DataTypes.STRING,
     allowNull: false
   },
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: true
+  nom_latin: {
+    type: DataTypes.STRING,
+    unique: true,
+    allowNull: false
   },
   famille_botanique: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  genre: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  ordre: {
     type: DataTypes.STRING,
     allowNull: true
   },
   type: {
-    type: DataTypes.ENUM('arbre', 'arbuste', 'plante_herbacée', 'plante_grimpante', 'céréale', 'légume', 'fruit', 'autre'),
-    allowNull: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
-  cycle_vie: {
-    type: DataTypes.ENUM('annuel', 'bisannuel', 'vivace', 'pérenne'),
-    allowNull: true
+  cycle_de_vie: {
+    type: DataTypes.STRING,
+    allowNull: false
   },
-  image_url: {
+  zone_geographique: {
     type: DataTypes.STRING,
     allowNull: true
-  },
-  galerie_photos: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    defaultValue: []
-  },
-  est_active: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true
   }
 }, {
   tableName: 'plantes',
-  timestamps: false
+  timestamps: true
 });
 
 module.exports = Plante;

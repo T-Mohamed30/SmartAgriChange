@@ -7,12 +7,14 @@ const env = process.env.NODE_ENV || 'development';
 
 let sequelize;
 
+const path = require('path');
 if (env === 'offline') {
-  // Mode OFFLINE : SQLite
+  // Mode OFFLINE : SQLite — use absolute path inside backend folder to avoid ambiguity
+  const storagePath = path.join(__dirname, '..', 'database_offline.sqlite');
   sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: './database_offline.sqlite', // fichier SQLite local
-    logging: console.log, // ou false si tu veux désactiver les logs SQL
+    storage: storagePath,
+    logging: console.log,
   });
 
   sequelize

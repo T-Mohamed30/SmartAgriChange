@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:convert';
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/plant_analysis_api.dart';
@@ -57,8 +59,9 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
   void _onCapturePressed() async {
     if (_controller == null ||
         !_controller!.value.isInitialized ||
-        _isCapturing)
+        _isCapturing) {
       return;
+    }
 
     setState(() {
       _isCapturing = true;
@@ -82,53 +85,54 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
         final prefs = await SharedPreferences.getInstance();
         final token = prefs.getString('jwt_token') ?? '';
 
-        // Use parcelle 1 as example; adapt to real selected parcelle
-        final parcelleId = 1;
+        // Analysis is not mandatory linked to a parcelle, so pass null
+        final int? parcelleId = null;
 
-        final file = File(image.path);
-        AnalysePlante analyse = await PlantAnalysisApi.analyserPlanteMultipart(
-          parcelleId,
-          file,
-          token,
-        );
-
-        Navigator.of(context).pop(); // remove loading
-
-        // Navigate to detail page using the created analysis ID
-        if (mounted) {
-          Navigator.of(context).pushReplacementNamed(
-            '/plant_analysis/detail',
-            arguments: {'analysisId': analyse.id},
+        if (kIsWeb) {
+          // On web, convert image bytes to base64 string
+          final base64Image = base64Encode(bytes);
+          AnalysePlante analyse = await PlantAnalysisApi.analyserPlanteAuto(
+            parcelleId,
+            base64Image,
+            token,
           );
+          Navigator.of(context).pop(); // remove loading
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed(
+              '/plant_analysis/detail',
+              arguments: {'analysisId': analyse.id},
+            );
+          }
+          return;
+        } else {
+          // On mobile/native, use File
+          final file = File(image.path);
+          AnalysePlante analyse = await PlantAnalysisApi.analyserPlanteAuto(
+            parcelleId,
+            file,
+            token,
+          );
+          Navigator.of(context).pop(); // remove loading
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed(
+              '/plant_analysis/detail',
+              arguments: {'analysisId': analyse.id},
+            );
+          }
+          return;
         }
-        return;
       } catch (e) {
         Navigator.of(context).pop();
-        // proceed to navigate to detail page with local image as fallback
+        // Show error and allow retry
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload échoué, affichage local: $e')),
+          SnackBar(content: Text('Échec de l\'analyse: $e. Veuillez réessayer.')),
         );
+        setState(() {
+          _isCapturing = false;
+          _capturedImageBytes = null;
+        });
+        return;
       }
-
-      // Keep _isCapturing true to switch UI to scan animation state
-      // The UI will show the scan animation screen with the captured photo
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Image capturée: \${image.path}')));
-
-      // After 5 seconds, navigate to the plant detail page
-      Future.delayed(const Duration(seconds: 5), () {
-        if (mounted) {
-          Navigator.of(context).pushReplacementNamed(
-            '/plant_analysis/detail',
-            arguments: {
-              'imagePath': image.path,
-              // Add other necessary arguments here
-            },
-          );
-        }
-      });
     } catch (e) {
       ScaffoldMessenger.of(
         context,
