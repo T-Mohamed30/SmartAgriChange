@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartagrichange_mobile/features/auth/domain/entities/user.dart';
 import 'providers/auth_provider.dart';
 
 class OtpPage extends ConsumerStatefulWidget {
   final String phone;
-  const OtpPage({super.key, required this.phone});
+  final int? userId;
+  const OtpPage({super.key, required this.phone, this.userId});
 
   @override
   ConsumerState<OtpPage> createState() => _OtpPageState();
+
+  // Factory constructor to create from route arguments
+  factory OtpPage.fromArgs(Map<String, dynamic> args) {
+    return OtpPage(
+      phone: args['phone'] as String,
+      userId: args['user_id'] as int?,
+    );
+  }
 }
 
 class _OtpPageState extends ConsumerState<OtpPage> {
@@ -39,6 +49,25 @@ class _OtpPageState extends ConsumerState<OtpPage> {
         return;
       }
 
+      // Use the user ID passed from registration, or try to get from SharedPreferences as fallback
+      int? userIdToUse = widget.userId;
+      if (userIdToUse == null) {
+        final prefs = await SharedPreferences.getInstance();
+        userIdToUse = prefs.getInt('user_id');
+      }
+
+      if (userIdToUse == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ID utilisateur manquant. Veuillez recommencer l\'inscription.'),
+          ),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
       final result = await ref
           .read(verifyOtpProvider)
           .call(
@@ -47,6 +76,7 @@ class _OtpPageState extends ConsumerState<OtpPage> {
             user.nom,
             user.prenom,
             user.password,
+            userId: userIdToUse,
           );
 
       if (!mounted) return;
@@ -57,15 +87,15 @@ class _OtpPageState extends ConsumerState<OtpPage> {
           nom: result['nom'] ?? '',
           prenom: result['prenom'] ?? '',
           phone: widget.phone,
+          callingCode: '', // Not available in OTP response
           password: '', // Le mot de passe n'est pas nécessaire ici
         );
-        print('📝 Mise à jour de l\'utilisateur: ${updatedUser.toJson()}');
         ref.read(userProvider.notifier).state = updatedUser;
 
         // Nettoyer le contrôleur avant la navigation
         otpController.clear();
-        // Naviguer vers la page d'accueil
-        Navigator.pushReplacementNamed(context, '/home');
+        // Naviguer vers la page de connexion après inscription réussie
+        Navigator.of(context).pushNamedAndRemoveUntil('/auth/login', (route) => false);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('OTP incorrect ou expiré')),

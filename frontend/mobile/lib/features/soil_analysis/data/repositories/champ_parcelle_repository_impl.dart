@@ -1,52 +1,153 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../domain/entities/champ.dart';
 import '../../domain/entities/parcelle.dart';
+import '../../domain/repositories/champ_parcelle_repository.dart';
 
-class ChampParcelleRepository {
+class ChampParcelleRepositoryImpl implements ChampParcelleRepository {
   final Dio dio;
   final String baseUrl;
 
-  ChampParcelleRepository({required this.dio, required this.baseUrl});
+  ChampParcelleRepositoryImpl({required this.dio, required this.baseUrl});
 
   Future<List<Champ>> fetchChamps() async {
-    final response = await dio.get('$baseUrl/champs');
-    final data = response.data as List;
-    return data
-        .map(
-          (json) => Champ(
-            id: json['id'].toString(),
-            name: json['name'],
-            location: json['location'],
-          ),
-        )
-        .toList();
+    final response = await dio.get('$baseUrl/fields');
+    debugPrint('Fetch champs response: ${response.data}');
+    final data = response.data;
+
+    if (data == null) {
+      return []; // No fields recorded
+    }
+
+    // Handle API response structure: {status: success, message: ..., data: [...]}
+    if (data is Map<String, dynamic> && data['data'] != null) {
+      final fieldsData = data['data'];
+      if (fieldsData is List) {
+        return fieldsData
+            .where((json) => json['id'] != null) // Filter out invalid entries
+            .map(
+              (json) => Champ(
+                id: json['id']?.toString() ?? '',
+                name: json['name']?.toString() ?? '',
+                location: json['location']?.toString() ?? '',
+              ),
+            )
+            .toList();
+      } else if (fieldsData is Map<String, dynamic>) {
+        // If it's a single object, wrap it in a list
+        if (fieldsData['id'] != null) {
+          return [
+            Champ(
+              id: fieldsData['id']?.toString() ?? '',
+              name: fieldsData['name']?.toString() ?? '',
+              location: fieldsData['location']?.toString() ?? '',
+            )
+          ];
+        } else {
+          return [];
+        }
+      }
+    }
+
+    // Fallback for direct list response (if API changes)
+    if (data is List) {
+      return data
+          .where((json) => json['id'] != null) // Filter out invalid entries
+          .map(
+            (json) => Champ(
+              id: json['id']?.toString() ?? '',
+              name: json['name']?.toString() ?? '',
+              location: json['location']?.toString() ?? '',
+            ),
+          )
+          .toList();
+    } else if (data is Map<String, dynamic>) {
+      // If it's a single object, wrap it in a list
+      if (data['id'] != null) {
+        return [
+          Champ(
+            id: data['id']?.toString() ?? '',
+            name: data['name']?.toString() ?? '',
+            location: data['location']?.toString() ?? '',
+          )
+        ];
+      } else {
+        return [];
+      }
+    } else {
+      throw Exception('Unexpected response format for fields');
+    }
   }
 
   Future<List<Parcelle>> fetchParcelles({required String champId}) async {
-    final response = await dio.get('$baseUrl/parcelles?champId=$champId');
-    final data = response.data as List;
-    return data
-        .map(
-          (json) => Parcelle(
-            id: json['id'].toString(),
-            name: json['name'],
-            superficie: double.tryParse(json['superficie'].toString()) ?? 0.0,
-            champId: json['champId'].toString(),
-          ),
+    final response = await dio.get('$baseUrl/fields/$champId/parcels');
+    final data = response.data;
+    debugPrint('Fetch parcelles response: $data');
+
+    // Handle API response structure: {status: success, message: ..., data: [...]}
+    if (data is Map<String, dynamic> && data['data'] != null) {
+      final parcelsData = data['data'];
+      if (parcelsData is List) {
+        return parcelsData
+            .map(
+              (json) => Parcelle(
+                id: json['id']?.toString() ?? '',
+                name: json['name']?.toString() ?? '',
+                superficie: double.tryParse(json['area']?.toString() ?? '0.0') ?? 0.0,
+                champId: json['field_id']?.toString() ?? '',
+              ),
+            )
+            .toList();
+      } else if (parcelsData is Map<String, dynamic>) {
+        // If it's a single object, wrap it in a list
+        return [
+          Parcelle(
+            id: parcelsData['id']?.toString() ?? '',
+            name: parcelsData['name']?.toString() ?? '',
+            superficie: double.tryParse(parcelsData['area']?.toString() ?? '0.0') ?? 0.0,
+            champId: parcelsData['field_id']?.toString() ?? '',
+          )
+        ];
+      }
+    }
+
+    // Fallback for direct list response
+    if (data is List) {
+      return data
+          .map(
+            (json) => Parcelle(
+              id: json['id']?.toString() ?? '',
+              name: json['name']?.toString() ?? '',
+              superficie: double.tryParse(json['area']?.toString() ?? '0.0') ?? 0.0,
+              champId: json['field_id']?.toString() ?? '',
+            ),
+          )
+          .toList();
+    } else if (data is Map<String, dynamic>) {
+      // If it's a single object, wrap it in a list
+      return [
+        Parcelle(
+          id: data['id']?.toString() ?? '',
+          name: data['name']?.toString() ?? '',
+          superficie: double.tryParse(data['area']?.toString() ?? '0.0') ?? 0.0,
+          champId: data['field_id']?.toString() ?? '',
         )
-        .toList();
+      ];
+    } else {
+      throw Exception('Unexpected response format for parcels');
+    }
   }
 
   Future<Champ> createChamp(String name, String location) async {
     final response = await dio.post(
-      '$baseUrl/champs',
+      '$baseUrl/fields',
       data: {'name': name, 'location': location},
     );
     final json = response.data;
     return Champ(
-      id: json['id'].toString(),
-      name: json['name'],
-      location: json['location'],
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      location: json['location']?.toString() ?? '',
     );
   }
 
@@ -56,50 +157,117 @@ class ChampParcelleRepository {
     String champId,
   ) async {
     final response = await dio.post(
-      '$baseUrl/parcelles',
-      data: {'name': name, 'superficie': superficie, 'champId': champId},
+      '$baseUrl/parcels',
+      data: {'name': name, 'area': superficie, 'field_id': champId},
     );
-    final json = response.data;
+    final data = response.data;
+    debugPrint('Create parcelle response: $data');
+
+    // Handle API response structure: {status: success, message: ..., data: {...}}
+    if (data is Map<String, dynamic> && data['data'] != null) {
+      final parcelleData = data['data'];
+      return Parcelle(
+        id: parcelleData['id']?.toString() ?? '',
+        name: parcelleData['name']?.toString() ?? '',
+        superficie: double.tryParse(parcelleData['area']?.toString() ?? '0.0') ?? 0.0,
+        champId: parcelleData['field_id']?.toString() ?? '',
+      );
+    }
+
+    // Fallback for direct response
     return Parcelle(
-      id: json['id'].toString(),
-      name: json['name'],
-      superficie: double.tryParse(json['superficie'].toString()) ?? 0.0,
-      champId: json['champId'].toString(),
+      id: data['id']?.toString() ?? '',
+      name: data['name']?.toString() ?? '',
+      superficie: double.tryParse(data['area']?.toString() ?? '0.0') ?? 0.0,
+      champId: data['field_id']?.toString() ?? '',
     );
   }
 
   Future<Champ> updateChamp(String id, String name, String location) async {
     final response = await dio.put(
-      '$baseUrl/champs/$id',
+      '$baseUrl/fields/$id',
       data: {'name': name, 'location': location},
     );
-    final json = response.data;
+    final data = response.data;
+    debugPrint('Update champ response: $data');
+
+    // Handle API response structure: {status: success, message: ..., data: {...}}
+    if (data is Map<String, dynamic> && data['data'] != null) {
+      final champData = data['data'];
+      // Check if the response contains an error
+      if (champData is Map<String, dynamic> && champData['status'] == 'failed') {
+        throw Exception(champData['message'] ?? 'Update failed');
+      }
+      return Champ(
+        id: champData['id']?.toString() ?? '',
+        name: champData['name']?.toString() ?? '',
+        location: champData['location']?.toString() ?? '',
+      );
+    }
+
+    // Fallback for direct response
     return Champ(
-      id: json['id'].toString(),
-      name: json['name'],
-      location: json['location'],
+      id: data['id']?.toString() ?? '',
+      name: data['name']?.toString() ?? '',
+      location: data['location']?.toString() ?? '',
     );
   }
 
   Future<void> deleteChamp(String id) async {
-    await dio.delete('$baseUrl/champs/$id');
+    final response = await dio.delete('$baseUrl/fields/$id');
+    final data = response.data;
+    debugPrint('Delete champ response: $data');
+
+    // Handle API response structure: {status: success, message: ..., data: {...}}
+    if (data is Map<String, dynamic> && data['data'] != null) {
+      final deleteData = data['data'];
+      // Check if the response contains an error
+      if (deleteData is Map<String, dynamic> && deleteData['status'] == 'failed') {
+        throw Exception(deleteData['message'] ?? 'Delete failed');
+      }
+    }
   }
 
   Future<Parcelle> updateParcelle(String id, String name, double superficie, String champId) async {
     final response = await dio.put(
-      '$baseUrl/parcelles/$id',
-      data: {'name': name, 'superficie': superficie, 'champId': champId},
+      '$baseUrl/parcels/$id',
+      data: {'name': name, 'area': superficie, 'field_id': champId},
     );
-    final json = response.data;
+    final data = response.data;
+    debugPrint('Update parcelle response: $data');
+
+    // Handle API response structure: {status: success, message: ..., data: {...}}
+    if (data is Map<String, dynamic> && data['data'] != null) {
+      final parcelleData = data['data'];
+      return Parcelle(
+        id: parcelleData['id']?.toString() ?? '',
+        name: parcelleData['name']?.toString() ?? '',
+        superficie: double.tryParse(parcelleData['area']?.toString() ?? '0.0') ?? 0.0,
+        champId: parcelleData['field_id']?.toString() ?? '',
+      );
+    }
+
+    // Fallback for direct response
     return Parcelle(
-      id: json['id'].toString(),
-      name: json['name'],
-      superficie: double.tryParse(json['superficie'].toString()) ?? 0.0,
-      champId: json['champId'].toString(),
+      id: data['id']?.toString() ?? '',
+      name: data['name']?.toString() ?? '',
+      superficie: double.tryParse(data['area']?.toString() ?? '0.0') ?? 0.0,
+      champId: data['field_id']?.toString() ?? '',
     );
   }
 
   Future<void> deleteParcelle(String id) async {
-    await dio.delete('$baseUrl/parcelles/$id');
+    final response = await dio.delete('$baseUrl/parcels/$id');
+    final data = response.data;
+    debugPrint('Delete parcelle response: $data');
+
+    // Handle API response structure: {status: success, message: ..., data: {...}}
+    if (data is Map<String, dynamic> && data['data'] != null) {
+      final deleteData = data['data'];
+      // Check if the response contains an error
+      if (deleteData is Map<String, dynamic> && deleteData['status'] == 'failed') {
+        throw Exception(deleteData['message'] ?? 'Delete failed');
+      }
+    }
   }
 }

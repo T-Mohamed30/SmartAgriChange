@@ -9,7 +9,7 @@ import 'package:smartagrichange_mobile/features/user_dashboard/home.dart';
 import 'features/onboarding/presentation/welcome_screen.dart';
 import 'features/onboarding/presentation/stepper_screen.dart';
 import 'features/auth/presentation/register.dart';
-import 'features/auth/presentation/login.dart';
+import 'package:smartagrichange_mobile/features/auth/presentation/login.dart';
 import 'features/auth/presentation/otp_page.dart';
 import 'features/soil_analysis/presentation/analysis_screen.dart';
 import 'features/soil_analysis/presentation/crop_detail_screen.dart';
@@ -93,11 +93,18 @@ class MyApp extends StatelessWidget {
         '/welcome': (context) => const WelcomeScreen(),
         '/stepper': (context) => const StepperScreen(),
         '/auth/register': (context) => const RegisterPage(),
-        '/auth/login': (context) => const LoginPage(),
+        '/auth/login': (context) => LoginPage(),
         '/auth/otp': (context) {
-          final phone =
-              ModalRoute.of(context)?.settings.arguments as String? ?? '';
-          return OtpPage(phone: phone);
+          final args = ModalRoute.of(context)?.settings.arguments;
+          if (args is Map<String, dynamic>) {
+            final phone = args['phone'] as String? ?? '';
+            final userId = args['user_id'] as int?;
+            return OtpPage(phone: phone, userId: userId);
+          } else if (args is String) {
+            // Fallback for old string argument
+            return OtpPage(phone: args);
+          }
+          return const OtpPage(phone: '');
         },
         '/account': (context) => const AccountPage(),
 

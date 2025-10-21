@@ -310,12 +310,17 @@ class _LongPressCardState extends State<LongPressCard> {
       _overlayEntry!.remove();
       _overlayEntry = null;
     }
-    setState(() => _isMenuVisible = false);
+    if (mounted) {
+      setState(() => _isMenuVisible = false);
+    }
   }
 
   @override
   void dispose() {
-    _hideContextMenu();
+    if (_overlayEntry != null) {
+      _overlayEntry!.remove();
+      _overlayEntry = null;
+    }
     super.dispose();
   }
 
@@ -457,13 +462,19 @@ class ChampsListPage extends ConsumerWidget {
                                                 SnackBar(content: Text('${champ.name} supprimé')),
                                               );
                                             }
-                                          } catch (e) {
-                                            if (context.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(content: Text('Erreur lors de la suppression: $e')),
-                                              );
-                                            }
+                                      } catch (e) {
+                                        debugPrint('ChampsListPage: Error deleting champ ${champ.name} (ID: ${champ.id}): $e');
+                                        if (context.mounted) {
+                                          // Check if the error is due to unauthorized access
+                                          String errorMessage = 'Erreur lors de la suppression: $e';
+                                          if (e.toString().contains('Unauthorized') || e.toString().contains('failed')) {
+                                            errorMessage = 'Accès non autorisé. Veuillez vous reconnecter.';
                                           }
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text(errorMessage)),
+                                          );
+                                        }
+                                      }
                                         },
                                         child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
                                       ),
@@ -661,9 +672,15 @@ class ParcellesListPage extends ConsumerWidget {
                                           );
                                         }
                                       } catch (e) {
+                                        debugPrint('ParcellesListPage: Error deleting parcelle ${parcelle.name} (ID: ${parcelle.id}): $e');
                                         if (context.mounted) {
+                                          // Check if the error is due to unauthorized access
+                                          String errorMessage = 'Erreur lors de la suppression: $e';
+                                          if (e.toString().contains('Unauthorized') || e.toString().contains('failed')) {
+                                            errorMessage = 'Accès non autorisé. Veuillez vous reconnecter.';
+                                          }
                                           ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Erreur lors de la suppression: $e')),
+                                            SnackBar(content: Text(errorMessage)),
                                           );
                                         }
                                       }

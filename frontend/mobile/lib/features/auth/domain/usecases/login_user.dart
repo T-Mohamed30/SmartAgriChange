@@ -4,5 +4,5 @@ class LoginUser {
   final AuthRepository repository;
   LoginUser(this.repository);
 
-  Future<Map<String, dynamic>?> call(String phone, String password) => repository.login(phone, password);
+  Future<Map<String, dynamic>?> call(String phone, String password, String callingCode) => repository.login(phone, password, callingCode);
 }

@@ -8,7 +8,7 @@ class PlantAnalysisApi {
   // For Android emulator use http://10.0.2.2:3000/api
   // For iOS simulator use http://localhost:3000/api
   static const String baseUrl =
-      'http://localhost:3000/api'; // Adjust port if needed
+      'https://smartagrichangeapi.kgslab.com/api'; // Adjust port if needed
 
   // Analyze plant image
   @deprecated

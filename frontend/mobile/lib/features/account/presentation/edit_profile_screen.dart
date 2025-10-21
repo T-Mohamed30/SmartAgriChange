@@ -79,6 +79,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             nom: userData['nom'] ?? '',
             prenom: userData['prenom'] ?? '',
             phone: userData['phone'] ?? '',
+            callingCode: userData['calling_code'] ?? '', // Add calling code from response
             password: '', // Keep existing password or empty for security
           );
           ref.read(userProvider.notifier).state = updatedUser;

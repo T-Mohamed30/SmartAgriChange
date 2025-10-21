@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/entities/sensor.dart';
 import 'providers/sensor_provider.dart';
@@ -497,9 +498,18 @@ class _CreateChampBottomSheetState extends ConsumerState<CreateChampBottomSheet>
     if (_formKey.currentState!.validate()) {
       final name = _nameController.text;
       final location = _locationController.text;
-      await ref.read(createChampProvider({'name': name, 'location': location}).future);
-      ref.refresh(champsProvider);
-      if (mounted) Navigator.pop(context);
+      try {
+        await ref.read(createChampProvider({'name': name, 'location': location}).future);
+        ref.refresh(champsProvider);
+        if (mounted) Navigator.pop(context);
+      } catch (e) {
+        debugPrint('DetectionCapteursPage: Error creating champ $name: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur lors de la création du champ: $e')),
+          );
+        }
+      }
     }
   }
 
@@ -554,13 +564,22 @@ class _CreateParcelleBottomSheetState extends ConsumerState<CreateParcelleBottom
     if (_formKey.currentState!.validate()) {
       final name = _nameController.text;
       final superficie = double.tryParse(_superficieController.text) ?? 0.0;
-      await ref.read(createParcelleProvider({
-        'name': name,
-        'superficie': superficie,
-        'champId': widget.champId,
-      }).future);
-      ref.refresh(parcellesProvider(widget.champId));
-      if (mounted) Navigator.pop(context);
+      try {
+        await ref.read(createParcelleProvider({
+          'name': name,
+          'superficie': superficie,
+          'champId': widget.champId,
+        }).future);
+        ref.refresh(parcellesProvider(widget.champId));
+        if (mounted) Navigator.pop(context);
+      } catch (e) {
+        debugPrint('DetectionCapteursPage: Error creating parcelle $name: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur lors de la création de la parcelle: $e')),
+          );
+        }
+      }
     }
   }
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/entities/champ.dart';
 import '../domain/entities/parcelle.dart';
-import '../application/analysis_service.dart';
+import '../application/analysis_service.dart' show soilDataProvider, analysisServiceProvider;
 import 'providers/champ_parcelle_provider.dart';
 import 'providers/selection_providers.dart' as selection_providers;
 import 'widgets/selector_card.dart';
@@ -225,23 +225,36 @@ class CropDetailScreen extends ConsumerWidget {
                         ),
                         children: [
                           const Divider(height: 1, thickness: 1),
-                          SizedBox(
-                            width: double.infinity,
-                            child: _priorityCard(
-                              'Haute priorité',
-                              'Ajouter potassium → 250 kg/ha',
-                              Colors.red.shade100,
-                              Colors.red,
-                            ),
-                          ),
-                          SizedBox(
-                            width: double.infinity,
-                            child: _priorityCard(
-                              'Moyenne priorité',
-                              'Corriger pH avec chaux si <6.0',
-                              Colors.orange.shade100,
-                              Colors.orange,
-                            ),
+                          Builder(
+                            builder: (context) {
+                              final soilData = ref.watch(soilDataProvider);
+                              if (soilData == null) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Text('Aucune recommandation disponible.'),
+                                );
+                              }
+                              final recommendations = ref.read(analysisServiceProvider).generateSoilRecommendations(soilData);
+                              if (recommendations.isEmpty) {
+                                return const Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Text('Aucune recommandation nécessaire.'),
+                                );
+                              }
+                              return Column(
+                                children: recommendations.map((rec) {
+                                  return SizedBox(
+                                    width: double.infinity,
+                                    child: _priorityCard(
+                                      'Priorité',
+                                      rec,
+                                      Colors.orange.shade100,
+                                      Colors.orange,
+                                    ),
+                                  );
+                                }).toList(),
+                              );
+                            },
                           ),
                         ],
                       ),

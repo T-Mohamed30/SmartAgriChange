@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/parcelle.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/presentation/providers/champ_parcelle_provider.dart';
@@ -38,6 +39,8 @@ class _EditParcelleBottomSheetState extends ConsumerState<EditParcelleBottomShee
 
     setState(() => _isLoading = true);
 
+    debugPrint('EditParcelle: Starting parcelle update for ID: ${widget.parcelle.id}');
+
     try {
       final superficie = double.tryParse(_superficieController.text.trim());
       if (superficie == null) {
@@ -51,6 +54,8 @@ class _EditParcelleBottomSheetState extends ConsumerState<EditParcelleBottomShee
         'champId': widget.parcelle.champId,
       }).future);
 
+      debugPrint('EditParcelle: Parcelle update successful for ID: ${widget.parcelle.id}');
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Parcelle modifiée avec succès')),
@@ -58,9 +63,16 @@ class _EditParcelleBottomSheetState extends ConsumerState<EditParcelleBottomShee
         Navigator.of(context).pop(true); // Retourner true pour indiquer le succès
       }
     } catch (e) {
+      debugPrint('EditParcelle: Error updating parcelle ID ${widget.parcelle.id}: $e');
+
       if (mounted) {
+        // Check if the error is due to unauthorized access
+        String errorMessage = 'Erreur lors de la modification: $e';
+        if (e.toString().contains('Unauthorized') || e.toString().contains('failed')) {
+          errorMessage = 'Accès non autorisé. Veuillez vous reconnecter.';
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors de la modification: $e')),
+          SnackBar(content: Text(errorMessage)),
         );
       }
     } finally {

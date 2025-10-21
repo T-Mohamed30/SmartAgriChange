@@ -5,5 +5,5 @@ class RegisterUser {
   final AuthRepository repository;
   RegisterUser(this.repository);
 
-  Future<void> call(User user) => repository.register(user);
+  Future<Map<String, dynamic>?> call(User user) => repository.register(user);
 }

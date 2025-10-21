@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 
 import 'providers/auth_provider.dart';
 import '../domain/entities/user.dart';
@@ -19,8 +20,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   final TextEditingController confirmPasswordController =
       TextEditingController();
 
+  String selectedCallingCode = '+226'; // Default to Burkina Faso
   bool passwordVisible = false;
   bool confirmPasswordVisible = false;
+
+
 
   @override
   void dispose() {
@@ -98,10 +102,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         nom: nom,
         prenom: prenom,
         phone: phone,
+        callingCode: selectedCallingCode,
         password: password,
       );
 
-      await ref.read(registerUserProvider).call(user);
+      final registrationResult = await ref.read(registerUserProvider).call(user);
 
       if (mounted) {
         Navigator.of(context).pop(); // Fermer le dialogue de chargement
@@ -119,13 +124,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           Navigator.pushReplacementNamed(
             context,
             '/auth/otp',
-            arguments: phone,
+            arguments: {
+              'phone': phone,
+              'user_id': registrationResult?['user_id'],
+            },
           );
         }
       }
     } catch (e) {
-      print('Erreur lors de l\'inscription: $e');
-
       if (mounted) {
         Navigator.of(
           context,
@@ -199,12 +205,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                       icon: Icons.person_outline,
                     ),
                     const SizedBox(height: 12),
-                    _buildTextField(
-                      'Téléphone',
-                      controller: phoneController,
-                      keyboardType: TextInputType.phone,
-                      icon: Icons.phone,
-                    ),
+                    _buildPhoneField(),
                     const SizedBox(height: 12),
                     _buildTextField(
                       'Mot de passe',
@@ -312,6 +313,29 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPhoneField() {
+    return IntlPhoneField(
+      controller: phoneController,
+      decoration: InputDecoration(
+        hintText: 'Numéro de téléphone',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 12,
+        ),
+      ),
+      initialCountryCode: 'BF', // Burkina Faso
+      onChanged: (phone) {
+        // Note: calling code is set in onCountryChanged, not here
+      },
+      onCountryChanged: (country) {
+        setState(() {
+          selectedCallingCode = '+${country.dialCode}';
+        });
+      },
     );
   }
 

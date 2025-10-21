@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 class AppConfig {
   // Configuration de l'API
-  static const String _defaultApiUrl = 'http://localhost:3000/api';
+  static const String _defaultApiUrl = 'https://smartagrichangeapi.kgslab.com/api';
   static const String _defaultWebSocketUrl = 'ws://localhost:3000';
   
   // Récupérer l'URL de l'API en fonction de la plateforme

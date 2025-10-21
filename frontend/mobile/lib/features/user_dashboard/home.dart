@@ -116,7 +116,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                       final prenom = user!.prenom;
                       final displayName = prenom.isNotEmpty
                           ? prenom
-                          : 'Utilisateur';
+                          : user.nom.isNotEmpty
+                              ? user.nom
+                              : 'Utilisateur';
 
                       // Déterminer la salutation en fonction de l'heure
                       final greeting = hour < 12 ? 'Bonjour' : 'Bonsoir';

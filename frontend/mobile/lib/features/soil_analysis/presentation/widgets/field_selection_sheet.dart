@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/champ.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/parcelle.dart';
-import 'package:smartagrichange_mobile/features/soil_analysis/presentation/providers/field_provider.dart';
+import 'package:smartagrichange_mobile/features/soil_analysis/presentation/providers/champ_parcelle_provider.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/presentation/widgets/action_button.dart';
 
 class FieldSelectionSheet extends ConsumerWidget {
@@ -21,7 +21,7 @@ class FieldSelectionSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final fieldsAsync = ref.watch(userFieldsProvider);
+    final fieldsAsync = ref.watch(champsProvider);
 
     return SafeArea(
       child: Padding(
@@ -54,8 +54,35 @@ class FieldSelectionSheet extends ConsumerWidget {
               child: fieldsAsync.when(
                 data: (fields) {
                   if (fields.isEmpty) {
-                    return const Center(
-                      child: Text('Aucun champ trouvé'),
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.agriculture_outlined,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Aucun champ enregistré',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Créez votre premier champ pour commencer',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[500],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     );
                   }
                   
@@ -169,15 +196,23 @@ class FieldSelectionSheet extends ConsumerWidget {
                   if (formKey.currentState!.validate()) {
                     try {
                       final newField = await ref.read(
-                        createFieldProvider({
+                        createChampProvider({
                           'name': nameController.text,
                           'location': locationController.text,
-                        })
+                        }).future
                       );
-                      
-                      if (context.mounted) {
+
+                      if (newField != null && context.mounted) {
                         onFieldSelected(newField);
                         Navigator.pop(context);
+
+                        // Afficher un message de succès
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Champ créé avec succès'),
+                            backgroundColor: Colors.green,
+                          ),
+                        );
                       }
                     } catch (e) {
                       if (context.mounted) {
@@ -215,7 +250,7 @@ class ParcelleSelectionSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final parcellesAsync = ref.watch(fieldParcellesProvider(champId));
+    final parcellesAsync = ref.watch(parcellesProvider(champId));
 
     return SafeArea(
       child: Padding(
@@ -375,13 +410,13 @@ class ParcelleSelectionSheet extends ConsumerWidget {
                           'champId': champId,
                           'name': nameController.text,
                           'superficie': double.parse(superficieController.text),
-                        })
+                        }).future
                       );
-                      
-                      if (context.mounted) {
+
+                      if (newParcelle != null && context.mounted) {
                         Navigator.pop(context);
                         onParcelleSelected(newParcelle);
-                        
+
                         // Afficher un message de succès
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(

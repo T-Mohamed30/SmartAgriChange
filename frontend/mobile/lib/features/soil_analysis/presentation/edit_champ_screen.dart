@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/champ.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/presentation/providers/champ_parcelle_provider.dart';
@@ -38,12 +39,16 @@ class _EditChampBottomSheetState extends ConsumerState<EditChampBottomSheet> {
 
     setState(() => _isLoading = true);
 
+    debugPrint('EditChamp: Starting champ update for ID: ${widget.champ.id}');
+
     try {
       await ref.read(updateChampProvider({
         'id': widget.champ.id,
         'name': _nameController.text.trim(),
         'location': _locationController.text.trim(),
       }).future);
+
+      debugPrint('EditChamp: Champ update successful for ID: ${widget.champ.id}');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -52,9 +57,16 @@ class _EditChampBottomSheetState extends ConsumerState<EditChampBottomSheet> {
         Navigator.of(context).pop(true); // Retourner true pour indiquer le succès
       }
     } catch (e) {
+      debugPrint('EditChamp: Error updating champ ID ${widget.champ.id}: $e');
+
       if (mounted) {
+        // Check if the error is due to unauthorized access
+        String errorMessage = 'Erreur lors de la modification: $e';
+        if (e.toString().contains('Unauthorized') || e.toString().contains('failed')) {
+          errorMessage = 'Accès non autorisé. Veuillez vous reconnecter.';
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors de la modification: $e')),
+          SnackBar(content: Text(errorMessage)),
         );
       }
     } finally {

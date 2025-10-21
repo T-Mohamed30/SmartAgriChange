@@ -9,6 +9,8 @@ class VerifyOtp {
     String otp,
     String nom,
     String prenom,
-    String motDePasse,
-  ) => repository.verifyOtp(phone, otp, nom, prenom, motDePasse);
+    String motDePasse, {
+    int? userId,
+  }) =>
+      repository.verifyOtp(phone, otp, nom, prenom, motDePasse, userId: userId);
 }

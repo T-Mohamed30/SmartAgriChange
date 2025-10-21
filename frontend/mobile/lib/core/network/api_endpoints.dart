@@ -6,7 +6,7 @@ class ApiEndpoints {
   // For iOS simulator use http://localhost:3000
   // For web use http://localhost:3000
   // Change this before building to a real host or production URL.
-  static const String baseUrl = 'http://localhost:3000';
+  static const String baseUrl = 'https://smartagrichangeapi.kgslab.com/api';
 
   // Headers
   static const Map<String, String> headers = {
@@ -15,31 +15,37 @@ class ApiEndpoints {
   };
 
   // Auth endpoints
-  static const String login = '/api/auth/login';
-  static const String register = '/api/auth/register';
-  static const String verifyOtp = '/api/auth/verify-otp';
-  static const String refreshToken = '/api/auth/refresh-token';
-  static const String logout = '/api/auth/logout';
+  static const String login = '/auth/login';
+  static const String register = '/users/farmers/register';
+  static String verifyOtp(String userId) => '/users/$userId/verify-otp';
+  static String resendOtp(String userId) => '/users/$userId/resend-otp';
+  static const String refreshToken = '/auth/refresh';
+  static const String logout = '/auth/logout';
+  static const String me = '/auth/me';
 
   // User endpoints
-  static const String userProfile = '/api/users/me';
-  static const String updateProfile = '/api/users/me';
+  static String userProfile(String farmerId) => '/users/farmers/$farmerId/profile';
+  static String updateProfile(String farmerId) => '/users/farmers/$farmerId/profile';
+  static String changePassword(String userId) => '/users/$userId/change-password';
 
   // Field endpoints
-  static String getUserFields() => '/api/champs/me';
-  static String getFieldById(String id) => '/api/champs/$id';
-  static String createField() => '/api/champs';
-  static String updateField(String id) => '/api/champs/$id';
-  static String deleteField(String id) => '/api/champs/$id';
+  static const String fields = '/fields';
+  static String getFieldById(String id) => '/fields/$id';
+  static String getFieldParcels(String fieldId) => '/fields/$fieldId/parcels';
 
   // Parcelle endpoints
-  static String getParcellesByChamp(String champId) =>
-      '/api/champs/$champId/parcelles';
-  static String getParcelleById(String id) => '/api/parcelles/$id';
-  static String createParcelle(String champId) =>
-      '/api/champs/$champId/parcelles';
-  static String updateParcelle(String id) => '/api/parcelles/$id';
-  static String deleteParcelle(String id) => '/api/parcelles/$id';
+  static const String parcels = '/parcels';
+  static String getParcelleById(String id) => '/parcels/$id';
+
+  // Soil analysis endpoints
+  static const String soilAnalyses = '/soil-analyses';
+  static String getSoilAnalysisById(String id) => '/soil-analyses/$id';
+  static String getUserSoilAnalyses(String userId) => '/users/$userId/soil-analyses';
+
+  // Analysis endpoints
+  static const String analyses = '/analyses';
+  static String getAnalysisById(String id) => '/analyses/$id';
+  static String getAnalysisByParcelle(String parcelleId) => '/analyses/parcelle/$parcelleId';
 
   // Sensor endpoints
   static const String sensors = '/api/sensors';
@@ -52,7 +58,7 @@ class ApiEndpoints {
   // Méthode pour obtenir les en-têtes avec le token d'authentification
   static Future<Map<String, String>> getAuthHeaders() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
+    final token = prefs.getString('jwt_token');
 
     if (token != null) {
       return {...headers, 'Authorization': 'Bearer $token'};
@@ -66,9 +72,6 @@ class ApiEndpoints {
 
   // Analysis endpoints
   static String getAnalysisHistory() => '/analysis/history';
-  static String getAnalysisById(String id) => '/analysis/$id';
-  static String getAnalysisByParcelle(String parcelleId) =>
-      '/analysis/parcelle/$parcelleId';
   static String createAnalysis() => '/analysis';
 
   // Weather endpoints

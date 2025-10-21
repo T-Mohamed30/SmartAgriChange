@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartagrichange_mobile/features/auth/domain/entities/user.dart';
 import 'package:smartagrichange_mobile/features/auth/presentation/providers/auth_provider.dart';
 
@@ -14,6 +16,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   bool passwordVisible = false;
+  String selectedCallingCode = '+226'; // Default to Burkina Faso
+  String completePhoneNumber =
+      ''; // Store the complete international phone number
 
   @override
   void dispose() {
@@ -23,11 +28,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   void _login() async {
-    final phone = phoneController.text.trim();
+    // Extract phone number without calling code
+    final phoneNumber = phoneController.text.trim();
     final password = passwordController.text;
 
     // Vérification simple des champs
-    if (phone.isEmpty || password.isEmpty) {
+    if (phoneNumber.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Veuillez remplir tous les champs')),
       );
@@ -39,31 +45,65 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       barrierDismissible: false,
       builder: (_) => const Center(child: CircularProgressIndicator()),
     );
-    
+
     try {
       // Appel à l'API de connexion
-      final userData = await ref.read(loginUserProvider)(phone, password);
-      
+      final userData = await ref.read(loginUserProvider)(
+        phoneNumber,
+        password,
+        selectedCallingCode,
+      );
+
       if (userData != null && mounted) {
         // Mettre à jour les informations utilisateur
         final user = User(
           nom: userData['nom'] ?? '',
           prenom: userData['prenom'] ?? '',
-          phone: phone,
+          phone: phoneNumber,
+          callingCode: selectedCallingCode,
           password: '', // Le mot de passe n'est pas stocké
         );
-        print('📝 Mise à jour de l\'utilisateur: ${user.toJson()}');
+
         ref.read(userProvider.notifier).state = user;
-        
+
+        // Fetch current user data from /auth/me endpoint
+        try {
+          final currentUserData = await ref.read(getCurrentUserProvider)();
+          if (currentUserData != null) {
+            // Update user with actual data from /auth/me
+            final updatedUser = User(
+              nom: currentUserData['nom'] ?? user.nom,
+              prenom: currentUserData['prenom'] ?? user.prenom,
+              phone: phoneNumber,
+              callingCode: selectedCallingCode,
+              password: '',
+            );
+            ref.read(userProvider.notifier).state = updatedUser;
+          }
+        } catch (e) {
+          // Continue with login data if /auth/me fails
+        }
+
+        // Clear any cached user data to ensure fresh login
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('user_id');
+
         // Si la connexion est réussie, naviguer directement vers la page d'accueil
         if (mounted) {
-          Navigator.of(context).pop();
-          Navigator.pushReplacementNamed(context, '/home');
+          Navigator.of(context).pop(); // Close loading dialog
+
+          // Use pushNamedAndRemoveUntil to clear navigation stack
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+            }
+          });
         }
       }
     } catch (e) {
       if (mounted) {
         Navigator.of(context).pop();
+        print('Erreur de connexion capturée: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur de connexion: ${e.toString()}')),
         );
@@ -86,11 +126,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 children: [
                   Align(
                     alignment: Alignment.topLeft,
-                    child: Image.asset('assets/images/feuille_1.png', width: 150),
+                    child: Image.asset(
+                      'assets/images/feuille_1.png',
+                      width: 150,
+                    ),
                   ),
                   Align(
                     alignment: Alignment.topRight,
-                    child: Image.asset('assets/images/feuille_2.png', width: 150),
+                    child: Image.asset(
+                      'assets/images/feuille_2.png',
+                      width: 150,
+                    ),
                   ),
                   Center(
                     child: Padding(
@@ -107,7 +153,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   children: [
                     const Text(
                       'Connexion',
-                      style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                      ),
                       textAlign: TextAlign.left,
                     ),
                     const SizedBox(height: 8),
@@ -117,11 +166,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       textAlign: TextAlign.left,
                     ),
                     const SizedBox(height: 24),
-                    _buildTextField(
-                      'Téléphone',
-                      controller: phoneController,
-                      keyboardType: TextInputType.phone,
-                    ),
+                    _buildPhoneField(),
                     const SizedBox(height: 12),
                     _buildTextField(
                       'Mot de passe',
@@ -144,10 +189,16 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          textStyle: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         onPressed: _login,
-                        child: const Text("Se connecter", style: TextStyle(color: Colors.white)),
+                        child: const Text(
+                          "Se connecter",
+                          style: TextStyle(color: Colors.white),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -169,14 +220,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           onPressed: () {
                             //connexion Google
                           },
-                          icon: Image.asset('assets/images/google.png', height: 30),
+                          icon: Image.asset(
+                            'assets/images/google.png',
+                            height: 30,
+                          ),
                         ),
                         const SizedBox(width: 20),
                         IconButton(
                           onPressed: () {
                             // connexion Facebook
                           },
-                          icon: Image.asset('assets/images/facebook.png', height: 30),
+                          icon: Image.asset(
+                            'assets/images/facebook.png',
+                            height: 30,
+                          ),
                         ),
                       ],
                     ),
@@ -191,7 +248,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           },
                           child: const Text(
                             'Rejoignez-nous.',
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF007F3D)),
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF007F3D),
+                            ),
                           ),
                         ),
                       ],
@@ -204,6 +264,32 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildPhoneField() {
+    return IntlPhoneField(
+      controller: phoneController,
+      decoration: InputDecoration(
+        hintText: 'Numéro de téléphone',
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 12,
+        ),
+      ),
+      initialCountryCode: 'BF', // Burkina Faso
+      onChanged: (phone) {
+        setState(() {
+          completePhoneNumber =
+              phone.completeNumber; // Store the complete international number
+        });
+      },
+      onCountryChanged: (country) {
+        setState(() {
+          selectedCallingCode = '+${country.dialCode}';
+        });
+      },
     );
   }
 
@@ -222,7 +308,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       decoration: InputDecoration(
         hintText: placeholder,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 12,
+        ),
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math' as math;
 
-import '../application/analysis_service.dart';
+import '../application/analysis_service.dart' show analysisServiceProvider, recommendationsProvider, soilDataProvider;
 
 class AnalysisArgs {
   final String sensorId;
@@ -139,22 +139,31 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                 ),
               ),
               const SizedBox(height: 16),
-              Container(
+                Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Descrpition', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    SizedBox(height: 8),
-                    Text(
-                      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor.',
-                      style: TextStyle(color: Colors.black87),
-                    ),
-                  ],
+                child: Consumer(
+                  builder: (context, ref, _) {
+                    final soilData = ref.watch(soilDataProvider);
+                    if (soilData == null) {
+                      return const Text('Description du sol non disponible.');
+                    }
+                    final description = ref.read(analysisServiceProvider).generateSoilDescription(soilData);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Description', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 8),
+                        Text(
+                          description,
+                          style: const TextStyle(color: Colors.black87),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 16),
