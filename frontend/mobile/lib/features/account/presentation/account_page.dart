@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../auth/presentation/providers/auth_provider.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
@@ -12,8 +13,12 @@ class AccountPage extends ConsumerWidget {
     // Get user from auth provider
     final user = ref.watch(userProvider);
 
-    final String fullName = user != null ? '${user.nom} ${user.prenom}' : 'Utilisateur';
-    final String phoneNumber = user?.phone ?? '';
+    final String fullName = user != null
+        ? '${user.nom} ${user.prenom}'
+        : 'Utilisateur';
+    final String phoneNumber = user != null
+        ? '(${user.callingCode}) ${user.phone}'
+        : '';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -37,7 +42,10 @@ class AccountPage extends ConsumerWidget {
                   children: [
                     Text(
                       fullName,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -67,7 +75,11 @@ class AccountPage extends ConsumerWidget {
                   SizedBox(height: 4),
                   Text(
                     'Standard',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                   ),
                   SizedBox(height: 4),
                   Text(
@@ -93,43 +105,94 @@ class AccountPage extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: _buildListTile(
                       icon: ImageIcon(
-                        AssetImage('assets/icons/interface-user-single--close-geometric-human-person-single-up-user--Streamline-Core.png'),
+                        AssetImage(
+                          'assets/icons/interface-user-single--close-geometric-human-person-single-up-user--Streamline-Core.png',
+                        ),
                         color: Colors.black,
                       ),
-                  text: 'Modifié mes informations',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const EditProfileScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Divider(height: 1),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _buildListTile(
-                  icon: const Icon(Icons.lock_outline, color: Colors.black),
-                  text: 'Changer mon mot de passe',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ChangePasswordScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Divider(height: 1),
-              ),
+                      text: 'Modifié mes informations',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const EditProfileScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Divider(height: 1),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _buildListTile(
+                      icon: const Icon(Icons.lock_outline, color: Colors.black),
+                      text: 'Changer mon mot de passe',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ChangePasswordScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Divider(height: 1),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _buildListTile(
+                      icon: const Icon(Icons.logout, color: Colors.red),
+                      text: 'Se déconnecter',
+                      onTap: () async {
+                        // Show confirmation dialog
+                        final shouldLogout = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Déconnexion'),
+                            content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: const Text('Annuler'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                child: const Text('Se déconnecter'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (shouldLogout == true) {
+                          // Clear all stored authentication data
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.clear(); // Clear all preferences to be safe
+
+                          // Clear user provider state
+                          ref.read(userProvider.notifier).state = null;
+
+                          // Navigate to welcome screen and clear navigation stack
+                          if (context.mounted) {
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              '/welcome',
+                              (route) => false,
+                            );
+                          }
+                        }
+                      },
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Divider(height: 1),
+                  ),
                   // Abonnement section
                   _buildSectionTitle('Abonnement'),
                   Padding(
@@ -189,11 +252,16 @@ class AccountPage extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: _buildListTile(
                       icon: ImageIcon(
-                        AssetImage('assets/icons/image-picture-landscape-1--photos-photo-landscape-picture-photography-camera-pictures--Streamline-Core.png'),
+                        AssetImage(
+                          'assets/icons/image-picture-landscape-1--photos-photo-landscape-picture-photography-camera-pictures--Streamline-Core.png',
+                        ),
                         color: Colors.black,
                       ),
                       text: 'Version de l’application',
-                      trailing: const Text('1.00', style: TextStyle(color: Colors.black54)),
+                      trailing: const Text(
+                        '1.00',
+                        style: TextStyle(color: Colors.black54),
+                      ),
                       onTap: null,
                     ),
                   ),

@@ -20,4 +20,7 @@ final verifyOtpProvider = Provider((ref) => VerifyOtp(ref.read(authRepositoryPro
 final getCurrentUserProvider = Provider((ref) => GetCurrentUser(ref.read(authRepositoryProvider)));
 
 // État de l'utilisateur connecté
-final userProvider = StateProvider<User?>((ref) => null);
+final userProvider = StateProvider<User?>((ref) {
+  // Initialize to null to ensure clean state on app start
+  return null;
+});

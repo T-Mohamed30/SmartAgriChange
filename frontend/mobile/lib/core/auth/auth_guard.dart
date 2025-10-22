@@ -14,53 +14,58 @@ class AuthGuard extends ConsumerWidget {
     this.redirectTo = '/auth/login',
   });
 
+  Future<bool> _isAuthenticated(WidgetRef ref) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    if (token == null) return false;
+
+    try {
+      final currentUserData = await ref.read(getCurrentUserProvider)();
+      if (currentUserData == null) return false;
+
+      // Update user provider with current user data
+      ref.read(userProvider.notifier).state = User(
+        nom: currentUserData['nom'] ?? '',
+        prenom: currentUserData['prenom'] ?? '',
+        phone: currentUserData['telephone'] ?? '',
+        callingCode: '+226',
+        password: '',
+      );
+      return true;
+    } catch (_) {
+      // Clear invalid token
+      await prefs.clear();
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(userProvider);
-
-    // Initialize authentication state
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('jwt_token');
-
-      if (token == null || token.isEmpty) {
-        // No token found, redirect to login
-        if (ModalRoute.of(context)?.isCurrent == true && ModalRoute.of(context)?.settings.name != '/auth/login') {
-          ref.read(userProvider.notifier).state = null;
-          Navigator.of(context).pushReplacementNamed(redirectTo!);
+    return FutureBuilder<bool>(
+      future: _isAuthenticated(ref),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF007F3D)),
+              ),
+            ),
+          );
         }
-      } else if (user == null) {
-        // Token exists but user state is null, try to restore user data
-        try {
-          final currentUserData = await ref.read(getCurrentUserProvider)();
-          if (currentUserData != null) {
-            final restoredUser = User(
-              nom: currentUserData['nom'] ?? '',
-              prenom: currentUserData['prenom'] ?? '',
-              phone: currentUserData['telephone'] ?? '',
-              callingCode: '+226', // Default, can be updated if needed
-              password: '',
-            );
-            ref.read(userProvider.notifier).state = restoredUser;
-          } else {
-            // No user data available, redirect to login
-            if (ModalRoute.of(context)?.isCurrent == true && ModalRoute.of(context)?.settings.name != '/auth/login') {
+
+        if (snapshot.data == true) {
+          return child;
+        } else {
+          // Redirect to login after build is complete
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (ModalRoute.of(context)?.settings.name != '/auth/login') {
               Navigator.of(context).pushReplacementNamed(redirectTo!);
             }
-          }
-        } catch (e) {
-          // Failed to get user data, redirect to login
-          if (ModalRoute.of(context)?.isCurrent == true && ModalRoute.of(context)?.settings.name != '/auth/login') {
-            Navigator.of(context).pushReplacementNamed(redirectTo!);
-          }
+          });
+          return const SizedBox.shrink();
         }
-      }
-    });
-
-    return user != null ? child : const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
+      },
     );
   }
 }

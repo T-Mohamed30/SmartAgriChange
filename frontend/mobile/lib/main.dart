@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartagrichange_mobile/core/auth/auth_guard.dart';
 import 'package:smartagrichange_mobile/features/weather/presentation/providers/weather_provider.dart';
 import 'package:smartagrichange_mobile/features/weather/data/repositories/weather_repository_impl.dart';
@@ -18,7 +19,14 @@ import 'features/account/presentation/account_page.dart';
 import 'features/plant_analysis/presentation/plant_scanner_screen.dart';
 import 'features/plant_analysis/presentation/plant_detail_page.dart';
 
-void main() {
+void main() async {
+  // Clear all stored data on app start for clean authentication state
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Force synchronous clearing of all stored data
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.clear(); // Clear all stored data including tokens
+
   runApp(
     ProviderScope(
       overrides: [

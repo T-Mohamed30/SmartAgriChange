@@ -48,6 +48,17 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // Get current user to get user ID
+      final currentUser = ref.read(userProvider);
+      if (currentUser == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Utilisateur non trouvé. Veuillez vous reconnecter.'),
+          ),
+        );
+        return;
+      }
+
       // Get JWT token from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('jwt_token');
@@ -61,21 +72,35 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         return;
       }
 
-      final response = await http.put(
-        Uri.parse(ApiEndpoints.buildUrl('/api/auth/change-password')),
+      // Get current user data to extract user ID
+      final currentUserData = await ref.read(getCurrentUserProvider)();
+      if (currentUserData == null || !currentUserData.containsKey('id')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Impossible de récupérer les informations utilisateur.'),
+          ),
+        );
+        return;
+      }
+
+      final userId = currentUserData['id'].toString();
+
+      final response = await http.post(
+        Uri.parse(ApiEndpoints.buildUrl(ApiEndpoints.changePassword(userId))),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
-          'mot_de_passe_actuel': _currentPasswordController.text,
-          'nouveau_mot_de_passe': _newPasswordController.text,
+          'current_password': _currentPasswordController.text,
+          'new_password': _newPasswordController.text,
+          'new_password_confirmation': _confirmPasswordController.text,
         }),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['success']) {
+        if (data['status'] == 'success') {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Mot de passe changé avec succès')),
           );
@@ -90,9 +115,14 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
           );
         }
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Erreur serveur')));
+        final data = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              data['message'] ?? 'Erreur lors du changement de mot de passe',
+            ),
+          ),
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(

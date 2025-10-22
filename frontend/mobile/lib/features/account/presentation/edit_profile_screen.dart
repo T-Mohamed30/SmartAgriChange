@@ -7,6 +7,7 @@ import '../../auth/presentation/providers/auth_provider.dart';
 import '../../auth/domain/entities/user.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../soil_analysis/presentation/widgets/action_button.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -58,28 +59,82 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         return;
       }
 
+      // Get current user data to find the user ID
+      final getCurrentUserUseCase = ref.read(getCurrentUserProvider);
+      final currentUserData = await getCurrentUserUseCase();
+
+      if (currentUserData == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Impossible de récupérer les données utilisateur. Veuillez vous reconnecter.'),
+          ),
+        );
+        return;
+      }
+
+      // Extract user ID from current user data - try different paths
+      int? userId;
+      final user = ref.read(userProvider);
+
+      // First try to get from SharedPreferences
+      userId = prefs.getInt('user_id');
+
+      // If not found, try to get from current user data
+      if (userId == null) {
+        // Try to get user ID from /auth/me response
+        final authMeResponse = await http.get(
+          Uri.parse(ApiEndpoints.buildUrl('/auth/me')),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        );
+
+        if (authMeResponse.statusCode == 200) {
+          final authMeData = jsonDecode(authMeResponse.body);
+          final userData = authMeData['user'] ?? authMeData['data'] ?? authMeData;
+
+          if (userData != null && userData['id'] != null) {
+            userId = userData['id'];
+            // Store the user ID for future use
+            await prefs.setInt('user_id', userId!);
+          }
+        }
+      }
+
+      if (userId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ID utilisateur non trouvé. Veuillez vous reconnecter.'),
+          ),
+        );
+        return;
+      }
+
       final response = await http.put(
-        Uri.parse(ApiEndpoints.buildUrl('/api/auth/profile')),
+        Uri.parse(ApiEndpoints.buildUrl('/users/farmers/$userId/profile')),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
         body: jsonEncode({
-          'nom': _nomController.text.trim(),
-          'prenom': _prenomController.text.trim(),
+          'lastname': _nomController.text.trim(),
+          'firstname': _prenomController.text.trim(),
+          'phone_number': _telephoneController.text.trim(),
+          'calling_code': '+226', // Default for now, can be updated if needed
         }),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        if (data['success']) {
+        if (data['success'] == true || data['message'] != null) {
           // Update the user provider with new data
-          final userData = data['user'];
+          final userData = data['user'] ?? data['data'];
           final updatedUser = User(
-            nom: userData['nom'] ?? '',
-            prenom: userData['prenom'] ?? '',
-            phone: userData['phone'] ?? '',
-            callingCode: userData['calling_code'] ?? '', // Add calling code from response
+            nom: userData?['lastname'] ?? userData?['nom'] ?? _nomController.text.trim(),
+            prenom: userData?['firstname'] ?? userData?['prenom'] ?? _prenomController.text.trim(),
+            phone: userData?['phone_number'] ?? userData?['telephone'] ?? _telephoneController.text.trim(),
+            callingCode: userData?['calling_code'] ?? '+226',
             password: '', // Keep existing password or empty for security
           );
           ref.read(userProvider.notifier).state = updatedUser;
@@ -191,11 +246,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
+              IntlPhoneField(
                 controller: _telephoneController,
                 decoration: InputDecoration(
                   hintText: 'Téléphone',
-                  prefixIcon: const Icon(Icons.phone),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -204,7 +258,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     horizontal: 12,
                   ),
                 ),
-                readOnly: true, // Phone number shouldn't be editable
+                initialCountryCode: 'BF', // Burkina Faso
+                onChanged: (phone) {
+                  // Update the controller with the complete number
+                  setState(() {
+                    _telephoneController.text = phone.completeNumber;
+                  });
+                },
+                validator: (value) {
+                  if (value == null || value.number.isEmpty) {
+                    return 'Le numéro de téléphone est requis';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 32),
               ActionButton(

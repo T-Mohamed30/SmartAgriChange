@@ -4,6 +4,7 @@ import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartagrichange_mobile/features/auth/domain/entities/user.dart';
 import 'package:smartagrichange_mobile/features/auth/presentation/providers/auth_provider.dart';
+import 'package:smartagrichange_mobile/features/user_dashboard/home.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -40,10 +41,19 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       return;
     }
 
-    showDialog(
+    // Show loading dialog with better UX
+    showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator()),
+      barrierColor: Colors.black.withOpacity(0.5),
+      transitionDuration: const Duration(milliseconds: 200),
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return const Center(
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF007F3D)),
+          ),
+        );
+      },
     );
 
     try {
@@ -55,7 +65,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       );
 
       if (userData != null && mounted) {
-        // Mettre à jour les informations utilisateur
+        // Mettre à jour les informations utilisateur avec les données du login
         final user = User(
           nom: userData['nom'] ?? '',
           prenom: userData['prenom'] ?? '',
@@ -66,29 +76,12 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
         ref.read(userProvider.notifier).state = user;
 
-        // Fetch current user data from /auth/me endpoint
-        try {
-          final currentUserData = await ref.read(getCurrentUserProvider)();
-          if (currentUserData != null) {
-            // Update user with actual data from /auth/me
-            final updatedUser = User(
-              nom: currentUserData['nom'] ?? user.nom,
-              prenom: currentUserData['prenom'] ?? user.prenom,
-              phone: phoneNumber,
-              callingCode: selectedCallingCode,
-              password: '',
-            );
-            ref.read(userProvider.notifier).state = updatedUser;
-          }
-        } catch (e) {
-          // Continue with login data if /auth/me fails
-        }
-
         // Clear any cached user data to ensure fresh login
         final prefs = await SharedPreferences.getInstance();
         await prefs.remove('user_id');
 
         // Si la connexion est réussie, naviguer directement vers la page d'accueil
+        // Note: Token is already saved by the repository implementation
         if (mounted) {
           Navigator.of(context).pop(); // Close loading dialog
 
@@ -108,6 +101,49 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           SnackBar(content: Text('Erreur de connexion: ${e.toString()}')),
         );
       }
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Check if user is already logged in on app start
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkExistingLogin();
+    });
+  }
+
+  void _checkExistingLogin() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwt_token');
+
+      if (token != null && token.isNotEmpty) {
+        // Token exists, try to validate it with /auth/me
+        try {
+          final currentUserData = await ref.read(getCurrentUserProvider)();
+          if (currentUserData != null && mounted) {
+            // Token is valid, navigate to home
+            final user = User(
+              nom: currentUserData['nom'] ?? '',
+              prenom: currentUserData['prenom'] ?? '',
+              phone: currentUserData['telephone'] ?? '',
+              callingCode: '+226', // Default, can be updated if needed
+              password: '',
+            );
+            ref.read(userProvider.notifier).state = user;
+            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+          }
+        } catch (e) {
+          // Token is invalid, clear it
+          await prefs.remove('jwt_token');
+          await prefs.remove('user_id');
+          await prefs.clear();
+        }
+      }
+    } catch (e) {
+      // Handle any errors gracefully
+      print('Error checking existing login: $e');
     }
   }
 

@@ -327,7 +327,15 @@ class RemoteAuthRepository implements AuthRepository {
         }
 
         if (userData != null) {
+          // Extract user ID for change password functionality
+          final userId = userData['id'] ?? userData['user_id'];
+          if (userId != null) {
+            // Store user ID in SharedPreferences for change password
+            await prefs.setInt('user_id', int.parse(userId.toString()));
+          }
+
           return {
+            'id': userId,
             'nom': userData['lastname'] ?? userData['nom'] ?? '',
             'prenom': userData['firstname'] ?? userData['prenom'] ?? '',
             'telephone': userData['phone_number'] ?? userData['telephone'] ?? '',
