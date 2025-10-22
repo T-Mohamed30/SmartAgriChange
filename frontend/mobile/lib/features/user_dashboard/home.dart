@@ -117,8 +117,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                       final displayName = prenom.isNotEmpty
                           ? prenom
                           : user.nom.isNotEmpty
-                              ? user.nom
-                              : 'Utilisateur';
+                          ? user.nom
+                          : 'Utilisateur';
 
                       // Déterminer la salutation en fonction de l'heure
                       final greeting = hour < 12 ? 'Bonjour' : 'Bonsoir';
@@ -363,15 +363,19 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: _buildStatItem(
-                            stats['champs']?.toString() ?? '0',
-                            'Champs',
+                        child: InkWell(
+                          onTap: () => _onItemTapped(1),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: _buildStatItem(
+                              stats['champs']?.toString() ?? '0',
+                              'Champs',
+                            ),
                           ),
                         ),
                       ),

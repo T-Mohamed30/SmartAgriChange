@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/entities/champ.dart';
 import '../domain/entities/parcelle.dart';
-import '../application/analysis_service.dart' show soilDataProvider, analysisServiceProvider;
+import '../application/analysis_service.dart'
+    show soilDataProvider, analysisServiceProvider;
 import 'providers/champ_parcelle_provider.dart';
 import 'providers/selection_providers.dart' as selection_providers;
 import 'widgets/selector_card.dart';
@@ -40,6 +41,7 @@ class CropDetailScreen extends ConsumerWidget {
               style: const TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.w600,
+                fontSize: 18,
               ),
             ),
             const SizedBox(width: 8),
@@ -83,32 +85,6 @@ class CropDetailScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        recommendation,
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      const SizedBox(height: 12),
-                      ActionButton(
-                        text: 'Générer un calendrier agricole',
-                        onPressed: () {
-                          _showCalendarBottomSheet(context);
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
               Expanded(
                 child: ListView(
                   children: [
@@ -118,6 +94,7 @@ class CropDetailScreen extends ConsumerWidget {
                       ),
                       elevation: 2,
                       child: ExpansionTile(
+                        initiallyExpanded: true,
                         title: const Text(
                           'Résultats',
                           style: TextStyle(fontWeight: FontWeight.w600),
@@ -134,22 +111,34 @@ class CropDetailScreen extends ConsumerWidget {
                                 _resultRow(
                                   'assets/icons/renewable-energy 1.png',
                                   'Conductivité',
-                                  soilData != null ? '${soilData.ec.toStringAsFixed(1)} us/cm' : '0 us/cm',
+                                  soilData != null
+                                      ? '${soilData.ec.toStringAsFixed(1)} us/cm'
+                                      : '0 us/cm',
                                 ),
                                 const SizedBox(height: 16),
                                 _resultRow(
                                   'assets/icons/celsius 1.png',
                                   'Température',
-                                  soilData != null ? '${soilData.temperature.toStringAsFixed(1)} °C' : '0 °C',
+                                  soilData != null
+                                      ? '${soilData.temperature.toStringAsFixed(1)} °C'
+                                      : '0 °C',
                                 ),
                                 const SizedBox(height: 16),
                                 _resultRow(
                                   'assets/icons/humidity 1.png',
                                   'Humidité',
-                                  soilData != null ? '${soilData.humidity.toStringAsFixed(1)} %' : '0 %',
+                                  soilData != null
+                                      ? '${soilData.humidity.toStringAsFixed(1)} %'
+                                      : '0 %',
                                 ),
                                 const SizedBox(height: 16),
-                                _resultRow('assets/icons/ph.png', 'PH', soilData != null ? soilData.ph.toStringAsFixed(1) : '0'),
+                                _resultRow(
+                                  'assets/icons/ph.png',
+                                  'PH',
+                                  soilData != null
+                                      ? soilData.ph.toStringAsFixed(1)
+                                      : '0',
+                                ),
                                 const SizedBox(height: 16),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
@@ -179,9 +168,24 @@ class CropDetailScreen extends ConsumerWidget {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceEvenly,
                                   children: [
-                                    _nutrientColumn('Azote (N)', soilData != null ? '${soilData.nitrogen.toStringAsFixed(0)} mg/kg' : '0 mg/kg'),
-                                    _nutrientColumn('Phosphore (P)', soilData != null ? '${soilData.phosphorus.toStringAsFixed(0)} mg/kg' : '0 mg/kg'),
-                                    _nutrientColumn('Potassium (K)', soilData != null ? '${soilData.potassium.toStringAsFixed(0)} mg/kg' : '0 mg/kg'),
+                                    _nutrientColumn(
+                                      'Azote (N)',
+                                      soilData != null
+                                          ? '${soilData.nitrogen.toStringAsFixed(0)} mg/kg'
+                                          : '0 mg/kg',
+                                    ),
+                                    _nutrientColumn(
+                                      'Phosphore (P)',
+                                      soilData != null
+                                          ? '${soilData.phosphorus.toStringAsFixed(0)} mg/kg'
+                                          : '0 mg/kg',
+                                    ),
+                                    _nutrientColumn(
+                                      'Potassium (K)',
+                                      soilData != null
+                                          ? '${soilData.potassium.toStringAsFixed(0)} mg/kg'
+                                          : '0 mg/kg',
+                                    ),
                                   ],
                                 ),
                               ],
@@ -197,6 +201,7 @@ class CropDetailScreen extends ConsumerWidget {
                       ),
                       elevation: 2,
                       child: ExpansionTile(
+                        initiallyExpanded: true,
                         title: const Text(
                           'Conditions idéales',
                           style: TextStyle(fontWeight: FontWeight.w600),
@@ -219,6 +224,7 @@ class CropDetailScreen extends ConsumerWidget {
                       ),
                       elevation: 2,
                       child: ExpansionTile(
+                        initiallyExpanded: true,
                         title: const Text(
                           'Actions recommandées',
                           style: TextStyle(fontWeight: FontWeight.w600),
@@ -231,14 +237,23 @@ class CropDetailScreen extends ConsumerWidget {
                               if (soilData == null) {
                                 return const Padding(
                                   padding: EdgeInsets.all(16.0),
-                                  child: Text('Aucune recommandation disponible.'),
+                                  child: Text(
+                                    'Aucune recommandation disponible.',
+                                  ),
                                 );
                               }
-                              final recommendations = ref.read(analysisServiceProvider).generateSoilRecommendations(soilData);
+                              final recommendations = ref
+                                  .read(analysisServiceProvider)
+                                  .generateSoilRecommendations(
+                                    soilData,
+                                    cropName,
+                                  );
                               if (recommendations.isEmpty) {
                                 return const Padding(
                                   padding: EdgeInsets.all(16.0),
-                                  child: Text('Aucune recommandation nécessaire.'),
+                                  child: Text(
+                                    'Aucune recommandation nécessaire.',
+                                  ),
                                 );
                               }
                               return Column(
@@ -806,52 +821,180 @@ const _defaultConditions = CropConditions(
 );
 
 final Map<String, CropConditions> _conditionsByCrop = {
-  'tomate': const CropConditions(
-    nRange: '80 – 150',
-    pRange: '30 – 60',
-    kRange: '150 – 250',
-    tempRange: '18 – 27',
-    humRange: '60 – 80',
-    phRange: '6.0 – 6.8',
-  ),
   'riz': const CropConditions(
-    nRange: '50 – 120',
-    pRange: '25 – 50',
-    kRange: '100 – 200',
-    tempRange: '18 – 30',
-    humRange: '50 – 70',
-    phRange: '5.8 –7.0',
-  ),
-  'sésame': const CropConditions(
-    nRange: '60 – 120',
-    pRange: '20 – 45',
-    kRange: '80 – 160',
-    tempRange: '20 – 30',
-    humRange: '60 – 90',
-    phRange: '5.5 – 7.0',
+    nRange: '60 - 99',
+    pRange: '30 - 64',
+    kRange: '30 - 50',
+    tempRange: '20.04 - 26.98',
+    humRange: '80.12 - 84.97',
+    phRange: '5.01 - 7.91',
   ),
   'maïs': const CropConditions(
-    nRange: '40 – 100',
-    pRange: '20 – 40',
-    kRange: '80 – 150',
-    tempRange: '12 – 25',
-    humRange: '40 – 60',
-    phRange: '6.0 – 7.5',
+    nRange: '60 - 120',
+    pRange: '35 - 60',
+    kRange: '15 - 28',
+    tempRange: '18.04 - 26.55',
+    humRange: '54.43 - 75.82',
+    phRange: '5.50 - 7.00',
   ),
-  'soja': const CropConditions(
-    nRange: '40 – 80',
-    pRange: '20 – 40',
-    kRange: '80 – 140',
-    tempRange: '20 – 30',
-    humRange: '60 – 80',
-    phRange: '6.0 – 7.0',
+  'pois chiche': const CropConditions(
+    nRange: '0 - 20',
+    pRange: '50 - 78',
+    kRange: '15 - 27',
+    tempRange: '18.82 - 26.70',
+    humRange: '16.35 - 21.90',
+    phRange: '7.33 - 7.90',
   ),
-  'arachide': const CropConditions(
-    nRange: '30 – 70',
-    pRange: '20 – 40',
-    kRange: '80 – 140',
-    tempRange: '22 – 30',
-    humRange: '50 – 70',
-    phRange: '5.5 – 7.0',
+  'haricot': const CropConditions(
+    nRange: '20 - 40',
+    pRange: '60 - 79',
+    kRange: '15 - 28',
+    tempRange: '20.00 - 27.24',
+    humRange: '79.54 - 94.94',
+    phRange: '5.75 - 7.94',
+  ),
+  'pois d\'angole': const CropConditions(
+    nRange: '20 - 40',
+    pRange: '60 - 80',
+    kRange: '15 - 28',
+    tempRange: '17.91 - 27.74',
+    humRange: '48.42 - 58.75',
+    phRange: '5.48 - 7.90',
+  ),
+  'haricot de tignous': const CropConditions(
+    nRange: '20 - 40',
+    pRange: '40 - 58',
+    kRange: '5 - 15',
+    tempRange: '27.02 - 35.85',
+    humRange: '30.07 - 35.84',
+    phRange: '5.75 - 7.99',
+  ),
+  'haricot mungo': const CropConditions(
+    nRange: '20 - 40',
+    pRange: '5 - 20',
+    kRange: '5 - 18',
+    tempRange: '28.01 - 40.09',
+    humRange: '80.08 - 84.99',
+    phRange: '5.12 - 7.05',
+  ),
+  'haricot urd': const CropConditions(
+    nRange: '30 - 50',
+    pRange: '5 - 20',
+    kRange: '5 - 18',
+    tempRange: '28.01 - 40.09',
+    humRange: '75.04 - 84.98',
+    phRange: '5.23 - 7.37',
+  ),
+  'lentille': const CropConditions(
+    nRange: '0 - 20',
+    pRange: '60 - 79',
+    kRange: '15 - 30',
+    tempRange: '17.51 - 22.84',
+    humRange: '60.14 - 65.80',
+    phRange: '5.40 - 6.95',
+  ),
+  'grenade': const CropConditions(
+    nRange: '0 - 20',
+    pRange: '5 - 20',
+    kRange: '10 - 20',
+    tempRange: '18.03 - 22.81',
+    humRange: '89.98 - 94.99',
+    phRange: '5.56 - 6.59',
+  ),
+  'banane': const CropConditions(
+    nRange: '80 - 120',
+    pRange: '100 - 120',
+    kRange: '45 - 55',
+    tempRange: '26.54 - 37.81',
+    humRange: '80.11 - 84.96',
+    phRange: '5.40 - 6.95',
+  ),
+  'mangue': const CropConditions(
+    nRange: '20 - 40',
+    pRange: '20 - 39',
+    kRange: '20 - 30',
+    tempRange: '27.80 - 40.00',
+    humRange: '50.11 - 54.80',
+    phRange: '5.00 - 6.00',
+  ),
+  'raisin': const CropConditions(
+    nRange: '10 - 20',
+    pRange: '10 - 20',
+    kRange: '15 - 28',
+    tempRange: '20.00 - 40.07',
+    humRange: '79.90 - 84.98',
+    phRange: '6.30 - 7.01',
+  ),
+  'pastèque': const CropConditions(
+    nRange: '100 - 120',
+    pRange: '15 - 30',
+    kRange: '50 - 59',
+    tempRange: '25.01 - 40.97',
+    humRange: '80.20 - 84.80',
+    phRange: '6.00 - 7.00',
+  ),
+  'cantaloup': const CropConditions(
+    nRange: '100 - 120',
+    pRange: '15 - 30',
+    kRange: '50 - 59',
+    tempRange: '20.02 - 40.98',
+    humRange: '90.00 - 94.99',
+    phRange: '6.00 - 7.00',
+  ),
+  'pomme': const CropConditions(
+    nRange: '0 - 20',
+    pRange: '120 - 145',
+    kRange: '190 - 205',
+    tempRange: '20.84 - 22.80',
+    humRange: '90.00 - 94.95',
+    phRange: '5.71 - 6.00',
+  ),
+  'orange': const CropConditions(
+    nRange: '10 - 20',
+    pRange: '10 - 15',
+    kRange: '10 - 18',
+    tempRange: '15.11 - 16.96',
+    humRange: '90.01 - 94.99',
+    phRange: '6.01 - 7.00',
+  ),
+  'papaye': const CropConditions(
+    nRange: '40 - 60',
+    pRange: '40 - 60',
+    kRange: '40 - 50',
+    tempRange: '20.04 - 40.08',
+    humRange: '90.00 - 94.99',
+    phRange: '6.00 - 7.00',
+  ),
+  'noix de coco': const CropConditions(
+    nRange: '20 - 35',
+    pRange: '5 - 10',
+    kRange: '30 - 35',
+    tempRange: '27.51 - 28.56',
+    humRange: '90.01 - 94.99',
+    phRange: '5.00 - 5.50',
+  ),
+  'coton': const CropConditions(
+    nRange: '80 - 120',
+    pRange: '50 - 79',
+    kRange: '70 - 90',
+    tempRange: '23.41 - 35.84',
+    humRange: '75.04 - 84.99',
+    phRange: '6.50 - 7.99',
+  ),
+  'jute': const CropConditions(
+    nRange: '60 - 100',
+    pRange: '40 - 60',
+    kRange: '40 - 59',
+    tempRange: '24.01 - 35.53',
+    humRange: '78.02 - 84.98',
+    phRange: '6.40 - 7.99',
+  ),
+  'café': const CropConditions(
+    nRange: '80 - 120',
+    pRange: '15 - 35',
+    kRange: '15 - 30',
+    tempRange: '22.01 - 27.56',
+    humRange: '50.50 - 70.83',
+    phRange: '6.60 - 7.35',
   ),
 };
