@@ -18,6 +18,7 @@ import 'features/soil_analysis/presentation/crop_calendar_screen.dart';
 import 'features/account/presentation/account_page.dart';
 import 'features/plant_analysis/presentation/plant_scanner_screen.dart';
 import 'features/plant_analysis/presentation/plant_detail_page.dart';
+import 'features/plant_analysis/presentation/plant_full_detail_page.dart';
 
 void main() async {
   // Clear all stored data on app start for clean authentication state
@@ -139,8 +140,18 @@ class MyApp extends StatelessWidget {
               ModalRoute.of(context)?.settings.arguments
                   as Map<String, dynamic>? ??
               {};
-          final analysisId = args['analysisId'] as int?;
-          return AuthGuard(child: PlantDetailPage(analysisId: analysisId));
+          final imagePath = args['imagePath'] as String?;
+          return AuthGuard(child: PlantDetailPage(imagePath: imagePath ?? ''));
+        },
+        '/plant_analysis/full_detail': (context) {
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>? ??
+              {};
+          final imagePath = args['imagePath'] as String?;
+          return AuthGuard(
+            child: PlantFullDetailPage(imagePath: imagePath ?? ''),
+          );
         },
       },
     );

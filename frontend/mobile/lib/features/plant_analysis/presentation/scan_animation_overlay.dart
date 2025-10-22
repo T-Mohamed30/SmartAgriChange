@@ -6,10 +6,10 @@ class ScanAnimationOverlay extends StatefulWidget {
   final VoidCallback onClose;
 
   const ScanAnimationOverlay({
-    super.key,
+    Key? key,
     required this.imageBytes,
     required this.onClose,
-  });
+  }) : super(key: key);
 
   @override
   _ScanAnimationOverlayState createState() => _ScanAnimationOverlayState();

@@ -1,14 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
-import 'dart:convert';
 
 import 'package:camera/camera.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../services/plant_analysis_api.dart';
-import '../models/plant_analysis_models.dart';
 
 import 'scan_animation_overlay.dart';
 
@@ -59,9 +54,8 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
   void _onCapturePressed() async {
     if (_controller == null ||
         !_controller!.value.isInitialized ||
-        _isCapturing) {
+        _isCapturing)
       return;
-    }
 
     setState(() {
       _isCapturing = true;
@@ -81,57 +75,17 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
         builder: (_) => const Center(child: CircularProgressIndicator()),
       );
 
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final token = prefs.getString('jwt_token') ?? '';
+      // Mock analysis for development/testing
+      await Future.delayed(const Duration(seconds: 2)); // Simulate API delay
 
-        // Analysis is not mandatory linked to a parcelle, so pass null
-        final int? parcelleId = null;
+      Navigator.of(context).pop(); // remove loading
 
-        if (kIsWeb) {
-          // On web, convert image bytes to base64 string
-          final base64Image = base64Encode(bytes);
-          AnalysePlante analyse = await PlantAnalysisApi.analyserPlanteAuto(
-            parcelleId,
-            base64Image,
-            token,
-          );
-          Navigator.of(context).pop(); // remove loading
-          if (mounted) {
-            Navigator.of(context).pushReplacementNamed(
-              '/plant_analysis/detail',
-              arguments: {'analysisId': analyse.id},
-            );
-          }
-          return;
-        } else {
-          // On mobile/native, use File
-          final file = File(image.path);
-          AnalysePlante analyse = await PlantAnalysisApi.analyserPlanteAuto(
-            parcelleId,
-            file,
-            token,
-          );
-          Navigator.of(context).pop(); // remove loading
-          if (mounted) {
-            Navigator.of(context).pushReplacementNamed(
-              '/plant_analysis/detail',
-              arguments: {'analysisId': analyse.id},
-            );
-          }
-          return;
-        }
-      } catch (e) {
-        Navigator.of(context).pop();
-        // Show error and allow retry
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Échec de l\'analyse: $e. Veuillez réessayer.')),
+      // Navigate to detail page with captured image
+      if (mounted) {
+        Navigator.of(context).pushReplacementNamed(
+          '/plant_analysis/detail',
+          arguments: {'imagePath': image.path},
         );
-        setState(() {
-          _isCapturing = false;
-          _capturedImageBytes = null;
-        });
-        return;
       }
     } catch (e) {
       ScaffoldMessenger.of(
