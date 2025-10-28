@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:cross_file/cross_file.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:smartagrichange_mobile/core/network/api_endpoints.dart';
 import 'package:smartagrichange_mobile/core/network/dio_client.dart';
@@ -23,34 +25,74 @@ class PlantAnalysisService {
 
   /// Upload a single image for plant analysis
   Future<AnomalyAnalysisResponse> analyzePlantImage(
-    File imageFile, {
+    XFile imageFile, {
     int? parcelId,
   }) async {
+    debugPrint('PlantAnalysisService: Starting plant image analysis...');
     try {
+      debugPrint('PlantAnalysisService: Getting auth headers...');
       final headers = await _getAuthHeaders();
+      debugPrint('PlantAnalysisService: Auth headers obtained');
 
-      final formData = FormData.fromMap({
-        'image': await MultipartFile.fromFile(
-          imageFile.path,
-          filename: 'plant_image.jpg',
+      debugPrint('PlantAnalysisService: Preparing form data...');
+      final formData = FormData();
+
+      // Use XFile for cross-platform compatibility
+      debugPrint('PlantAnalysisService: Using cross-platform file handling');
+      final bytes = await imageFile.readAsBytes();
+      formData.files.add(
+        MapEntry(
+          'image',
+          MultipartFile.fromBytes(bytes, filename: 'plant_image.jpg'),
         ),
-        if (parcelId != null) 'parcel_id': parcelId.toString(),
-      });
+      );
 
+      if (parcelId != null) {
+        formData.fields.add(MapEntry('parcel_id', parcelId.toString()));
+      }
+      debugPrint('PlantAnalysisService: Form data prepared');
+
+      debugPrint(
+        'PlantAnalysisService: Sending POST request to /anomaly-analyses/img',
+      );
       final response = await _dioClient.dio.post(
         ApiEndpoints.buildUrl('/anomaly-analyses/img'),
         data: formData,
         options: Options(headers: headers),
       );
+      debugPrint(
+        'PlantAnalysisService: Response received - Status: ${response.statusCode}',
+      );
+      debugPrint(
+        'PlantAnalysisService: Response data: ${jsonEncode(response.data)}',
+      );
+      debugPrint('Response headers: ${response.headers}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return AnomalyAnalysisResponse.fromJson(response.data['data']);
+        debugPrint(
+          'PlantAnalysisService: Analysis successful, parsing response...',
+        );
+        // Check if the response contains an error status
+        final responseData = response.data['data'];
+        if (responseData is Map<String, dynamic> && responseData['status'] == 'failed') {
+          final errorMessage = responseData['message'] ?? 'Unknown error occurred';
+          final errorDetails = responseData['errors'] ?? '';
+          debugPrint(
+            'PlantAnalysisService: API returned error status - Message: $errorMessage, Details: $errorDetails',
+          );
+          throw Exception('Analysis failed: $errorMessage${errorDetails.isNotEmpty ? ' - $errorDetails' : ''}');
+        }
+        return AnomalyAnalysisResponse.fromJson(responseData);
       } else {
+        debugPrint(
+          'PlantAnalysisService: Failed to analyze plant image - Status: ${response.statusCode}, Message: ${response.statusMessage}',
+        );
         throw Exception(
           'Failed to analyze plant image: ${response.statusMessage}',
         );
       }
     } catch (e) {
+      debugPrint('PlantAnalysisService: Error analyzing plant image: $e');
       throw Exception('Error analyzing plant image: $e');
     }
   }

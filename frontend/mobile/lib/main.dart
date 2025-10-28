@@ -4,11 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:typed_data';
 import 'package:smartagrichange_mobile/core/auth/auth_guard.dart';
+import 'package:smartagrichange_mobile/core/network/dio_client.dart';
 import 'package:smartagrichange_mobile/features/weather/presentation/providers/weather_provider.dart';
 import 'package:smartagrichange_mobile/features/weather/data/repositories/weather_repository_impl.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/presentation/detection_capteurs.dart';
 import 'package:smartagrichange_mobile/features/user_dashboard/home.dart';
 import 'package:smartagrichange_mobile/features/plant_analysis/models/anomaly_analysis_models.dart';
+import 'package:provider/provider.dart' as provider;
 import 'features/onboarding/presentation/welcome_screen.dart';
 import 'features/onboarding/presentation/stepper_screen.dart';
 import 'features/auth/presentation/register.dart';
@@ -35,7 +37,10 @@ void main() async {
       overrides: [
         weatherRepositoryProvider.overrideWithValue(WeatherRepository()),
       ],
-      child: const MyApp(),
+      child: provider.Provider<DioClient>(
+        create: (_) => DioClient(),
+        child: const MyApp(),
+      ),
     ),
   );
 }

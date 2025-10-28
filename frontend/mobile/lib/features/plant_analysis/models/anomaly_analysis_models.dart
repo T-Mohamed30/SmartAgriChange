@@ -1,6 +1,6 @@
 /// Response for anomaly detection analysis
 class AnomalyAnalysisResponse {
-  final int id;
+  final int? id;
   final ClassifierPrediction modelResult;
   final DateTime createdAt;
   final int userId;
@@ -10,7 +10,7 @@ class AnomalyAnalysisResponse {
   final Anomaly anomaly;
 
   AnomalyAnalysisResponse({
-    required this.id,
+    this.id,
     required this.modelResult,
     required this.createdAt,
     required this.userId,

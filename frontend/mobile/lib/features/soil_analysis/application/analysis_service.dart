@@ -301,7 +301,7 @@ class AnalysisService {
     // Essayer d'abord avec Dio configuré pour éviter les problèmes CORS
     final dio = Dio(
       BaseOptions(
-        baseUrl: 'http://localhost:8000',
+        baseUrl: 'http://https://smartagrichangeapi.kgslab.com/api',
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
         headers: {

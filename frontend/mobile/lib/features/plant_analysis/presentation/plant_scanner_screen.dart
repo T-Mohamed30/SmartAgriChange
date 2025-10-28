@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
+import 'package:cross_file/cross_file.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -39,25 +40,45 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
   }
 
   void _initService() {
-    final dioClient = Provider.of<DioClient>(context, listen: false);
-    _plantAnalysisService = PlantAnalysisService(dioClient);
+    debugPrint('PlantScannerScreen: Initializing service...');
+    try {
+      final dioClient = Provider.of<DioClient>(context, listen: false);
+      _plantAnalysisService = PlantAnalysisService(dioClient);
+      debugPrint('PlantScannerScreen: Service initialized successfully');
+    } catch (e) {
+      debugPrint('PlantScannerScreen: Error initializing service: $e');
+      setState(() {
+        _errorMessage = 'Erreur d\'initialisation du service: $e';
+      });
+    }
   }
 
   Future<void> _initCamera() async {
+    debugPrint('PlantScannerScreen: Initializing camera...');
     try {
       cameras = await availableCameras();
+      debugPrint(
+        'PlantScannerScreen: Available cameras: ${cameras?.length ?? 0}',
+      );
       if (cameras != null && cameras!.isNotEmpty) {
+        debugPrint('PlantScannerScreen: Using camera: ${cameras!.first.name}');
         _controller = CameraController(
           cameras!.first,
           ResolutionPreset.high,
           enableAudio: false,
         );
         await _controller!.initialize();
+        debugPrint('PlantScannerScreen: Camera initialized successfully');
         if (mounted) setState(() {});
+      } else {
+        debugPrint('PlantScannerScreen: No cameras available');
+        setState(() {
+          _errorMessage = 'Aucune caméra disponible';
+        });
       }
     } catch (e) {
       // Handle camera initialization error
-      debugPrint('Error initializing camera: $e');
+      debugPrint('PlantScannerScreen: Error initializing camera: $e');
       setState(() {
         _errorMessage = 'Erreur d\'initialisation de la caméra: $e';
       });
@@ -71,11 +92,16 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
   }
 
   void _onCapturePressed() async {
+    debugPrint('PlantScannerScreen: Capture button pressed');
     if (_controller == null ||
         !_controller!.value.isInitialized ||
         _isCapturing ||
-        _isAnalyzing)
+        _isAnalyzing) {
+      debugPrint(
+        'PlantScannerScreen: Cannot capture - controller: $_controller, initialized: ${_controller?.value.isInitialized}, capturing: $_isCapturing, analyzing: $_isAnalyzing',
+      );
       return;
+    }
 
     setState(() {
       _isCapturing = true;
@@ -83,15 +109,19 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
     });
 
     try {
+      debugPrint('PlantScannerScreen: Taking picture...');
       final image = await _controller!.takePicture();
+      debugPrint('PlantScannerScreen: Picture taken at: ${image.path}');
       final bytes = await image.readAsBytes();
+      debugPrint('PlantScannerScreen: Image bytes length: ${bytes.length}');
       setState(() {
         _capturedImageBytes = bytes;
       });
 
       // Start analysis
-      await _analyzeImage(File(image.path));
+      await _analyzeImage(XFile(image.path));
     } catch (e) {
+      debugPrint('PlantScannerScreen: Error during capture: $e');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Erreur lors de la capture: $e')));
@@ -102,9 +132,16 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
   }
 
   Future<void> _onGalleryPressed() async {
-    if (_isCapturing || _isAnalyzing) return;
+    debugPrint('PlantScannerScreen: Gallery button pressed');
+    if (_isCapturing || _isAnalyzing) {
+      debugPrint(
+        'PlantScannerScreen: Cannot select from gallery - capturing: $_isCapturing, analyzing: $_isAnalyzing',
+      );
+      return;
+    }
 
     try {
+      debugPrint('PlantScannerScreen: Picking image from gallery...');
       final pickedFile = await _imagePicker.pickImage(
         source: ImageSource.gallery,
         maxWidth: 1920,
@@ -113,30 +150,42 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
       );
 
       if (pickedFile != null) {
+        debugPrint('PlantScannerScreen: Image selected: ${pickedFile.path}');
         final bytes = await pickedFile.readAsBytes();
+        debugPrint(
+          'PlantScannerScreen: Gallery image bytes length: ${bytes.length}',
+        );
         setState(() {
           _capturedImageBytes = bytes;
           _isCapturing = true;
         });
 
         // Start analysis
-        await _analyzeImage(File(pickedFile.path));
+        await _analyzeImage(pickedFile);
+      } else {
+        debugPrint('PlantScannerScreen: No image selected from gallery');
       }
     } catch (e) {
+      debugPrint('PlantScannerScreen: Error selecting from gallery: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erreur lors de la sélection: $e')),
       );
     }
   }
 
-  Future<void> _analyzeImage(File imageFile) async {
-    if (_plantAnalysisService == null) return;
+  Future<void> _analyzeImage(XFile imageFile) async {
+    debugPrint('PlantScannerScreen: Starting image analysis...');
+    if (_plantAnalysisService == null) {
+      debugPrint('PlantScannerScreen: PlantAnalysisService is null');
+      return;
+    }
 
     setState(() {
       _isAnalyzing = true;
     });
 
     try {
+      debugPrint('PlantScannerScreen: Showing loading dialog...');
       // Show loading dialog
       showDialog(
         context: context,
@@ -153,15 +202,20 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
         ),
       );
 
+      debugPrint(
+        'PlantScannerScreen: Calling API to analyze image: ${imageFile.path}',
+      );
       // Call API to analyze the image
       final analysisResult = await _plantAnalysisService!.analyzePlantImage(
         imageFile,
       );
+      debugPrint('PlantScannerScreen: Analysis completed successfully');
 
       Navigator.of(context).pop(); // Remove loading dialog
 
       // Navigate to detail page with analysis result
       if (mounted) {
+        debugPrint('PlantScannerScreen: Navigating to detail page...');
         Navigator.of(context).pushReplacementNamed(
           '/plant_analysis/detail',
           arguments: {
@@ -171,6 +225,7 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
         );
       }
     } catch (e) {
+      debugPrint('PlantScannerScreen: Error during analysis: $e');
       Navigator.of(context).pop(); // Remove loading dialog
 
       ScaffoldMessenger.of(
