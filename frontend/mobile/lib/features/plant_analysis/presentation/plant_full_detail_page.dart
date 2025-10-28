@@ -29,7 +29,8 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    final rubricsLength = widget.analysisResult?.plant.rubrics?.length ?? 0;
+    _tabController = TabController(length: 1 + rubricsLength, vsync: this);
   }
 
   @override
@@ -184,7 +185,8 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
               label: 'Cycle de vie',
               value: plant?.cycleVie ?? 'Non spécifié',
             ),
-            if (plant?.description != null && plant!.description!.isNotEmpty) ...[
+            if (plant?.description != null &&
+                plant!.description!.isNotEmpty) ...[
               const SizedBox(height: 12),
               const Text(
                 'Description',
@@ -209,80 +211,46 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
     );
   }
 
-  Widget _buildRubricSection(Rubric rubric) {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              rubric.name,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            Column(
-              children: rubric.infos?.map((info) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          info.title,
-                          style: const TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          info.content,
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(color: Colors.black87),
-                        ),
-                      ),
-                    ],
+  Widget _buildRubricView(Rubric rubric) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: (rubric.infos ?? []).map((info) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  info.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black87,
                   ),
-                );
-              }).toList() ?? [],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  info.content,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black87,
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        }).toList(),
       ),
     );
   }
 
-  List<Widget> _buildDynamicCareItems() {
-    final plant = widget.analysisResult?.plant;
-    if (plant?.rubrics == null || plant!.rubrics!.isEmpty) {
-      // Fallback to static items if no rubrics
-      return [
-        _buildCareItem('Eau', 'Arrosage et besoins hydriques'),
-        _buildCareItem('Fertilisation', 'Engrais et nutrition'),
-        _buildCareItem('Taille / entretien', 'Techniques de taille et maintenance'),
-        _buildCareItem('Propagation', 'Multiplication et bouturage'),
-        _buildCareItem('Calendrier cultural', 'Périodes optimales pour chaque soin'),
-      ];
-    }
 
-    // Build dynamic items from rubrics
-    return plant.rubrics!.map((rubric) {
-      return _buildRubricSection(rubric);
-    }).toList();
-  }
 
   Widget _buildMorphology() {
-    final List<String> items = [
-      'Racines',
-      'Feuilles',
-      'Fleurs',
-      'Fruits',
-    ];
+    final List<String> items = ['Racines', 'Feuilles', 'Fleurs', 'Fruits'];
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -354,9 +322,13 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
       orElse: () => Rubric(id: '', plantId: 0, name: '', infos: []),
     );
 
-    if (morphologyRubric == null || morphologyRubric.infos == null || morphologyRubric.infos!.isEmpty) {
+    if (morphologyRubric == null ||
+        morphologyRubric?.infos == null ||
+        (morphologyRubric?.infos ?? []).isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Informations sur $morphologyType non disponibles')),
+        SnackBar(
+          content: Text('Informations sur $morphologyType non disponibles'),
+        ),
       );
       return;
     }
@@ -365,15 +337,16 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
     // Try exact match first, then partial match
     RubricInfo? matchingInfo;
     try {
-      matchingInfo = morphologyRubric.infos!.firstWhere(
+      matchingInfo = (morphologyRubric?.infos ?? []).firstWhere(
         (info) => info.title.toLowerCase() == morphologyType.toLowerCase(),
       );
     } catch (e) {
       // If exact match fails, try partial match
       try {
-        matchingInfo = morphologyRubric.infos!.firstWhere(
-          (info) => info.title.toLowerCase().contains(morphologyType.toLowerCase()) ||
-                   morphologyType.toLowerCase().contains(info.title.toLowerCase()),
+        matchingInfo = (morphologyRubric?.infos ?? []).firstWhere(
+          (info) =>
+              info.title.toLowerCase().contains(morphologyType.toLowerCase()) ||
+              morphologyType.toLowerCase().contains(info.title.toLowerCase()),
         );
       } catch (e) {
         matchingInfo = null;
@@ -382,7 +355,9 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
 
     if (matchingInfo == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Informations sur $morphologyType non disponibles')),
+        SnackBar(
+          content: Text('Informations sur $morphologyType non disponibles'),
+        ),
       );
       return;
     }
@@ -428,13 +403,18 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
     Rubric? careRubric;
     for (final rubric in plant?.rubrics ?? []) {
       final rubricNameLower = rubric.name.toLowerCase();
-      if (terms.any((term) => rubricNameLower.contains(term) || term.contains(rubricNameLower))) {
+      if (terms.any(
+        (term) =>
+            rubricNameLower.contains(term) || term.contains(rubricNameLower),
+      )) {
         careRubric = rubric;
         break;
       }
     }
 
-    if (careRubric == null || careRubric.infos == null || careRubric.infos!.isEmpty) {
+    if (careRubric == null ||
+        careRubric?.infos == null ||
+        (careRubric?.infos ?? []).isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Informations sur $careType non disponibles')),
       );
@@ -448,7 +428,7 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: careRubric.infos!.map((info) {
+            children: (careRubric?.infos ?? []).map((info) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: Column(
@@ -566,12 +546,16 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
           size: 16,
           color: Colors.grey.shade400,
         ),
-        onTap: onTap ?? () {
-          // Handle tap for each care item
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Section "$title" - Bientôt disponible')),
-          );
-        },
+        onTap:
+            onTap ??
+            () {
+              // Handle tap for each care item
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Section "$title" - Bientôt disponible'),
+                ),
+              );
+            },
       ),
     );
   }
@@ -695,6 +679,27 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
 
   @override
   Widget build(BuildContext context) {
+    final rubrics = widget.analysisResult?.plant.rubrics ?? [];
+    final tabs = <Tab>[const Tab(text: 'Fiche plante')];
+    tabs.addAll(rubrics.map((r) => Tab(text: r.name)));
+
+    final tabViews = <Widget>[
+      // Tab 1: fiche plante (scrollable)
+      SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 12),
+            _buildCardInfo(),
+            _buildMorphology(),
+            _buildPhotoGallery(),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    ];
+    tabViews.addAll(rubrics.map((r) => _buildRubricView(r)));
+
     // Page principale avec TabBar
     return Scaffold(
       body: Column(
@@ -718,141 +723,14 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
               horizontal: 16,
               vertical: 8,
             ),
-            tabs: const [
-              Tab(text: 'Fiche plante'),
-              Tab(text: 'Soins & Culture'),
-              Tab(text: 'Conditions idéales'),
-              Tab(text: 'Problèmes et solutions'),
-              Tab(text: 'Economie et contexte local'),
-            ],
+            tabs: tabs,
           ),
 
           // contenu tab
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: [
-                // Tab 1: fiche plante (scrollable)
-                SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 12),
-                      _buildCardInfo(),
-                      _buildMorphology(),
-                      _buildPhotoGallery(),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                ),
-
-                // Tab 2: Soins & Culture
-                SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildCareItem('Eau', 'Arrosage et besoins hydriques', onTap: () => _showCareDetail('Eau')),
-                            _buildCareItem('Fertilisation', 'Engrais et nutrition', onTap: () => _showCareDetail('Fertilisation')),
-                            _buildCareItem('Taille / entretien', 'Techniques de taille et maintenance', onTap: () => _showCareDetail('Taille / entretien')),
-                            _buildCareItem('Propagation', 'Multiplication et bouturage'),
-                            _buildCareItem('Calendrier cultural', 'Périodes optimales pour chaque soin'),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Tab 3: Conditions idéales
-                SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildCareItem(
-                              'Température',
-                              'Conditions thermiques optimales',
-                            ),
-                            _buildCareItem(
-                              'Sol',
-                              'Type de sol et pH recommandé',
-                            ),
-                            _buildCareItem(
-                              'Lumière',
-                              'Exposition et ensoleillement',
-                            ),
-                            _buildCareItem(
-                              'Zones de cultures principales',
-                              'Régions adaptées à la culture',
-                            ),
-                            _buildCareItem(
-                              'Saisonnalité locale',
-                              'Calendrier cultural spécifique',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Tab 4: Problèmes et solutions
-                SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildProblemSection('Maladies courantes'),
-                        _buildProblemSection('Ravageurs'),
-                        _buildProblemSection('Carences fréquentes'),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // Tab 5: Economie et contexte local
-                SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildEconomicSection('Prix marché', [
-                          '200-500 FCFA/kg selon variété et qualité',
-                        ]),
-                        _buildEconomicSection('Utilisation', [
-                          'Consommation fraîche',
-                          'Transformation (jus, séché, confiture)',
-                          'Bois du manguier utilisé en menuiserie',
-                        ]),
-                        _buildEconomicSection('Importance sociale', [
-                          'Source de revenus pour petits producteurs',
-                          'Activité importante pour les femmes (vente au marché, transformation artisanale)',
-                          'Export possible vers Côte d\'Ivoire, Ghana, Europe (variétés améliorées)',
-                        ]),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+              children: tabViews,
             ),
           ),
         ],
