@@ -1,4 +1,5 @@
 import '../entities/sensor.dart';
+import '../entities/npk_data.dart';
 
 abstract class SensorRepository {
   /// démarre la recherche/bluetooth scan
@@ -12,4 +13,5 @@ abstract class SensorRepository {
 
   /// optional: démarrer mesure / trigger analyse
   Future<void> startAnalysis(String sensorId, {String? parcelleId});
+  Stream<NPKData>? get npkDataStream;
 }

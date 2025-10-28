@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/sensor.dart';
+import '../../domain/entities/npk_data.dart';
 import '../../domain/repositories/sensor_repository.dart';
 import '../../data/repositories/sensor_repository_impl.dart';
 
@@ -19,6 +20,12 @@ final detectedSensorsStreamProvider = StreamProvider<List<Sensor>>((ref) {
 
 /// provider pour capteur sélectionné
 final selectedSensorProvider = StateProvider<Sensor?>((ref) => null);
+
+/// provider pour le stream NPK data
+final npkDataStreamProvider = StreamProvider<NPKData>((ref) {
+  final repo = ref.watch(sensorRepositoryProvider);
+  return repo.npkDataStream!;
+});
 
 /// provider pour l'état d'une détection (idle/searching/found)
 enum SensorDetectionState { idle, searching, found, notFound, error }

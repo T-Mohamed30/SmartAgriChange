@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math' as math;
+import 'package:share_plus/share_plus.dart';
 
-import '../application/analysis_service.dart' show analysisServiceProvider, recommendationsProvider, soilDataProvider;
+import '../application/analysis_service.dart'
+    show
+        analysisServiceProvider,
+        recommendationsProvider,
+        soilDataProvider,
+        AnalysisService;
 
 class AnalysisArgs {
   final String sensorId;
@@ -59,182 +65,257 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
     final recommendations = ref.watch(recommendationsProvider);
     final soilData = ref.watch(soilDataProvider);
     return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (args != null) ...[
-                Text(
-                  args.champName == null
-                      ? 'Capteur: ${args.sensorName}'
-                      : 'Capteur: ${args.sensorName} • Champ: ${args.champName}${args.parcelleName != null ? ' • Parcelle: ${args.parcelleName}' : ''}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
-                ),
-                const SizedBox(height: 16),
-              ],
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (args != null) ...[
+            Text(
+              args.champName == null
+                  ? 'Capteur: ${args.sensorName}'
+                  : 'Capteur: ${args.sensorName} • Champ: ${args.champName}${args.parcelleName != null ? ' • Parcelle: ${args.parcelleName}' : ''}',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+            ),
+            const SizedBox(height: 16),
+          ],
 
-              _metricRow('Conductivité', soilData != null ? '${soilData.ec.toStringAsFixed(1)} us/cm' : '0 us/cm', 'assets/icons/renewable-energy 1.png'),
-              const SizedBox(height: 16),
-              _metricRow('Température', soilData != null ? '${soilData.temperature.toStringAsFixed(1)} °C' : '0 °C', 'assets/icons/celsius 1.png'),
-              const SizedBox(height: 16),
-              _metricRow('Humidité', soilData != null ? '${soilData.humidity.toStringAsFixed(1)} %' : '0 %', 'assets/icons/humidity 1.png'),
-              const SizedBox(height: 16),
-              _metricRow('Ph', soilData != null ? soilData.ph.toStringAsFixed(1) : '0', 'assets/icons/ph.png'),
+          _metricRow(
+            'Conductivité',
+            soilData != null
+                ? '${soilData.ec.toStringAsFixed(1)} us/cm'
+                : '0 us/cm',
+            'assets/icons/renewable-energy 1.png',
+          ),
+          const SizedBox(height: 16),
+          _metricRow(
+            'Température',
+            soilData != null
+                ? '${soilData.temperature.toStringAsFixed(1)} °C'
+                : '0 °C',
+            'assets/icons/celsius 1.png',
+          ),
+          const SizedBox(height: 16),
+          _metricRow(
+            'Humidité',
+            soilData != null
+                ? '${soilData.humidity.toStringAsFixed(1)} %'
+                : '0 %',
+            'assets/icons/humidity 1.png',
+          ),
+          const SizedBox(height: 16),
+          _metricRow(
+            'Ph',
+            soilData != null ? soilData.ph.toStringAsFixed(1) : '0',
+            'assets/icons/ph.png',
+          ),
 
-              const SizedBox(height: 24),
+          const SizedBox(height: 24),
 
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset('assets/icons/npk-illustration.png', width: 24, height: 24, fit: BoxFit.contain),
-                        const SizedBox(width: 8),
-                        const Text('Nutriments', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      ],
+                    Image.asset(
+                      'assets/icons/npk-illustration.png',
+                      width: 24,
+                      height: 24,
+                      fit: BoxFit.contain,
                     ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text('Azote (N)'),
-                              SizedBox(height: 4),
-                              Text(soilData != null ? '${soilData.nitrogen.toStringAsFixed(0)} mg/kg' : '0 mg/kg', style: TextStyle(fontWeight: FontWeight.w700)),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text('Phosphore (P)'),
-                              SizedBox(height: 4),
-                              Text(soilData != null ? '${soilData.phosphorus.toStringAsFixed(0)} mg/kg' : '0 mg/kg', style: TextStyle(fontWeight: FontWeight.w700)),
-                            ],
-                          ),
-                        ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text('Potassium (K)'),
-                              SizedBox(height: 4),
-                              Text(soilData != null ? '${soilData.potassium.toStringAsFixed(0)} mg/kg' : '0 mg/kg', style: TextStyle(fontWeight: FontWeight.w700)),
-                            ],
-                          ),
-                        ),
-                      ],
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Nutriments',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 16),
-                Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Consumer(
-                  builder: (context, ref, _) {
-                    final soilData = ref.watch(soilDataProvider);
-                    if (soilData == null) {
-                      return const Text('Description du sol non disponible.');
-                    }
-                    final description = ref.read(analysisServiceProvider).generateSoilDescription(soilData);
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Description', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 8),
-                        Text(
-                          description,
-                          style: const TextStyle(color: Colors.black87),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Nos Recommendations', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 12),
-                      Expanded(
-                        child: recommendations.isEmpty
-                          ? const Center(child: Text('Chargement des recommandations...'))
-                          : ListView.separated(
-                              itemCount: recommendations.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 8),
-                              itemBuilder: (context, index) {
-                                final item = recommendations[index];
-                                return Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFE5F8EC),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              item.culture.name,
-                                              style: const TextStyle(fontWeight: FontWeight.w700),
-                                            ),
-                                            const SizedBox(height: 2),
-                                            Text('compatibilité: ${item.compatibilityScore.toStringAsFixed(1)}%'),
-                                          ],
-                                        ),
-                                      ),
-                                      InkWell(
-                                        borderRadius: BorderRadius.circular(16),
-                                        onTap: () {
-                                          Navigator.pushNamed(
-                                            context,
-                                            '/soil_analysis/crop_detail',
-                                            arguments: item.culture.name,
-                                          );
-                                        },
-                                        child: const Padding(
-                                          padding: EdgeInsets.all(4.0),
-                                          child: Icon(Icons.chevron_right, color: Colors.black),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text('Azote (N)'),
+                          SizedBox(height: 4),
+                          Text(
+                            soilData != null
+                                ? '${soilData.nitrogen.toStringAsFixed(0)} mg/kg'
+                                : '0 mg/kg',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text('Phosphore (P)'),
+                          SizedBox(height: 4),
+                          Text(
+                            soilData != null
+                                ? '${soilData.phosphorus.toStringAsFixed(0)} mg/kg'
+                                : '0 mg/kg',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text('Potassium (K)'),
+                          SizedBox(height: 4),
+                          Text(
+                            soilData != null
+                                ? '${soilData.potassium.toStringAsFixed(0)} mg/kg'
+                                : '0 mg/kg',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        );
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Consumer(
+              builder: (context, ref, _) {
+                final soilData = ref.watch(soilDataProvider);
+                if (soilData == null) {
+                  return const Text('Description du sol non disponible.');
+                }
+                final description = ref
+                    .read(analysisServiceProvider)
+                    .generateSoilDescription(soilData);
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Description',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      description,
+                      style: const TextStyle(color: Colors.black87),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Nos Recommendations',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: recommendations.isEmpty
+                        ? const Center(
+                            child: Text('Chargement des recommandations...'),
+                          )
+                        : ListView.separated(
+                            itemCount: recommendations.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 8),
+                            itemBuilder: (context, index) {
+                              final item = recommendations[index];
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE5F8EC),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item.culture.name,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'compatibilité: ${item.compatibilityScore.toStringAsFixed(1)}%',
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    InkWell(
+                                      borderRadius: BorderRadius.circular(16),
+                                      onTap: () {
+                                        Navigator.pushNamed(
+                                          context,
+                                          '/soil_analysis/crop_detail',
+                                          arguments: item.culture.name,
+                                        );
+                                      },
+                                      child: const Padding(
+                                        padding: EdgeInsets.all(4.0),
+                                        child: Icon(
+                                          Icons.chevron_right,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _metricTile(String label, String value, String asset) {
@@ -260,14 +341,16 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  label,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: Colors.black87),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: Colors.black87),
                 ),
               ],
             ),
@@ -296,6 +379,38 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
     );
   }
 
+  String _generateShareText(dynamic soilData, List<dynamic> recommendations) {
+    final buffer = StringBuffer();
+    buffer.writeln('Résultats de l\'analyse du sol - SmartAgriChange');
+    buffer.writeln();
+    buffer.writeln('Paramètres du sol:');
+    buffer.writeln('Conductivité: ${soilData.ec.toStringAsFixed(1)} us/cm');
+    buffer.writeln(
+      'Température: ${soilData.temperature.toStringAsFixed(1)} °C',
+    );
+    buffer.writeln('Humidité: ${soilData.humidity.toStringAsFixed(1)} %');
+    buffer.writeln('pH: ${soilData.ph.toStringAsFixed(1)}');
+    buffer.writeln();
+    buffer.writeln('Nutriments:');
+    buffer.writeln('Azote (N): ${soilData.nitrogen.toStringAsFixed(0)} mg/kg');
+    buffer.writeln(
+      'Phosphore (P): ${soilData.phosphorus.toStringAsFixed(0)} mg/kg',
+    );
+    buffer.writeln(
+      'Potassium (K): ${soilData.potassium.toStringAsFixed(0)} mg/kg',
+    );
+    buffer.writeln();
+    buffer.writeln('Recommandations:');
+    for (final rec in recommendations) {
+      buffer.writeln(
+        '- ${rec.culture.name}: ${rec.compatibilityScore.toStringAsFixed(1)}% de compatibilité',
+      );
+    }
+    buffer.writeln();
+    buffer.writeln('Partagé depuis SmartAgriChange');
+    return buffer.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
     final args = ModalRoute.of(context)?.settings.arguments as AnalysisArgs?;
@@ -307,7 +422,14 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               elevation: 0,
               centerTitle: true,
-              title: const Text('Résultat', style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.w600)),
+              title: const Text(
+                'Résultat',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               leadingWidth: 64,
               leading: Padding(
                 padding: const EdgeInsets.only(left: 16),
@@ -325,124 +447,143 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                   ),
                 ),
               ),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.share, color: Colors.black),
+                  onPressed: () async {
+                    final soilData = ref.read(soilDataProvider);
+                    final recommendations = ref.read(recommendationsProvider);
+                    if (soilData != null && recommendations.isNotEmpty) {
+                      final shareText = _generateShareText(
+                        soilData,
+                        recommendations,
+                      );
+                      await Share.share(shareText);
+                    }
+                  },
+                ),
+              ],
               iconTheme: const IconThemeData(color: Colors.black),
             )
           : null,
-            body: SafeArea(
+      body: SafeArea(
         top: !_showResults,
-        child: _showResults ? _buildDataDisplay(args) : Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Zone d'animation
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.8,
-                height: 360,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    // Image de sol centrée et agrandie
-                    final solWidth = constraints.maxWidth * 0.85;
-                    final double solHeight = solWidth / 2;
+        child: _showResults
+            ? _buildDataDisplay(args)
+            : Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Zone d'animation
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.8,
+                      height: 360,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          // Image de sol centrée et agrandie
+                          final solWidth = constraints.maxWidth * 0.85;
+                          final double solHeight = solWidth / 2;
 
-                    // Centre horizontal
-                    final double cx = constraints.maxWidth / 2;
-                    // Rayon de la courbe des icônes (au-dessus du sol)
-                    final double R = solWidth * 0.45;
-                    // Décalage vertical de base (les icônes collent la surface)
-                    final double baseOffset = solHeight - 6;
+                          // Centre horizontal
+                          final double cx = constraints.maxWidth / 2;
+                          // Rayon de la courbe des icônes (au-dessus du sol)
+                          final double R = solWidth * 0.45;
+                          // Décalage vertical de base (les icônes collent la surface)
+                          final double baseOffset = solHeight - 6;
 
-                    // Angles en degrés (gauche -> droite) pour 5 icônes
-                    final List<double> deg = [160, 125, 90, 55, 20];
-                    final List<Offset> bases = deg.map((d) {
-                      final rad = d * math.pi / 180.0;
-                      final x = cx + R * math.cos(rad);
-                      final y = baseOffset + R * math.sin(rad);
-                      return Offset(x, y);
-                    }).toList();
+                          // Angles en degrés (gauche -> droite) pour 5 icônes
+                          final List<double> deg = [160, 125, 90, 55, 20];
+                          final List<Offset> bases = deg.map((d) {
+                            final rad = d * math.pi / 180.0;
+                            final x = cx + R * math.cos(rad);
+                            final y = baseOffset + R * math.sin(rad);
+                            return Offset(x, y);
+                          }).toList();
 
-                    return Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Sol (en bas, sous les icônes)
-                        Positioned(
-                          bottom: 0,
-                          left: (constraints.maxWidth - solWidth) / 2,
-                          child: SizedBox(
-                            width: solWidth,
-                            height: solHeight,
-                            child: Image.asset(
-                              'assets/icons/sol_1.png',
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
+                          return Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Sol (en bas, sous les icônes)
+                              Positioned(
+                                bottom: 0,
+                                left: (constraints.maxWidth - solWidth) / 2,
+                                child: SizedBox(
+                                  width: solWidth,
+                                  height: solHeight,
+                                  child: Image.asset(
+                                    'assets/icons/sol_1.png',
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                              ),
 
-                        // 5 icônes synchronisées sur une demi-courbe
-                        _FloatingIcon(
-                          controller: _controller,
-                          asset: 'assets/icons/npk-illustration.png',
-                          baseLeft: bases[0].dx,
-                          baseBottom: bases[0].dy,
-                          travel: 80,
-                          size: 40,
-                        ),
-                        _FloatingIcon(
-                          controller: _controller,
-                          asset: 'assets/icons/ph.png',
-                          baseLeft: bases[1].dx,
-                          baseBottom: bases[1].dy,
-                          travel: 80,
-                          size: 36,
-                        ),
-                        _FloatingIcon(
-                          controller: _controller,
-                          asset: 'assets/icons/celsius 1.png',
-                          baseLeft: bases[2].dx,
-                          baseBottom: bases[2].dy,
-                          travel: 80,
-                          size: 38,
-                        ),
-                        _FloatingIcon(
-                          controller: _controller,
-                          asset: 'assets/icons/salt 1.png',
-                          baseLeft: bases[3].dx,
-                          baseBottom: bases[3].dy,
-                          travel: 80,
-                          size: 36,
-                        ),
-                        _FloatingIcon(
-                          controller: _controller,
-                          asset: 'assets/icons/humidity 1.png',
-                          baseLeft: bases[4].dx,
-                          baseBottom: bases[4].dy,
-                          travel: 80,
-                          size: 34,
-                        ),
-                      ],
-                    );
-                  },
+                              // 5 icônes synchronisées sur une demi-courbe
+                              _FloatingIcon(
+                                controller: _controller,
+                                asset: 'assets/icons/npk-illustration.png',
+                                baseLeft: bases[0].dx,
+                                baseBottom: bases[0].dy,
+                                travel: 80,
+                                size: 40,
+                              ),
+                              _FloatingIcon(
+                                controller: _controller,
+                                asset: 'assets/icons/ph.png',
+                                baseLeft: bases[1].dx,
+                                baseBottom: bases[1].dy,
+                                travel: 80,
+                                size: 36,
+                              ),
+                              _FloatingIcon(
+                                controller: _controller,
+                                asset: 'assets/icons/celsius 1.png',
+                                baseLeft: bases[2].dx,
+                                baseBottom: bases[2].dy,
+                                travel: 80,
+                                size: 38,
+                              ),
+                              _FloatingIcon(
+                                controller: _controller,
+                                asset: 'assets/icons/salt 1.png',
+                                baseLeft: bases[3].dx,
+                                baseBottom: bases[3].dy,
+                                travel: 80,
+                                size: 36,
+                              ),
+                              _FloatingIcon(
+                                controller: _controller,
+                                asset: 'assets/icons/humidity 1.png',
+                                baseLeft: bases[4].dx,
+                                baseBottom: bases[4].dy,
+                                travel: 80,
+                                size: 34,
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      "Analyse du sol en cours...",
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (args != null)
+                      Text(
+                        args.champName == null
+                            ? 'Capteur: ${args.sensorName}'
+                            : 'Capteur: ${args.sensorName} • Champ: ${args.champName}${args.parcelleName != null ? ' • Parcelle: ${args.parcelleName}' : ''}',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+                      ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-              Text(
-                "Analyse du sol en cours...",
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 8),
-              if (args != null)
-                Text(
-                  args.champName == null
-                      ? 'Capteur: ${args.sensorName}'
-                      : 'Capteur: ${args.sensorName} • Champ: ${args.champName}${args.parcelleName != null ? ' • Parcelle: ${args.parcelleName}' : ''}',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.black54),
-                ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -452,7 +593,8 @@ class _FloatingIcon extends StatelessWidget {
   final AnimationController controller;
   final String asset;
   final double baseLeft; // position horizontale de base
-  final double baseBottom; // position verticale de base (au-dessus du bas de zone)
+  final double
+  baseBottom; // position verticale de base (au-dessus du bas de zone)
   final double travel; // distance à parcourir vers le haut
   final double size;
 

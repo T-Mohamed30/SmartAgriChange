@@ -7,7 +7,7 @@ class AnomalyAnalysisResponse {
   final int? parcelId;
   final List<String> images;
   final Plant plant;
-  final Anomaly anomaly;
+  final Anomaly? anomaly;
 
   AnomalyAnalysisResponse({
     this.id,
@@ -17,7 +17,7 @@ class AnomalyAnalysisResponse {
     this.parcelId,
     required this.images,
     required this.plant,
-    required this.anomaly,
+    this.anomaly,
   });
 
   factory AnomalyAnalysisResponse.fromJson(Map<String, dynamic> json) {
@@ -29,7 +29,9 @@ class AnomalyAnalysisResponse {
       parcelId: json['parcel_id'],
       images: List<String>.from(json['images']),
       plant: Plant.fromJson(json['plant']),
-      anomaly: Anomaly.fromJson(json['anomaly']),
+      anomaly: json['anomaly'] != null
+          ? Anomaly.fromJson(json['anomaly'])
+          : null,
     );
   }
 }

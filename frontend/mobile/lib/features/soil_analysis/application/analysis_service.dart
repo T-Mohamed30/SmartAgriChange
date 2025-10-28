@@ -8,7 +8,10 @@ import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/re
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/sensor.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/sensor_detection_state.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/soil_data.dart';
+import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/npk_data.dart';
 import 'package:dio/dio.dart';
+import '../../../core/network/dio_client.dart';
+import '../../../core/network/api_endpoints.dart';
 
 // Crop conditions data
 class CropConditions {
@@ -261,110 +264,258 @@ class AnalysisService {
     dev.log('Capteur sélectionné: ${sensor.name}');
   }
 
-  Future<void> fetchDataAndAnalyze() async {
+  Future<void> fetchDataAndAnalyze({NPKData? npkData}) async {
     dev.log('Récupération des données du sol...');
-    await Future.delayed(const Duration(seconds: 2));
 
-    // Simuler des données aléatoires pour p, k, humidité, température, azote, ec, ph
-    final double p = 10 + Random().nextDouble() * 20;
-    final double k = 20 + Random().nextDouble() * 40;
-    final double humidity = 40 + Random().nextDouble() * 30;
-    final double temperature = 15 + Random().nextDouble() * 15;
-    final double nitrogen = 130 + Random().nextDouble() * 20;
-    final double ec = 1.5 + Random().nextDouble() * 0.5;
-    final double ph = 6.5 + Random().nextDouble() * 0.5;
+    SoilData soilData;
 
-    final soilData = SoilData(
-      ph: ph,
-      temperature: temperature,
-      humidity: humidity,
-      ec: ec,
-      nitrogen: nitrogen,
-      phosphorus: p,
-      potassium: k,
-    );
+    if (npkData != null) {
+      // Utiliser les données réelles du capteur
+      soilData = SoilData(
+        ph: npkData.ph ?? 7.0,
+        temperature: npkData.temperature ?? 25.0,
+        humidity: (npkData.humidity ?? 50).toDouble(),
+        ec: (npkData.conductivity ?? 1500).toDouble(),
+        nitrogen: (npkData.nitrogen ?? 100).toDouble(),
+        phosphorus: (npkData.phosphorus ?? 20).toDouble(),
+        potassium: (npkData.potassium ?? 150).toDouble(),
+      );
+      dev.log('Données du capteur utilisées: ${npkData.toString()}');
+    } else {
+      // Fallback: données simulées si aucune donnée du capteur
+      await Future.delayed(const Duration(seconds: 2));
+      final double p = 10 + Random().nextDouble() * 20;
+      final double k = 20 + Random().nextDouble() * 40;
+      final double humidity = 40 + Random().nextDouble() * 30;
+      final double temperature = 15 + Random().nextDouble() * 15;
+      final double nitrogen = 130 + Random().nextDouble() * 20;
+      final double ec = 1.5 + Random().nextDouble() * 0.5;
+      final double ph = 6.5 + Random().nextDouble() * 0.5;
+
+      soilData = SoilData(
+        ph: ph,
+        temperature: temperature,
+        humidity: humidity,
+        ec: ec,
+        nitrogen: nitrogen,
+        phosphorus: p,
+        potassium: k,
+      );
+      dev.log(
+        'Données simulées utilisées (pas de données capteur): p=$p, k=$k, humidité=$humidity, température=$temperature, azote=$nitrogen, ec=$ec, ph=$ph',
+      );
+    }
+
     _ref.read(soilDataProvider.notifier).state = soilData;
-    dev.log(
-      'Données du sol simulées: p=$p, k=$k, humidité=$humidity, température=$temperature, azote=$nitrogen, ec=$ec, ph=$ph',
-    );
 
-    // Appeler l'API IA pour obtenir les recommandations
-    await _callCropRecommendationApi(p, k, humidity, temperature);
+    // Envoyer les données à l'API et obtenir les recommandations
+    await _sendSoilDataToApi(soilData, npkData);
+  }
+
+  Future<void> _sendSoilDataToApi(SoilData soilData, NPKData? npkData) async {
+    try {
+      dev.log('Envoi des données du sol à l\'API...');
+
+      final dioClient = DioClient();
+      final headers = await ApiEndpoints.getAuthHeaders();
+
+      final payload = {
+        'ph': soilData.ph,
+        'temperature': soilData.temperature,
+        'humidity': soilData.humidity,
+        'ec': soilData.ec,
+        'nitrogen': soilData.nitrogen,
+        'phosphorus': soilData.phosphorus,
+        'potassium': soilData.potassium,
+        // Ajouter l'ID de la parcelle si disponible
+        // 'parcelleId': parcelleId,
+      };
+
+      final response = await dioClient.dio.post(
+        ApiEndpoints.buildUrl(ApiEndpoints.soilAnalyses),
+        data: payload,
+        options: Options(headers: headers),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data;
+        dev.log('Réponse API reçue: $data');
+
+        // Parser la réponse et créer les recommandations
+        final List<Recommendation> recommendations = [];
+
+        if (data['recommendations'] != null) {
+          final recommendationsData = data['recommendations'] as List;
+          for (var rec in recommendationsData) {
+            try {
+              final culture = Culture(
+                name: rec['culture']['name'] ?? 'Culture inconnue',
+                minPh: rec['culture']['minPh']?.toDouble() ?? 0.0,
+                maxPh: rec['culture']['maxPh']?.toDouble() ?? 14.0,
+                minTemp: rec['culture']['minTemp']?.toDouble() ?? 0.0,
+                maxTemp: rec['culture']['maxTemp']?.toDouble() ?? 50.0,
+                minHumidity: rec['culture']['minHumidity']?.toDouble() ?? 0.0,
+                maxHumidity: rec['culture']['maxHumidity']?.toDouble() ?? 100.0,
+                minNitrogen: rec['culture']['minNitrogen']?.toDouble() ?? 0.0,
+                maxNitrogen: rec['culture']['maxNitrogen']?.toDouble() ?? 200.0,
+                minPhosphorus:
+                    rec['culture']['minPhosphorus']?.toDouble() ?? 0.0,
+                maxPhosphorus:
+                    rec['culture']['maxPhosphorus']?.toDouble() ?? 200.0,
+                minPotassium: rec['culture']['minPotassium']?.toDouble() ?? 0.0,
+                maxPotassium:
+                    rec['culture']['maxPotassium']?.toDouble() ?? 200.0,
+                description:
+                    rec['culture']['description'] ??
+                    'Culture adaptée aux conditions du sol',
+                rendement:
+                    rec['culture']['rendement'] ??
+                    'Variable selon les pratiques culturales',
+              );
+
+              final recommendation = Recommendation(
+                culture: culture,
+                compatibilityScore:
+                    rec['compatibilityScore']?.toDouble() ?? 0.0,
+                explanation:
+                    rec['explanation'] ??
+                    'Score de compatibilité basé sur l\'analyse IA',
+                correctiveActions: List<String>.from(
+                  rec['correctiveActions'] ?? [],
+                ),
+              );
+
+              recommendations.add(recommendation);
+            } catch (e) {
+              dev.log('Erreur lors du parsing d\'une recommandation: $e');
+            }
+          }
+        }
+
+        // Trier par score décroissant
+        recommendations.sort(
+          (a, b) => b.compatibilityScore.compareTo(a.compatibilityScore),
+        );
+
+        _ref.read(recommendationsProvider.notifier).state = recommendations;
+        dev.log(
+          'Recommandations reçues de l\'API: ${recommendations.length} cultures.',
+        );
+      } else {
+        throw Exception('Erreur API: ${response.statusCode}');
+      }
+    } catch (e) {
+      dev.log('Erreur lors de l\'appel API: $e');
+      // Fallback vers la logique locale en cas d'erreur API
+      await _callCropRecommendationApi(
+        soilData,
+        _ref.read(selectedSensorProvider),
+      );
+    }
   }
 
   Future<void> _callCropRecommendationApi(
-    double p,
-    double k,
-    double humidity,
-    double temperature,
+    SoilData soilData,
+    Sensor? sensor,
   ) async {
-    // Essayer d'abord avec Dio configuré pour éviter les problèmes CORS
-    final dio = Dio(
-      BaseOptions(
-        baseUrl: 'http://https://smartagrichangeapi.kgslab.com/api',
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        // Désactiver les vérifications CORS pour cette requête
-        extra: {'withCredentials': false},
-      ),
-    );
+    // Générer les recommandations localement basé sur les conditions des cultures
+    final List<Recommendation> recommendations = [];
 
-    try {
-      final response = await dio.post(
-        '/api/v1/predict/probabilities',
-        data: {
-          'p': p,
-          'k': k,
-          'humidity': humidity,
-          'temperature': temperature,
-          'top_n': 5,
-        },
-        options: Options(
-          // Forcer le bypass des vérifications CORS
-          extra: {'withCredentials': false},
-        ),
-      );
+    _conditionsByCrop.forEach((cropName, conditions) {
+      // Calculer le score de compatibilité basé sur les paramètres du sol
+      double score = 0;
+      int paramCount = 0;
 
-      if (response.statusCode == 200) {
-        final List<dynamic> probs = response.data['probabilities'] ?? [];
-        final List<Recommendation> recommendations = probs.map((item) {
-          // Map English crop names to French names
-          final Map<String, String> cropNameMap = {
-            'rice': 'Riz',
-            'maize': 'Maïs',
-            'chickpea': 'Pois chiche',
-            'kidneybeans': 'Haricot rouge',
-            'pigeonpeas': 'Pois cajan',
-            'mothbeans': 'Haricot papillon',
-            'mungbean': 'Haricot mungo',
-            'blackgram': 'Haricot noir',
-            'lentil': 'Lentille',
-            'pomegranate': 'Grenade',
-            'banana': 'Banane',
-            'mango': 'Mangue',
-            'grapes': 'Raisin',
-            'watermelon': 'Pastèque',
-            'muskmelon': 'Melon',
-            'apple': 'Pomme',
-            'orange': 'Orange',
-            'papaya': 'Papaye',
-            'coconut': 'Noix de coco',
-            'cotton': 'Coton',
-            'jute': 'Jute',
-            'coffee': 'Café',
-          };
+      // Analyse du pH
+      if (conditions.phRange != _defaultConditions.phRange) {
+        final phRange = conditions.phRange.split(' - ');
+        if (phRange.length == 2) {
+          final minPh = double.tryParse(phRange[0]) ?? 0;
+          final maxPh = double.tryParse(phRange[1]) ?? 14;
+          if (soilData.ph >= minPh && soilData.ph <= maxPh) {
+            score += 20;
+          }
+          paramCount++;
+        }
+      }
 
-          final String cropEnglish = item['crop'] ?? 'Inconnu';
-          final String cropFrench =
-              cropNameMap[cropEnglish.toLowerCase()] ?? cropEnglish;
+      // Analyse de la température
+      if (conditions.tempRange != _defaultConditions.tempRange) {
+        final tempRange = conditions.tempRange.split(' - ');
+        if (tempRange.length == 2) {
+          final minTemp = double.tryParse(tempRange[0]) ?? 0;
+          final maxTemp = double.tryParse(tempRange[1]) ?? 50;
+          if (soilData.temperature >= minTemp &&
+              soilData.temperature <= maxTemp) {
+            score += 20;
+          }
+          paramCount++;
+        }
+      }
 
-          return Recommendation(
+      // Analyse de l'humidité
+      if (conditions.humRange != _defaultConditions.humRange) {
+        final humRange = conditions.humRange.split(' - ');
+        if (humRange.length == 2) {
+          final minHum = double.tryParse(humRange[0]) ?? 0;
+          final maxHum = double.tryParse(humRange[1]) ?? 100;
+          if (soilData.humidity >= minHum && soilData.humidity <= maxHum) {
+            score += 20;
+          }
+          paramCount++;
+        }
+      }
+
+      // Analyse de l'azote
+      if (conditions.nRange != _defaultConditions.nRange) {
+        final nRange = conditions.nRange.split(' - ');
+        if (nRange.length == 2) {
+          final minN = double.tryParse(nRange[0]) ?? 0;
+          final maxN = double.tryParse(nRange[1]) ?? 200;
+          if (soilData.nitrogen >= minN && soilData.nitrogen <= maxN) {
+            score += 15;
+          }
+          paramCount++;
+        }
+      }
+
+      // Analyse du phosphore
+      if (conditions.pRange != _defaultConditions.pRange) {
+        final pRange = conditions.pRange.split(' - ');
+        if (pRange.length == 2) {
+          final minP = double.tryParse(pRange[0]) ?? 0;
+          final maxP = double.tryParse(pRange[1]) ?? 200;
+          if (soilData.phosphorus >= minP && soilData.phosphorus <= maxP) {
+            score += 15;
+          }
+          paramCount++;
+        }
+      }
+
+      // Analyse du potassium
+      if (conditions.kRange != _defaultConditions.kRange) {
+        final kRange = conditions.kRange.split(' - ');
+        if (kRange.length == 2) {
+          final minK = double.tryParse(kRange[0]) ?? 0;
+          final maxK = double.tryParse(kRange[1]) ?? 200;
+          if (soilData.potassium >= minK && soilData.potassium <= maxK) {
+            score += 10;
+          }
+          paramCount++;
+        }
+      }
+
+      // Normaliser le score
+      final normalizedScore = paramCount > 0
+          ? (score / (paramCount * 20)) * 100
+          : 0.0;
+
+      if (normalizedScore > 30) {
+        // Seuil minimum pour recommander
+        recommendations.add(
+          Recommendation(
             culture: Culture(
-              name: cropFrench,
+              name: cropName,
               minPh: 0,
               maxPh: 14,
               minTemp: 0,
@@ -377,25 +528,28 @@ class AnalysisService {
               maxPhosphorus: 200,
               minPotassium: 0,
               maxPotassium: 200,
-              description: 'Culture recommandée par IA',
-              rendement: 'Variable',
+              description: 'Culture adaptée aux conditions du sol',
+              rendement: 'Variable selon les pratiques culturales',
             ),
-            compatibilityScore: (item['probability'] ?? 0) * 100,
-            explanation: 'Probabilité: ${(item['probability'] ?? 0) * 100}%',
-            correctiveActions: [],
-          );
-        }).toList();
-
-        _ref.read(recommendationsProvider.notifier).state = recommendations;
-        dev.log(
-          'Recommandations IA reçues: ${recommendations.length} cultures.',
+            compatibilityScore: normalizedScore.toDouble(),
+            explanation:
+                'Score de compatibilité: ${normalizedScore.toStringAsFixed(1)}%',
+            correctiveActions: generateSoilRecommendations(soilData, cropName),
+          ),
         );
-      } else {
-        dev.log('Erreur API IA: statut ${response.statusCode}');
       }
-    } catch (e) {
-      dev.log('Erreur lors de l\'appel API IA: $e');
-    }
+    });
+
+    // Trier par score décroissant et prendre les 5 meilleures
+    recommendations.sort(
+      (a, b) => b.compatibilityScore.compareTo(a.compatibilityScore),
+    );
+    final topRecommendations = recommendations.take(5).toList();
+
+    _ref.read(recommendationsProvider.notifier).state = topRecommendations;
+    dev.log(
+      'Recommandations générées localement: ${topRecommendations.length} cultures.',
+    );
   }
 
   String generateSoilDescription(SoilData soilData) {

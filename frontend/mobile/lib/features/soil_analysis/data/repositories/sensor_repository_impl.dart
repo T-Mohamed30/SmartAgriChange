@@ -1,5 +1,6 @@
 import 'dart:async';
 import '../../domain/entities/sensor.dart';
+import '../../domain/entities/npk_data.dart';
 import '../../domain/repositories/sensor_repository.dart';
 import '../services/usb_service.dart';
 import '../services/npk_service.dart';
@@ -11,6 +12,9 @@ class SensorRepositoryImpl implements SensorRepository {
   UsbService? _usbService;
   NPKService? _npkService;
   StreamSubscription? _usbSubscription;
+
+  @override
+  Stream<NPKData>? get npkDataStream => _npkService?.dataStream;
 
   @override
   Stream<List<Sensor>> scanSensors() {
