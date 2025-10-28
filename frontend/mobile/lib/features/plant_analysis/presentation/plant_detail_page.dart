@@ -91,7 +91,7 @@ class PlantDetailPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    plant?.nomCommun ?? 'manguier',
+                    plant?.nomCommun ?? 'Plante inconnue',
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -105,7 +105,7 @@ class PlantDetailPage extends StatelessWidget {
                       style: const TextStyle(fontSize: 16, color: Colors.black),
                       children: [
                         TextSpan(
-                          text: plant?.nomScientifique ?? 'Maguifera Indica',
+                          text: plant?.nomScientifique ?? 'Non spécifié',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF007F3D),
@@ -115,6 +115,7 @@ class PlantDetailPage extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
+
                   ElevatedButton(
                     onPressed: () {
                       Navigator.of(context).pushNamed(
@@ -158,7 +159,9 @@ class PlantDetailPage extends StatelessWidget {
                           const SizedBox(height: 8),
                           Text(
                             anomaly?.nom ??
-                                modelResult?.prediction ??
+                                (modelResult?.prediction.contains('___') == true
+                                    ? modelResult!.prediction.split('___').last
+                                    : modelResult?.prediction) ??
                                 'Tache brune (anthracnose)',
                             style: const TextStyle(
                               color: Colors.white,
@@ -220,8 +223,7 @@ class PlantDetailPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            anomaly?.description ??
-                'La "maladie des taches brunes" sur le manguier, aussi appelée anthracnose, est une maladie fongique courante causée par le champignon Colletotrichum gloeosporioides. Elle se manifeste par des lésions sombres et enfoncées sur les feuilles, les fleurs et les fruits, souvent entourées d\'un halo jaune. Les conditions chaudes et humides, notamment pendant la saison des pluies, favorisent sa propagation.',
+            anomaly?.description ?? 'Aucune description disponible.',
             style: const TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 12),
@@ -245,13 +247,7 @@ class PlantDetailPage extends StatelessWidget {
               children: const [
                 ListTile(
                   title: Text(
-                    'Taches sombres et enfoncées sur les feuilles, fleurs et fruits',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ),
-                ListTile(
-                  title: Text(
-                    'Présence d\'un halo jaune autour des lésions',
+                    'Aucun symptôme spécifié.',
                     style: TextStyle(fontSize: 14),
                   ),
                 ),
@@ -274,13 +270,7 @@ class PlantDetailPage extends StatelessWidget {
               children: const [
                 ListTile(
                   title: Text(
-                    'Champignon Colletotrichum gloeosporioides',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                ),
-                ListTile(
-                  title: Text(
-                    'Conditions chaudes et humides favorisant la propagation',
+                    'Aucune cause spécifiée.',
                     style: TextStyle(fontSize: 14),
                   ),
                 ),
@@ -300,7 +290,7 @@ class PlantDetailPage extends StatelessWidget {
     }
     return Center(
       child: Text(
-        'Solutions content goes here.',
+        'Aucune solution disponible.',
         style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
       ),
     );
@@ -315,9 +305,44 @@ class PlantDetailPage extends StatelessWidget {
     }
     return Center(
       child: Text(
-        'Préventions content goes here.',
+        'Aucune prévention disponible.',
         style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
       ),
+    );
+  }
+}
+
+class InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const InfoRow({super.key, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 150,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(color: Colors.black87),
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ),
+      ],
     );
   }
 }

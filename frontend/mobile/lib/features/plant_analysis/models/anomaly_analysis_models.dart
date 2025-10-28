@@ -98,9 +98,9 @@ class Plant {
           json['scientific_name'] ?? json['nom_scientifique'] ?? '',
       nomCommun: json['common_name'] ?? json['nom_commun'] ?? '',
       description: json['description'],
-      familleBotanique: json['famille_botanique'],
+      familleBotanique: json['family'] ?? json['famille_botanique'],
       type: json['type'],
-      cycleVie: json['cycle_vie'],
+      cycleVie: json['life_cycle'] ?? json['cycle_vie'],
       imageUrl: json['image_url'],
       galeriePhotos: json['galerie_photos'] != null
           ? List<String>.from(json['galerie_photos'])

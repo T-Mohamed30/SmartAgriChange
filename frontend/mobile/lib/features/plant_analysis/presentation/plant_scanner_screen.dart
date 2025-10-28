@@ -213,11 +213,19 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
 
       Navigator.of(context).pop(); // Remove loading dialog
 
-      // Navigate to detail page with analysis result
+      // Check if anomaly is detected based on prediction format: PlantName___healthy or PlantName___AnomalyName
+      final prediction = analysisResult.modelResult.prediction;
+      final hasAnomaly =
+          prediction.contains('___') && !prediction.contains('___healthy');
+
+      // Navigate to appropriate detail page
       if (mounted) {
         debugPrint('PlantScannerScreen: Navigating to detail page...');
+        final routeName = hasAnomaly
+            ? '/plant_analysis/detail'
+            : '/plant_analysis/healthy_detail';
         Navigator.of(context).pushReplacementNamed(
-          '/plant_analysis/detail',
+          routeName,
           arguments: {
             'analysisResult': analysisResult,
             'imageBytes': _capturedImageBytes,

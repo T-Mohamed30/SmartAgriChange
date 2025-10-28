@@ -4,17 +4,21 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:smartagrichange_mobile/features/plant_analysis/models/anomaly_analysis_models.dart';
 
-class PlantFullDetailPage extends StatefulWidget {
+class HealthyPlantDetailPage extends StatefulWidget {
   final AnomalyAnalysisResponse? analysisResult;
   final Uint8List? imageBytes;
 
-  const PlantFullDetailPage({super.key, this.analysisResult, this.imageBytes});
+  const HealthyPlantDetailPage({
+    super.key,
+    this.analysisResult,
+    this.imageBytes,
+  });
 
   @override
-  State<PlantFullDetailPage> createState() => _PlantFullDetailPageState();
+  State<HealthyPlantDetailPage> createState() => _HealthyPlantDetailPageState();
 }
 
-class _PlantFullDetailPageState extends State<PlantFullDetailPage>
+class _HealthyPlantDetailPageState extends State<HealthyPlantDetailPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
@@ -184,93 +188,10 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
               label: 'Cycle de vie',
               value: plant?.cycleVie ?? 'Non spécifié',
             ),
-            if (plant?.description != null && plant!.description!.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              const Text(
-                'Description',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                plant.description!,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                  height: 1.4,
-                ),
-              ),
-            ],
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildRubricSection(Rubric rubric) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: ExpansionTile(
-        title: Text(
-          rubric.name,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        children: rubric.infos?.map((info) => Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                info.title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                info.content,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        )).toList() ?? [],
-      ),
-    );
-  }
-
-  List<Widget> _buildDynamicCareItems() {
-    final plant = widget.analysisResult?.plant;
-    if (plant?.rubrics == null || plant!.rubrics!.isEmpty) {
-      // Fallback to static items if no rubrics
-      return [
-        _buildCareItem('Eau', 'Arrosage et besoins hydriques'),
-        _buildCareItem('Fertilisation', 'Engrais et nutrition'),
-        _buildCareItem('Taille / entretien', 'Techniques de taille et maintenance'),
-        _buildCareItem('Propagation', 'Multiplication et bouturage'),
-        _buildCareItem('Calendrier cultural', 'Périodes optimales pour chaque soin'),
-      ];
-    }
-
-    // Build dynamic items from rubrics
-    return plant.rubrics!.map((rubric) {
-      return _buildRubricSection(rubric);
-    }).toList();
   }
 
   Widget _buildMorphology() {
@@ -305,7 +226,9 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
               children: items
                   .map(
                     (e) => OutlinedButton(
-                      onPressed: () => _showMorphologyDetail(e),
+                      onPressed: () {
+                        // placeholder: ouvrir la fiche morphologique
+                      },
                       style: OutlinedButton.styleFrom(
                         backgroundColor: const Color(0xFFF5F5F5),
                         shape: RoundedRectangleBorder(
@@ -341,75 +264,6 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showMorphologyDetail(String morphologyType) {
-    final plant = widget.analysisResult?.plant;
-    final morphologyRubric = plant?.rubrics?.firstWhere(
-      (rubric) => rubric.name.toLowerCase().contains('morphologie'),
-      orElse: () => Rubric(id: '', plantId: 0, name: '', infos: []),
-    );
-
-    if (morphologyRubric == null || morphologyRubric.infos == null || morphologyRubric.infos!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Informations sur $morphologyType non disponibles')),
-      );
-      return;
-    }
-
-    // Find the info that matches the morphology type
-    // Try exact match first, then partial match
-    RubricInfo? matchingInfo;
-    try {
-      matchingInfo = morphologyRubric.infos!.firstWhere(
-        (info) => info.title.toLowerCase() == morphologyType.toLowerCase(),
-      );
-    } catch (e) {
-      // If exact match fails, try partial match
-      try {
-        matchingInfo = morphologyRubric.infos!.firstWhere(
-          (info) => info.title.toLowerCase().contains(morphologyType.toLowerCase()) ||
-                   morphologyType.toLowerCase().contains(info.title.toLowerCase()),
-        );
-      } catch (e) {
-        matchingInfo = null;
-      }
-    }
-
-    if (matchingInfo == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Informations sur $morphologyType non disponibles')),
-      );
-      return;
-    }
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(morphologyType),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                matchingInfo!.content,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Fermer'),
-          ),
-        ],
       ),
     );
   }
@@ -623,15 +477,113 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
 
   @override
   Widget build(BuildContext context) {
-    // Page principale avec TabBar
+    final plant = widget.analysisResult?.plant;
+
     return Scaffold(
       body: Column(
         children: [
-          // image + overlay
-          _buildTopImage(context),
-
-          // Header (titre + latin)
-          _buildHeader(),
+          // Image with back button and info button
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(8),
+                  bottomRight: Radius.circular(8),
+                ),
+                child: widget.imageBytes != null
+                    ? Image.memory(
+                        widget.imageBytes!,
+                        width: double.infinity,
+                        height: 300,
+                        fit: BoxFit.cover,
+                      )
+                    : Image.asset(
+                        'assets/images/mango_leaf.jpg',
+                        width: double.infinity,
+                        height: 300,
+                        fit: BoxFit.cover,
+                      ),
+              ),
+              // Back button on top left of image
+              Positioned(
+                top: 40,
+                left: 16,
+                child: CircleAvatar(
+                  backgroundColor: Colors.white,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.black),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+              ),
+              // Info button on top right of image
+              Positioned(
+                top: 40,
+                right: 16,
+                child: CircleAvatar(
+                  backgroundColor: Colors.white,
+                  child: IconButton(
+                    icon: const Icon(Icons.info_outline, color: Colors.black),
+                    onPressed: () {
+                      // TODO: Implement action for this button
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  plant?.nomCommun ?? 'Plante inconnue',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text.rich(
+                  TextSpan(
+                    text: 'Nom latin : ',
+                    style: const TextStyle(fontSize: 16, color: Colors.black),
+                    children: [
+                      TextSpan(
+                        text: plant?.nomScientifique ?? 'Non spécifié',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF007F3D),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade700,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'Votre plante est en bonne santé',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
 
           // Tabs
           TabBar(
@@ -688,11 +640,26 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildCareItem('Eau', 'Arrosage et besoins hydriques'),
-                            _buildCareItem('Fertilisation', 'Engrais et nutrition'),
-                            _buildCareItem('Taille / entretien', 'Techniques de taille et maintenance'),
-                            _buildCareItem('Propagation', 'Multiplication et bouturage'),
-                            _buildCareItem('Calendrier cultural', 'Périodes optimales pour chaque soin'),
+                            _buildCareItem(
+                              'Eau',
+                              'Arrosage et besoins hydriques',
+                            ),
+                            _buildCareItem(
+                              'Fertilisation',
+                              'Engrais et nutrition',
+                            ),
+                            _buildCareItem(
+                              'Taille / entretien',
+                              'Techniques de taille et maintenance',
+                            ),
+                            _buildCareItem(
+                              'Propagation',
+                              'Multiplication et bouturage',
+                            ),
+                            _buildCareItem(
+                              'Calendrier cultural',
+                              'Périodes optimales pour chaque soin',
+                            ),
                           ],
                         ),
                       ),

@@ -22,6 +22,7 @@ import 'features/soil_analysis/presentation/crop_calendar_screen.dart';
 import 'features/account/presentation/account_page.dart';
 import 'features/plant_analysis/presentation/plant_scanner_screen.dart';
 import 'features/plant_analysis/presentation/plant_detail_page.dart';
+import 'features/plant_analysis/presentation/healthy_plant_detail_page.dart';
 import 'features/plant_analysis/presentation/plant_full_detail_page.dart';
 
 void main() async {
@@ -152,6 +153,21 @@ class MyApp extends StatelessWidget {
           final imageBytes = args['imageBytes'] as Uint8List?;
           return AuthGuard(
             child: PlantDetailPage(
+              analysisResult: analysisResult,
+              imageBytes: imageBytes,
+            ),
+          );
+        },
+        '/plant_analysis/healthy_detail': (context) {
+          final args =
+              ModalRoute.of(context)?.settings.arguments
+                  as Map<String, dynamic>? ??
+              {};
+          final analysisResult =
+              args['analysisResult'] as AnomalyAnalysisResponse?;
+          final imageBytes = args['imageBytes'] as Uint8List?;
+          return AuthGuard(
+            child: HealthyPlantDetailPage(
               analysisResult: analysisResult,
               imageBytes: imageBytes,
             ),
