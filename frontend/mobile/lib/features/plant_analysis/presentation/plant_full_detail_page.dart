@@ -58,7 +58,10 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
                     );
                   },
                 )
-              : Image.asset('assets/images/mango_leaf.jpg', fit: BoxFit.cover),
+              : Image.asset(
+                  'assets/images/mango_leaf.jpg',
+                  fit: BoxFit.cover,
+                ),
         ),
 
         // Dégradé en bas de l'image pour contraste du texte si besoin

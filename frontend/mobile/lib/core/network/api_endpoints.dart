@@ -24,12 +24,9 @@ class ApiEndpoints {
   static const String me = '/auth/me';
 
   // User endpoints
-  static String userProfile(String farmerId) =>
-      '/users/farmers/$farmerId/profile';
-  static String updateProfile(String farmerId) =>
-      '/users/farmers/$farmerId/profile';
-  static String changePassword(String userId) =>
-      '/users/$userId/change-password';
+  static String userProfile(String farmerId) => '/users/farmers/$farmerId/profile';
+  static String updateProfile(String farmerId) => '/users/farmers/$farmerId/profile';
+  static String changePassword(String userId) => '/users/$userId/change-password';
 
   // Field endpoints
   static const String fields = '/fields';
@@ -43,14 +40,12 @@ class ApiEndpoints {
   // Soil analysis endpoints
   static const String soilAnalyses = '/soil-analyses';
   static String getSoilAnalysisById(String id) => '/soil-analyses/$id';
-  static String getUserSoilAnalyses(String userId) =>
-      '/users/$userId/soil-analyses';
+  static String getUserSoilAnalyses(String userId) => '/users/$userId/soil-analyses';
 
   // Analysis endpoints
   static const String analyses = '/analyses';
   static String getAnalysisById(String id) => '/analyses/$id';
-  static String getAnalysisByParcelle(String parcelleId) =>
-      '/analyses/parcelle/$parcelleId';
+  static String getAnalysisByParcelle(String parcelleId) => '/analyses/parcelle/$parcelleId';
 
   // Sensor endpoints
   static const String sensors = '/api/sensors';
@@ -87,15 +82,11 @@ class ApiEndpoints {
   // Plant analysis endpoints
   static const String plants = '/plants';
   static String getPlantById(String plantId) => '/plants/$plantId';
-  static String getPlantWithRubrics(String plantId) =>
-      '/plants/$plantId/with-rubrics';
+  static String getPlantWithRubrics(String plantId) => '/plants/$plantId/with-rubrics';
   static const String plantsWithRubrics = '/plants/with-rubrics';
-  static String getPlantAnomalies(String plantId) =>
-      '/plants/$plantId/anomalies';
-  static String getUserPlantAnalyses(String userId) =>
-      '/users/$userId/anomaly-analyses';
-  static String getPlantAnalysisById(String analysisId) =>
-      '/anomaly-analyses/$analysisId';
+  static String getPlantAnomalies(String plantId) => '/plants/$plantId/anomalies';
+  static String getUserPlantAnalyses(String userId) => '/users/$userId/anomaly-analyses';
+  static String getPlantAnalysisById(String analysisId) => '/anomaly-analyses/$analysisId';
 
   // Helper methods
   static String buildUrl(String endpoint) {

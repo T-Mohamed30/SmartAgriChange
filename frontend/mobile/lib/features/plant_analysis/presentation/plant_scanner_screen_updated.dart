@@ -5,9 +5,9 @@ import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:smartagrichange_mobile/core/network/dio_client.dart';
-import 'package:smartagrichange_mobile/features/plant_analysis/models/anomaly_analysis_models.dart';
-import 'package:smartagrichange_mobile/features/plant_analysis/services/plant_analysis_service.dart';
+import 'package:smart_agri_change/core/network/dio_client.dart';
+import 'package:smart_agri_change/features/plant_analysis/models/anomaly_analysis_models.dart';
+import 'package:smart_agri_change/features/plant_analysis/services/plant_analysis_service.dart';
 
 import 'scan_animation_overlay.dart';
 
@@ -89,9 +89,9 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
       // Start analysis
       await _analyzeImage(File(image.path));
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Erreur lors de la capture: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la capture: $e')),
+      );
       setState(() {
         _isCapturing = false;
       });
@@ -123,9 +123,7 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
       );
 
       // Call API to analyze the image
-      final analysisResult = await _plantAnalysisService!.analyzePlantImage(
-        imageFile,
-      );
+      final analysisResult = await _plantAnalysisService!.analyzePlantImage(imageFile);
 
       Navigator.of(context).pop(); // Remove loading dialog
 
@@ -142,9 +140,9 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
     } catch (e) {
       Navigator.of(context).pop(); // Remove loading dialog
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Erreur lors de l\'analyse: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de l\'analyse: $e')),
+      );
 
       setState(() {
         _isAnalyzing = false;

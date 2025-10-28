@@ -274,7 +274,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            item.culture.name,
+                                            item['crop'],
                                             style: const TextStyle(
                                               fontWeight: FontWeight.w700,
                                             ),
@@ -292,7 +292,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                                         Navigator.pushNamed(
                                           context,
                                           '/soil_analysis/crop_detail',
-                                          arguments: item.culture.name,
+                                          arguments: item['probability'],
                                         );
                                       },
                                       child: const Padding(
@@ -385,26 +385,18 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
     buffer.writeln();
     buffer.writeln('Paramètres du sol:');
     buffer.writeln('Conductivité: ${soilData.ec.toStringAsFixed(1)} us/cm');
-    buffer.writeln(
-      'Température: ${soilData.temperature.toStringAsFixed(1)} °C',
-    );
+    buffer.writeln('Température: ${soilData.temperature.toStringAsFixed(1)} °C');
     buffer.writeln('Humidité: ${soilData.humidity.toStringAsFixed(1)} %');
     buffer.writeln('pH: ${soilData.ph.toStringAsFixed(1)}');
     buffer.writeln();
     buffer.writeln('Nutriments:');
     buffer.writeln('Azote (N): ${soilData.nitrogen.toStringAsFixed(0)} mg/kg');
-    buffer.writeln(
-      'Phosphore (P): ${soilData.phosphorus.toStringAsFixed(0)} mg/kg',
-    );
-    buffer.writeln(
-      'Potassium (K): ${soilData.potassium.toStringAsFixed(0)} mg/kg',
-    );
+    buffer.writeln('Phosphore (P): ${soilData.phosphorus.toStringAsFixed(0)} mg/kg');
+    buffer.writeln('Potassium (K): ${soilData.potassium.toStringAsFixed(0)} mg/kg');
     buffer.writeln();
     buffer.writeln('Recommandations:');
     for (final rec in recommendations) {
-      buffer.writeln(
-        '- ${rec.culture.name}: ${rec.compatibilityScore.toStringAsFixed(1)}% de compatibilité',
-      );
+      buffer.writeln('- ${rec.culture.name}: ${rec.compatibilityScore.toStringAsFixed(1)}% de compatibilité');
     }
     buffer.writeln();
     buffer.writeln('Partagé depuis SmartAgriChange');

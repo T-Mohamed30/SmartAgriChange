@@ -11,10 +11,7 @@ final champParcelleRepositoryProvider = Provider<ChampParcelleRepositoryImpl>((
   ref,
 ) {
   final dio = DioClient();
-  return ChampParcelleRepositoryImpl(
-    dio: dio.dio,
-    baseUrl: ApiEndpoints.baseUrl,
-  );
+  return ChampParcelleRepositoryImpl(dio: dio.dio, baseUrl: ApiEndpoints.baseUrl);
 });
 
 final champsProvider = FutureProvider<List<Champ>>((ref) async {

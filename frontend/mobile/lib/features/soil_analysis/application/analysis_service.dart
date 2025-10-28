@@ -226,7 +226,7 @@ final detectionStateProvider = StateProvider<SensorDetectionState>(
 final detectedSensorsProvider = StateProvider<List<Sensor>>((ref) => []);
 final selectedSensorProvider = StateProvider<Sensor?>((ref) => null);
 final soilDataProvider = StateProvider<SoilData?>((ref) => null);
-final recommendationsProvider = StateProvider<List<Recommendation>>(
+final recommendationsProvider = StateProvider<List<dynamic>>(
   (ref) => [],
 );
 
@@ -265,46 +265,23 @@ class AnalysisService {
   }
 
   Future<void> fetchDataAndAnalyze({NPKData? npkData}) async {
+    if (npkData == null) return;
+
     dev.log('Récupération des données du sol...');
 
     SoilData soilData;
 
-    if (npkData != null) {
-      // Utiliser les données réelles du capteur
-      soilData = SoilData(
-        ph: npkData.ph ?? 7.0,
-        temperature: npkData.temperature ?? 25.0,
-        humidity: (npkData.humidity ?? 50).toDouble(),
-        ec: (npkData.conductivity ?? 1500).toDouble(),
-        nitrogen: (npkData.nitrogen ?? 100).toDouble(),
-        phosphorus: (npkData.phosphorus ?? 20).toDouble(),
-        potassium: (npkData.potassium ?? 150).toDouble(),
-      );
-      dev.log('Données du capteur utilisées: ${npkData.toString()}');
-    } else {
-      // Fallback: données simulées si aucune donnée du capteur
-      await Future.delayed(const Duration(seconds: 2));
-      final double p = 10 + Random().nextDouble() * 20;
-      final double k = 20 + Random().nextDouble() * 40;
-      final double humidity = 40 + Random().nextDouble() * 30;
-      final double temperature = 15 + Random().nextDouble() * 15;
-      final double nitrogen = 130 + Random().nextDouble() * 20;
-      final double ec = 1.5 + Random().nextDouble() * 0.5;
-      final double ph = 6.5 + Random().nextDouble() * 0.5;
-
-      soilData = SoilData(
-        ph: ph,
-        temperature: temperature,
-        humidity: humidity,
-        ec: ec,
-        nitrogen: nitrogen,
-        phosphorus: p,
-        potassium: k,
-      );
-      dev.log(
-        'Données simulées utilisées (pas de données capteur): p=$p, k=$k, humidité=$humidity, température=$temperature, azote=$nitrogen, ec=$ec, ph=$ph',
-      );
-    }
+    // Utiliser les données réelles du capteur
+    soilData = SoilData(
+      ph: npkData.ph ?? 0.0,
+      temperature: npkData.temperature ?? 0.0,
+      humidity: (npkData.humidity ?? 0).toDouble(),
+      ec: (npkData.conductivity ?? 0).toDouble(),
+      nitrogen: (npkData.nitrogen ?? 0).toDouble(),
+      phosphorus: (npkData.phosphorus ?? 0).toDouble(),
+      potassium: (npkData.potassium ?? 0).toDouble(),
+    );
+    dev.log('Données du capteur utilisées: ${npkData.toString()}');
 
     _ref.read(soilDataProvider.notifier).state = soilData;
 
@@ -318,17 +295,17 @@ class AnalysisService {
 
       final dioClient = DioClient();
       final headers = await ApiEndpoints.getAuthHeaders();
+      final sensor = _ref.read(selectedSensorProvider);
 
       final payload = {
         'ph': soilData.ph,
         'temperature': soilData.temperature,
         'humidity': soilData.humidity,
         'ec': soilData.ec,
-        'nitrogen': soilData.nitrogen,
-        'phosphorus': soilData.phosphorus,
-        'potassium': soilData.potassium,
-        // Ajouter l'ID de la parcelle si disponible
-        // 'parcelleId': parcelleId,
+        'n': soilData.nitrogen,
+        'p': soilData.phosphorus,
+        'k': soilData.potassium,
+        'sensor_model': "AgroSense-X200",
       };
 
       final response = await dioClient.dio.post(
@@ -342,60 +319,66 @@ class AnalysisService {
         dev.log('Réponse API reçue: $data');
 
         // Parser la réponse et créer les recommandations
-        final List<Recommendation> recommendations = [];
 
-        if (data['recommendations'] != null) {
-          final recommendationsData = data['recommendations'] as List;
-          for (var rec in recommendationsData) {
-            try {
-              final culture = Culture(
-                name: rec['culture']['name'] ?? 'Culture inconnue',
-                minPh: rec['culture']['minPh']?.toDouble() ?? 0.0,
-                maxPh: rec['culture']['maxPh']?.toDouble() ?? 14.0,
-                minTemp: rec['culture']['minTemp']?.toDouble() ?? 0.0,
-                maxTemp: rec['culture']['maxTemp']?.toDouble() ?? 50.0,
-                minHumidity: rec['culture']['minHumidity']?.toDouble() ?? 0.0,
-                maxHumidity: rec['culture']['maxHumidity']?.toDouble() ?? 100.0,
-                minNitrogen: rec['culture']['minNitrogen']?.toDouble() ?? 0.0,
-                maxNitrogen: rec['culture']['maxNitrogen']?.toDouble() ?? 200.0,
-                minPhosphorus:
-                    rec['culture']['minPhosphorus']?.toDouble() ?? 0.0,
-                maxPhosphorus:
-                    rec['culture']['maxPhosphorus']?.toDouble() ?? 200.0,
-                minPotassium: rec['culture']['minPotassium']?.toDouble() ?? 0.0,
-                maxPotassium:
-                    rec['culture']['maxPotassium']?.toDouble() ?? 200.0,
-                description:
-                    rec['culture']['description'] ??
-                    'Culture adaptée aux conditions du sol',
-                rendement:
-                    rec['culture']['rendement'] ??
-                    'Variable selon les pratiques culturales',
-              );
+        final dynamic soilAnalysisData = data;
 
-              final recommendation = Recommendation(
-                culture: culture,
-                compatibilityScore:
-                    rec['compatibilityScore']?.toDouble() ?? 0.0,
-                explanation:
-                    rec['explanation'] ??
-                    'Score de compatibilité basé sur l\'analyse IA',
-                correctiveActions: List<String>.from(
-                  rec['correctiveActions'] ?? [],
-                ),
-              );
+        final dynamic recommendations = data["crops_recommanded"] ?? [];
 
-              recommendations.add(recommendation);
-            } catch (e) {
-              dev.log('Erreur lors du parsing d\'une recommandation: $e');
-            }
-          }
-        }
+        
+        // if (data['recommendations'] != null) {
+        //   final recommendationsData = data['recommendations'] as List;
+        //   for (var rec in recommendationsData) {
+        //     try {
+        //       final culture = Culture(
+        //         name: rec['culture']['name'] ?? 'Culture inconnue',
+        //         minPh: rec['culture']['minPh']?.toDouble() ?? 0.0,
+        //         maxPh: rec['culture']['maxPh']?.toDouble() ?? 14.0,
+        //         minTemp: rec['culture']['minTemp']?.toDouble() ?? 0.0,
+        //         maxTemp: rec['culture']['maxTemp']?.toDouble() ?? 50.0,
+        //         minHumidity: rec['culture']['minHumidity']?.toDouble() ?? 0.0,
+        //         maxHumidity: rec['culture']['maxHumidity']?.toDouble() ?? 100.0,
+        //         minNitrogen: rec['culture']['minNitrogen']?.toDouble() ?? 0.0,
+        //         maxNitrogen: rec['culture']['maxNitrogen']?.toDouble() ?? 200.0,
+        //         minPhosphorus:
+        //             rec['culture']['minPhosphorus']?.toDouble() ?? 0.0,
+        //         maxPhosphorus:
+        //             rec['culture']['maxPhosphorus']?.toDouble() ?? 200.0,
+        //         minPotassium: rec['culture']['minPotassium']?.toDouble() ?? 0.0,
+        //         maxPotassium:
+        //             rec['culture']['maxPotassium']?.toDouble() ?? 200.0,
+        //         description:
+        //             rec['culture']['description'] ??
+        //             'Culture adaptée aux conditions du sol',
+        //         rendement:
+        //             rec['culture']['rendement'] ??
+        //             'Variable selon les pratiques culturales',
+        //       );
+
+        //       final recommendation = Recommendation(
+        //         culture: culture,
+        //         compatibilityScore:
+        //             rec['compatibilityScore']?.toDouble() ?? 0.0,
+        //         explanation:
+        //             rec['explanation'] ??
+        //             'Score de compatibilité basé sur l\'analyse IA',
+        //         correctiveActions: List<String>.from(
+        //           rec['correctiveActions'] ?? [],
+        //         ),
+        //       );
+
+        //       recommendations.add(recommendation);
+        //     } catch (e) {
+        //       dev.log('Erreur lors du parsing d\'une recommandation: $e');
+        //     }
+        //   }
+        // }
+
+        
 
         // Trier par score décroissant
-        recommendations.sort(
-          (a, b) => b.compatibilityScore.compareTo(a.compatibilityScore),
-        );
+        // recommendations.sort(
+        //   (a, b) => b['probability'].compareTo(a['probability']),
+        // );
 
         _ref.read(recommendationsProvider.notifier).state = recommendations;
         dev.log(

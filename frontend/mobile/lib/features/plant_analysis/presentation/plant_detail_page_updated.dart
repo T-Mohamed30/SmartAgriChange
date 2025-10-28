@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:smartagrichange_mobile/features/plant_analysis/models/anomaly_analysis_models.dart';
+import 'package:smart_agri_change/features/plant_analysis/models/anomaly_analysis_models.dart';
 
 class PlantDetailPage extends StatelessWidget {
   final AnomalyAnalysisResponse? analysisResult;
   final Uint8List? imageBytes;
 
-  const PlantDetailPage({Key? key, this.analysisResult, this.imageBytes})
-    : super(key: key);
+  const PlantDetailPage({
+    Key? key,
+    this.analysisResult,
+    this.imageBytes,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -157,9 +160,7 @@ class PlantDetailPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            anomaly?.nom ??
-                                modelResult?.prediction ??
-                                'Tache brune (anthracnose)',
+                            anomaly?.nom ?? modelResult?.prediction ?? 'Tache brune (anthracnose)',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -220,24 +221,19 @@ class PlantDetailPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            anomaly?.description ??
-                'La "maladie des taches brunes" sur le manguier, aussi appelée anthracnose, est une maladie fongique courante causée par le champignon Colletotrichum gloeosporioides. Elle se manifeste par des lésions sombres et enfoncées sur les feuilles, les fleurs et les fruits, souvent entourées d\'un halo jaune. Les conditions chaudes et humides, notamment pendant la saison des pluies, favorisent sa propagation.',
+            anomaly?.description ?? 'La "maladie des taches brunes" sur le manguier, aussi appelée anthracnose, est une maladie fongique courante causée par le champignon Colletotrichum gloeosporioides. Elle se manifeste par des lésions sombres et enfoncées sur les feuilles, les fleurs et les fruits, souvent entourées d\'un halo jaune. Les conditions chaudes et humides, notamment pendant la saison des pluies, favorisent sa propagation.',
             style: const TextStyle(fontSize: 14),
           ),
           const SizedBox(height: 12),
           if (anomaly?.symptomes != null && anomaly!.symptomes!.isNotEmpty)
             ExpansionTile(
               title: const Text('Symptômes'),
-              children: anomaly.symptomes!
-                  .map(
-                    (symptom) => ListTile(
-                      title: Text(
-                        symptom,
-                        style: const TextStyle(fontSize: 14),
-                      ),
-                    ),
-                  )
-                  .toList(),
+              children: anomaly.symptomes!.map((symptom) => ListTile(
+                title: Text(
+                  symptom,
+                  style: const TextStyle(fontSize: 14),
+                ),
+              )).toList(),
             )
           else
             ExpansionTile(
@@ -260,13 +256,12 @@ class PlantDetailPage extends StatelessWidget {
           if (anomaly?.causes != null && anomaly!.causes!.isNotEmpty)
             ExpansionTile(
               title: const Text('Causes'),
-              children: anomaly.causes!
-                  .map(
-                    (cause) => ListTile(
-                      title: Text(cause, style: const TextStyle(fontSize: 14)),
-                    ),
-                  )
-                  .toList(),
+              children: anomaly.causes!.map((cause) => ListTile(
+                title: Text(
+                  cause,
+                  style: const TextStyle(fontSize: 14),
+                ),
+              )).toList(),
             )
           else
             ExpansionTile(
@@ -295,7 +290,10 @@ class PlantDetailPage extends StatelessWidget {
     if (anomaly?.traitement != null) {
       return SingleChildScrollView(
         padding: const EdgeInsets.all(8),
-        child: Text(anomaly!.traitement!, style: const TextStyle(fontSize: 14)),
+        child: Text(
+          anomaly!.traitement!,
+          style: const TextStyle(fontSize: 14),
+        ),
       );
     }
     return Center(
@@ -310,7 +308,10 @@ class PlantDetailPage extends StatelessWidget {
     if (anomaly?.prevention != null) {
       return SingleChildScrollView(
         padding: const EdgeInsets.all(8),
-        child: Text(anomaly!.prevention!, style: const TextStyle(fontSize: 14)),
+        child: Text(
+          anomaly!.prevention!,
+          style: const TextStyle(fontSize: 14),
+        ),
       );
     }
     return Center(
