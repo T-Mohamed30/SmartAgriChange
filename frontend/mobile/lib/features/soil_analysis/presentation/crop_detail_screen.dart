@@ -636,7 +636,7 @@ class _ChampCard extends ConsumerWidget {
             Row(
               children: [
                 Text(
-                  'localité: ${champ.location}',
+                  'Localité: ${champ.location}',
                   style: const TextStyle(color: Colors.black54),
                 ),
                 const SizedBox(width: 16),

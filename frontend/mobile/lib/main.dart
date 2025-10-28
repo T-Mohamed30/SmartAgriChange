@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:typed_data';
 import 'package:smartagrichange_mobile/core/auth/auth_guard.dart';
 import 'package:smartagrichange_mobile/features/weather/presentation/providers/weather_provider.dart';
 import 'package:smartagrichange_mobile/features/weather/data/repositories/weather_repository_impl.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/presentation/detection_capteurs.dart';
 import 'package:smartagrichange_mobile/features/user_dashboard/home.dart';
+import 'package:smartagrichange_mobile/features/plant_analysis/models/anomaly_analysis_models.dart';
 import 'features/onboarding/presentation/welcome_screen.dart';
 import 'features/onboarding/presentation/stepper_screen.dart';
 import 'features/auth/presentation/register.dart';
@@ -140,17 +142,29 @@ class MyApp extends StatelessWidget {
               ModalRoute.of(context)?.settings.arguments
                   as Map<String, dynamic>? ??
               {};
-          final imagePath = args['imagePath'] as String?;
-          return AuthGuard(child: PlantDetailPage(imagePath: imagePath ?? ''));
+          final analysisResult =
+              args['analysisResult'] as AnomalyAnalysisResponse?;
+          final imageBytes = args['imageBytes'] as Uint8List?;
+          return AuthGuard(
+            child: PlantDetailPage(
+              analysisResult: analysisResult,
+              imageBytes: imageBytes,
+            ),
+          );
         },
         '/plant_analysis/full_detail': (context) {
           final args =
               ModalRoute.of(context)?.settings.arguments
                   as Map<String, dynamic>? ??
               {};
-          final imagePath = args['imagePath'] as String?;
+          final analysisResult =
+              args['analysisResult'] as AnomalyAnalysisResponse?;
+          final imageBytes = args['imageBytes'] as Uint8List?;
           return AuthGuard(
-            child: PlantFullDetailPage(imagePath: imagePath ?? ''),
+            child: PlantFullDetailPage(
+              analysisResult: analysisResult,
+              imageBytes: imageBytes,
+            ),
           );
         },
       },

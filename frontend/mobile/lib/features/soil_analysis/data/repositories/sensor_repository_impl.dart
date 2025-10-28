@@ -1,63 +1,152 @@
 import 'dart:async';
 import '../../domain/entities/sensor.dart';
 import '../../domain/repositories/sensor_repository.dart';
+import '../services/usb_service.dart';
+import '../services/npk_service.dart';
 
 class SensorRepositoryImpl implements SensorRepository {
-  // Ici un streamController qui simule des capteurs détectés
-  final _controller = StreamController<List<Sensor>>.broadcast();
-  Timer? _timer;
-
-  // initial mock list
-  final List<Sensor> _sensors = List.generate(4, (i) {
-    return Sensor(
-      id: 's$i',
-      name: 'Capteur #A1${i+1}',
-      status: SensorStatus.online,
-      batteryLevel: 80 - i * 5,
-      location: i == 0 ? 'Champ Maïs Nord' : null,
-      lastAnalysisAt: i == 0 ? DateTime.now().subtract(const Duration(days: 1)) : null,
-    );
-  });
+  final StreamController<List<Sensor>> _controller =
+      StreamController<List<Sensor>>.broadcast();
+  final List<Sensor> _detectedSensors = [];
+  UsbService? _usbService;
+  NPKService? _npkService;
+  StreamSubscription? _usbSubscription;
 
   @override
   Stream<List<Sensor>> scanSensors() {
-    // simule un scan périodique — en réel on push à chaque résultat Bluetooth
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 4), (_) {
-      // possibilité de modifier l'état aléatoirement pour test UI
-      _controller.add(List<Sensor>.from(_sensors));
-    });
-    // push initial
-    Future.delayed(Duration.zero, () => _controller.add(List<Sensor>.from(_sensors)));
+    _startUsbScan();
     return _controller.stream;
   }
 
+  void _startUsbScan() async {
+    try {
+      // Clear previous results and emit empty list to indicate scanning started
+      _detectedSensors.clear();
+      _controller.add([]);
+
+      // Initialize USB service
+      _usbService = UsbService();
+      await _usbService!.initialize();
+
+      // Add USB event listener for hotplug detection (only on native platforms)
+      _usbService!.initUsbEventListener((event) {
+        print("USB Event: $event");
+        // Re-scan when devices are attached/detached
+        _startUsbScan();
+      });
+
+      // Scan for USB devices
+      final devices = await _usbService!.scanDevices();
+      print("Found ${devices.length} USB devices");
+
+      // Convert USB devices to Sensor entities
+      for (final device in devices) {
+        print("Device: ${device.productName} (ID: ${device.deviceId})");
+        final sensor = Sensor(
+          id: device.deviceId.toString(),
+          name: device.productName ?? 'USB NPK Sensor',
+          status: SensorStatus.online,
+          batteryLevel: null, // USB devices don't have battery
+          location: null,
+          lastAnalysisAt: null,
+        );
+        _detectedSensors.add(sensor);
+      }
+
+      // Emit current list of detected sensors
+      _controller.add(List<Sensor>.from(_detectedSensors));
+    } catch (e) {
+      print("Error during USB scan: $e");
+      _controller.add([]);
+    }
+  }
+
   @override
-  Future<List<Sensor>> getCachedSensors() async => _sensors;
+  Future<List<Sensor>> getCachedSensors() async {
+    return List<Sensor>.from(_detectedSensors);
+  }
 
   @override
   Future<void> connectToSensor(String sensorId) async {
-    // stub: en réel on fait le pairing / connect via bluetooth
-    final idx = _sensors.indexWhere((s) => s.id == sensorId);
-    if (idx != -1) {
-      _sensors[idx] = _sensors[idx].copyWith(status: SensorStatus.online);
-      _controller.add(List<Sensor>.from(_sensors));
+    await _connectUsbSensor(sensorId);
+  }
+
+  Future<void> _connectUsbSensor(String sensorId) async {
+    try {
+      if (_usbService == null) {
+        throw Exception("USB service not initialized");
+      }
+
+      // Find the USB device by sensorId
+      final devices = await _usbService!.scanDevices();
+      final targetDevice = devices.firstWhere(
+        (device) => device.deviceId.toString() == sensorId,
+        orElse: () => throw Exception("Device not found"),
+      );
+
+      // Connect to the USB device
+      await _usbService!.connect(targetDevice);
+
+      // Initialize NPK service for data reading
+      _npkService = NPKService(_usbService!);
+
+      // Update sensor status
+      final sensorIndex = _detectedSensors.indexWhere((s) => s.id == sensorId);
+      if (sensorIndex != -1) {
+        _detectedSensors[sensorIndex] = _detectedSensors[sensorIndex].copyWith(
+          status: SensorStatus.online,
+        );
+        _controller.add(List<Sensor>.from(_detectedSensors));
+      }
+
+      print("Connected to USB sensor: $sensorId");
+    } catch (e) {
+      print("Error connecting to USB sensor: $e");
+      throw Exception("Failed to connect to sensor");
     }
   }
 
   @override
   Future<void> startAnalysis(String sensorId, {String? parcelleId}) async {
-    // stub: simule lancement d'analyse et update lastAnalysisAt
-    final idx = _sensors.indexWhere((s) => s.id == sensorId);
-    if (idx != -1) {
-      _sensors[idx] = _sensors[idx].copyWith(lastAnalysisAt: DateTime.now());
-      _controller.add(List<Sensor>.from(_sensors));
-      // ici on pourrait appeler un backend pour stocker la campagne / campagneId
+    await _startUsbAnalysis(sensorId, parcelleId: parcelleId);
+  }
+
+  Future<void> _startUsbAnalysis(String sensorId, {String? parcelleId}) async {
+    try {
+      if (_npkService == null) {
+        throw Exception("NPK service not initialized");
+      }
+
+      // Start polling for NPK data
+      _npkService!.startPolling();
+
+      // Listen to NPK data stream
+      _usbSubscription = _npkService!.dataStream.listen((npkData) {
+        print("Received NPK data: $npkData");
+
+        // Update sensor's last analysis time
+        final sensorIndex = _detectedSensors.indexWhere(
+          (s) => s.id == sensorId,
+        );
+        if (sensorIndex != -1) {
+          _detectedSensors[sensorIndex] = _detectedSensors[sensorIndex]
+              .copyWith(lastAnalysisAt: DateTime.now());
+          _controller.add(List<Sensor>.from(_detectedSensors));
+        }
+
+        // Here you could send the data to your backend API
+        // await _sendAnalysisDataToBackend(npkData, parcelleId);
+      });
+    } catch (e) {
+      print("Error starting USB analysis: $e");
+      throw Exception("Failed to start analysis");
     }
   }
 
   void dispose() {
-    _timer?.cancel();
+    _usbSubscription?.cancel();
+    _npkService?.dispose();
+    _usbService?.dispose();
     _controller.close();
   }
 }

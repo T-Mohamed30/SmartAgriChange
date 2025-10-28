@@ -80,7 +80,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               backgroundColor: Color(0xFF007F3D),
               shape: CircleBorder(),
               elevation: 8,
-              child: Image.asset('assets/icons/plus.png', color: Colors.white),
+              child: Image.asset('assets/icons/analyse.png', color: Colors.white),
             )
           : null,
       bottomNavigationBar: Theme(

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:smartagrichange_mobile/features/plant_analysis/models/anomaly_analysis_models.dart';
 
 class PlantFullDetailPage extends StatefulWidget {
-  final String imagePath;
+  final AnomalyAnalysisResponse? analysisResult;
+  final Uint8List? imageBytes;
 
-  const PlantFullDetailPage({super.key, required this.imagePath});
+  const PlantFullDetailPage({super.key, this.analysisResult, this.imageBytes});
 
   @override
   State<PlantFullDetailPage> createState() => _PlantFullDetailPageState();
@@ -44,9 +47,9 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
         SizedBox(
           height: imageHeight,
           width: double.infinity,
-          child: kIsWeb
-              ? Image.network(
-                  widget.imagePath,
+          child: widget.imageBytes != null
+              ? Image.memory(
+                  widget.imageBytes!,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Image.asset(
@@ -55,16 +58,7 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
                     );
                   },
                 )
-              : Image.file(
-                  File(widget.imagePath),
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Image.asset(
-                      'assets/images/mango_leaf.jpg',
-                      fit: BoxFit.cover,
-                    );
-                  },
-                ),
+              : Image.asset('assets/images/mango_leaf.jpg', fit: BoxFit.cover),
         ),
 
         // Dégradé en bas de l'image pour contraste du texte si besoin
@@ -222,7 +216,10 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         minimumSize: const Size(40, 14),
                       ),
                       child: Row(
@@ -230,7 +227,10 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
                         children: [
                           Text(
                             e,
-                            style: const TextStyle(color: Colors.black, fontSize: 11),
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 11,
+                            ),
                           ),
                           const SizedBox(width: 4),
                           const Icon(
@@ -271,25 +271,25 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
                 scrollDirection: Axis.horizontal,
                 itemCount: gallery.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    gallery[index],
-                    width: 120,
-                    height: 88,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Image.asset(
-                        'assets/images/mango_leaf.jpg',
-                        width: 120,
-                        height: 88,
-                        fit: BoxFit.cover,
-                      );
-                    },
-                  ),
-                );
-              },
+                itemBuilder: (context, index) {
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      gallery[index],
+                      width: 120,
+                      height: 88,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.asset(
+                          'assets/images/mango_leaf.jpg',
+                          width: 120,
+                          height: 88,
+                          fit: BoxFit.cover,
+                        );
+                      },
+                    ),
+                  );
+                },
               ),
             ),
             const SizedBox(height: 10),
@@ -319,17 +319,11 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         title: Text(
           title,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(
-            color: Colors.grey.shade600,
-            fontSize: 14,
-          ),
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
         ),
         trailing: Icon(
           Icons.arrow_forward_ios,
@@ -339,9 +333,7 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
         onTap: () {
           // Handle tap for each care item
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Section "$title" - Bientôt disponible'),
-            ),
+            SnackBar(content: Text('Section "$title" - Bientôt disponible')),
           );
         },
       ),
@@ -408,7 +400,10 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
                 );
               },
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
               ),
               child: const Text(
                 'Voir plus >',
@@ -483,7 +478,10 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
             isScrollable: true,
             tabAlignment: TabAlignment.start,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            labelPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            labelPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 8,
+            ),
             tabs: const [
               Tab(text: 'Fiche plante'),
               Tab(text: 'Soins & Culture'),
@@ -526,11 +524,26 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildCareItem('Eau', 'Arrosage et besoins hydriques'),
-                            _buildCareItem('Fertilisation', 'Engrais et nutrition'),
-                            _buildCareItem('Taille / entretien', 'Techniques de taille et maintenance'),
-                            _buildCareItem('Propagation', 'Multiplication et bouturage'),
-                            _buildCareItem('Calendrier cultural', 'Périodes optimales pour chaque soin'),
+                            _buildCareItem(
+                              'Eau',
+                              'Arrosage et besoins hydriques',
+                            ),
+                            _buildCareItem(
+                              'Fertilisation',
+                              'Engrais et nutrition',
+                            ),
+                            _buildCareItem(
+                              'Taille / entretien',
+                              'Techniques de taille et maintenance',
+                            ),
+                            _buildCareItem(
+                              'Propagation',
+                              'Multiplication et bouturage',
+                            ),
+                            _buildCareItem(
+                              'Calendrier cultural',
+                              'Périodes optimales pour chaque soin',
+                            ),
                           ],
                         ),
                       ),
@@ -552,11 +565,26 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildCareItem('Température', 'Conditions thermiques optimales'),
-                            _buildCareItem('Sol', 'Type de sol et pH recommandé'),
-                            _buildCareItem('Lumière', 'Exposition et ensoleillement'),
-                            _buildCareItem('Zones de cultures principales', 'Régions adaptées à la culture'),
-                            _buildCareItem('Saisonnalité locale', 'Calendrier cultural spécifique'),
+                            _buildCareItem(
+                              'Température',
+                              'Conditions thermiques optimales',
+                            ),
+                            _buildCareItem(
+                              'Sol',
+                              'Type de sol et pH recommandé',
+                            ),
+                            _buildCareItem(
+                              'Lumière',
+                              'Exposition et ensoleillement',
+                            ),
+                            _buildCareItem(
+                              'Zones de cultures principales',
+                              'Régions adaptées à la culture',
+                            ),
+                            _buildCareItem(
+                              'Saisonnalité locale',
+                              'Calendrier cultural spécifique',
+                            ),
                           ],
                         ),
                       ),
@@ -586,26 +614,19 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildEconomicSection(
-                          'Prix marché',
-                          ['200-500 FCFA/kg selon variété et qualité'],
-                        ),
-                        _buildEconomicSection(
-                          'Utilisation',
-                          [
-                            'Consommation fraîche',
-                            'Transformation (jus, séché, confiture)',
-                            'Bois du manguier utilisé en menuiserie',
-                          ],
-                        ),
-                        _buildEconomicSection(
-                          'Importance sociale',
-                          [
-                            'Source de revenus pour petits producteurs',
-                            'Activité importante pour les femmes (vente au marché, transformation artisanale)',
-                            'Export possible vers Côte d\'Ivoire, Ghana, Europe (variétés améliorées)',
-                          ],
-                        ),
+                        _buildEconomicSection('Prix marché', [
+                          '200-500 FCFA/kg selon variété et qualité',
+                        ]),
+                        _buildEconomicSection('Utilisation', [
+                          'Consommation fraîche',
+                          'Transformation (jus, séché, confiture)',
+                          'Bois du manguier utilisé en menuiserie',
+                        ]),
+                        _buildEconomicSection('Importance sociale', [
+                          'Source de revenus pour petits producteurs',
+                          'Activité importante pour les femmes (vente au marché, transformation artisanale)',
+                          'Export possible vers Côte d\'Ivoire, Ghana, Europe (variétés améliorées)',
+                        ]),
                       ],
                     ),
                   ),

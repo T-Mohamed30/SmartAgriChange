@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/sensor.dart';
 import '../../domain/repositories/sensor_repository.dart';
@@ -22,27 +23,49 @@ final selectedSensorProvider = StateProvider<Sensor?>((ref) => null);
 /// provider pour l'état d'une détection (idle/searching/found)
 enum SensorDetectionState { idle, searching, found, notFound, error }
 
-final detectionStateProvider = StateProvider<SensorDetectionState>((ref) => SensorDetectionState.idle);
+final detectionStateProvider = StateProvider<SensorDetectionState>(
+  (ref) => SensorDetectionState.idle,
+);
 
 /// actions (StateNotifier) pour orchestrer la détection / connexion
 class SensorActions extends StateNotifier<void> {
   final Ref ref;
-  SensorActions(this.ref): super(null);
+  SensorActions(this.ref) : super(null);
+  StreamSubscription? _detectionSubscription;
 
   void startSensorDetection() {
-    ref.read(detectionStateProvider.notifier).state = SensorDetectionState.searching;
-    // écouter le stream et mettre à jour l'état quand on a data
-    final sub = ref.watch(detectedSensorsStreamProvider.stream).listen((sensors) {
-      if (sensors.isEmpty) {
-        ref.read(detectionStateProvider.notifier).state = SensorDetectionState.notFound;
-      } else {
-        ref.read(detectionStateProvider.notifier).state = SensorDetectionState.found;
-      }
-    }, onError: (err) {
-      ref.read(detectionStateProvider.notifier).state = SensorDetectionState.error;
-    });
+    // Cancel any existing subscription
+    _detectionSubscription?.cancel();
 
-    // on garde la souscription au besoin (ou l'annuler dans dispose)
+    ref.read(detectionStateProvider.notifier).state =
+        SensorDetectionState.searching;
+
+    // écouter le stream et mettre à jour l'état quand on a data
+    _detectionSubscription = ref
+        .watch(detectedSensorsStreamProvider.stream)
+        .listen(
+          (sensors) {
+            print("Sensor detection stream received ${sensors.length} sensors");
+            if (sensors.isEmpty) {
+              ref.read(detectionStateProvider.notifier).state =
+                  SensorDetectionState.notFound;
+            } else {
+              ref.read(detectionStateProvider.notifier).state =
+                  SensorDetectionState.found;
+            }
+          },
+          onError: (err) {
+            print("Sensor detection error: $err");
+            ref.read(detectionStateProvider.notifier).state =
+                SensorDetectionState.error;
+          },
+        );
+  }
+
+  @override
+  void dispose() {
+    _detectionSubscription?.cancel();
+    super.dispose();
   }
 
   Future<void> selectSensor(Sensor sensor) async {
@@ -51,9 +74,16 @@ class SensorActions extends StateNotifier<void> {
     await ref.read(sensorRepositoryProvider).connectToSensor(sensor.id);
   }
 
-  Future<void> startAnalysis({required String sensorId, String? parcelleId}) async {
-    await ref.read(sensorRepositoryProvider).startAnalysis(sensorId, parcelleId: parcelleId);
+  Future<void> startAnalysis({
+    required String sensorId,
+    String? parcelleId,
+  }) async {
+    await ref
+        .read(sensorRepositoryProvider)
+        .startAnalysis(sensorId, parcelleId: parcelleId);
   }
 }
 
-final sensorActionsProvider = StateNotifierProvider<SensorActions, void>((ref) => SensorActions(ref));
+final sensorActionsProvider = StateNotifierProvider<SensorActions, void>(
+  (ref) => SensorActions(ref),
+);

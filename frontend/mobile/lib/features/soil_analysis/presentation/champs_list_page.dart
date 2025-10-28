@@ -84,8 +84,12 @@ class SwipeableCard extends StatelessWidget {
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
-                title: Text('Supprimer ${itemType == 'champ' ? 'le champ' : 'la parcelle'}'),
-                content: Text('Êtes-vous sûr de vouloir supprimer "$itemName" ?'),
+                title: Text(
+                  'Supprimer ${itemType == 'champ' ? 'le champ' : 'la parcelle'}',
+                ),
+                content: Text(
+                  'Êtes-vous sûr de vouloir supprimer "$itemName" ?',
+                ),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(false),
@@ -96,7 +100,10 @@ class SwipeableCard extends StatelessWidget {
                       Navigator.of(context).pop(true);
                       onDelete();
                     },
-                    child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+                    child: const Text(
+                      'Supprimer',
+                      style: TextStyle(color: Colors.red),
+                    ),
                   ),
                 ],
               );
@@ -157,7 +164,8 @@ class _LongPressCardState extends State<LongPressCard> {
     }
 
     // Adjust vertical position if menu would overflow
-    if (menuTop + 100 > screenSize.height) { // Approximate menu height
+    if (menuTop + 100 > screenSize.height) {
+      // Approximate menu height
       menuTop = position.dy - 110; // Show above the card
     }
 
@@ -167,9 +175,7 @@ class _LongPressCardState extends State<LongPressCard> {
           // Blur background
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: Container(
-              color: Colors.black.withOpacity(0.3),
-            ),
+            child: Container(color: Colors.black.withOpacity(0.3)),
           ),
           // Tap to dismiss
           Positioned.fill(
@@ -216,7 +222,9 @@ class _LongPressCardState extends State<LongPressCard> {
                 width: 220, // Increased width to prevent text wrapping
                 height: 80, // Reduced height
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade50, // Light gray background instead of pure white
+                  color: Colors
+                      .grey
+                      .shade50, // Light gray background instead of pure white
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -235,7 +243,10 @@ class _LongPressCardState extends State<LongPressCard> {
                           topRight: Radius.circular(8),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Reduced vertical padding
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ), // Reduced vertical padding
                           child: Row(
                             children: [
                               Icon(Icons.edit, color: Colors.blue, size: 20),
@@ -255,10 +266,7 @@ class _LongPressCardState extends State<LongPressCard> {
                       ),
                     ),
                     // Divider
-                    Container(
-                      height: 1,
-                      color: Colors.grey.withOpacity(0.2),
-                    ),
+                    Container(height: 1, color: Colors.grey.withOpacity(0.2)),
                     // Delete option
                     Material(
                       color: Colors.transparent,
@@ -272,7 +280,10 @@ class _LongPressCardState extends State<LongPressCard> {
                           bottomRight: Radius.circular(8),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Reduced vertical padding
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ), // Reduced vertical padding
                           child: Row(
                             children: [
                               Icon(Icons.delete, color: Colors.red, size: 20),
@@ -332,7 +343,6 @@ class _LongPressCardState extends State<LongPressCard> {
     );
   }
 }
-
 
 // Widget ChampCard pour affichage identique à SensorCard
 class ChampCard extends StatelessWidget {
@@ -405,7 +415,10 @@ class ChampsListPage extends ConsumerWidget {
     final champsAsync = ref.watch(champsProvider);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Liste des champs', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Liste des champs',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+        ),
       ),
       body: SafeArea(
         child: Padding(
@@ -432,7 +445,8 @@ class ChampsListPage extends ConsumerWidget {
                               final result = await showModalBottomSheet<bool>(
                                 context: context,
                                 isScrollControlled: true,
-                                builder: (_) => EditChampBottomSheet(champ: champ),
+                                builder: (_) =>
+                                    EditChampBottomSheet(champ: champ),
                               );
                               if (result == true) {
                                 // Refresh the list
@@ -445,38 +459,67 @@ class ChampsListPage extends ConsumerWidget {
                                 builder: (BuildContext context) {
                                   return AlertDialog(
                                     title: const Text('Supprimer le champ'),
-                                    content: Text('Êtes-vous sûr de vouloir supprimer "${champ.name}" ?'),
+                                    content: Text(
+                                      'Êtes-vous sûr de vouloir supprimer "${champ.name}" ?',
+                                    ),
                                     actions: [
                                       TextButton(
-                                        onPressed: () => Navigator.of(context).pop(),
+                                        onPressed: () =>
+                                            Navigator.of(context).pop(),
                                         child: const Text('Annuler'),
                                       ),
                                       TextButton(
                                         onPressed: () async {
                                           Navigator.of(context).pop();
                                           try {
-                                            await ref.read(deleteChampProvider(champ.id).future);
+                                            await ref.read(
+                                              deleteChampProvider(
+                                                champ.id,
+                                              ).future,
+                                            );
                                             ref.invalidate(champsProvider);
                                             if (context.mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(content: Text('${champ.name} supprimé')),
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    '${champ.name} supprimé',
+                                                  ),
+                                                ),
                                               );
                                             }
-                                      } catch (e) {
-                                        debugPrint('ChampsListPage: Error deleting champ ${champ.name} (ID: ${champ.id}): $e');
-                                        if (context.mounted) {
-                                          // Check if the error is due to unauthorized access
-                                          String errorMessage = 'Erreur lors de la suppression: $e';
-                                          if (e.toString().contains('Unauthorized') || e.toString().contains('failed')) {
-                                            errorMessage = 'Accès non autorisé. Veuillez vous reconnecter.';
+                                          } catch (e) {
+                                            debugPrint(
+                                              'ChampsListPage: Error deleting champ ${champ.name} (ID: ${champ.id}): $e',
+                                            );
+                                            if (context.mounted) {
+                                              // Check if the error is due to unauthorized access
+                                              String errorMessage =
+                                                  'Erreur lors de la suppression: $e';
+                                              if (e.toString().contains(
+                                                    'Unauthorized',
+                                                  ) ||
+                                                  e.toString().contains(
+                                                    'failed',
+                                                  )) {
+                                                errorMessage =
+                                                    'Accès non autorisé. Veuillez vous reconnecter.';
+                                              }
+                                              ScaffoldMessenger.of(
+                                                context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(errorMessage),
+                                                ),
+                                              );
+                                            }
                                           }
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text(errorMessage)),
-                                          );
-                                        }
-                                      }
                                         },
-                                        child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+                                        child: const Text(
+                                          'Supprimer',
+                                          style: TextStyle(color: Colors.red),
+                                        ),
                                       ),
                                     ],
                                   );
@@ -565,7 +608,7 @@ class ChampsListPage extends ConsumerWidget {
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
-                  child: Container(), // Placeholder for removed ElevatedButton
+                child: Container(), // Placeholder for removed ElevatedButton
               ),
             ],
           ),
@@ -583,7 +626,7 @@ class ChampsListPage extends ConsumerWidget {
         shape: const CircleBorder(),
         elevation: 8,
         child: const Icon(Icons.add, color: Colors.white),
-      )
+      ),
     );
   }
 }
@@ -598,7 +641,11 @@ class ParcellesListPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: Padding(
-          padding: const EdgeInsets.only(left: 12, top: 8, bottom: 8), // espace du bord gauche et vertical
+          padding: const EdgeInsets.only(
+            left: 12,
+            top: 8,
+            bottom: 8,
+          ), // espace du bord gauche et vertical
 
           child: Container(
             decoration: BoxDecoration(
@@ -618,7 +665,11 @@ class ParcellesListPage extends ConsumerWidget {
             ),
           ),
         ),
-        title: Text(champ.name, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        title: Text(
+          champ.name,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
         centerTitle: true,
       ),
       body: SafeArea(
@@ -637,55 +688,85 @@ class ParcellesListPage extends ConsumerWidget {
                       return LongPressCard(
                         itemName: parcelle.name,
                         itemType: 'parcelle',
-                            onEdit: () async {
-                              final result = await showModalBottomSheet<bool>(
-                                context: context,
-                                isScrollControlled: true,
-                                builder: (_) => EditParcelleBottomSheet(parcelle: parcelle),
-                              );
-                              if (result == true) {
-                                // Refresh the list
-                                ref.invalidate(parcellesProvider(champ.id));
-                              }
-                            },
+                        onEdit: () async {
+                          final result = await showModalBottomSheet<bool>(
+                            context: context,
+                            isScrollControlled: true,
+                            builder: (_) =>
+                                EditParcelleBottomSheet(parcelle: parcelle),
+                          );
+                          if (result == true) {
+                            // Refresh the list
+                            ref.invalidate(parcellesProvider(champ.id));
+                          }
+                        },
                         onDelete: () {
                           showDialog(
                             context: context,
                             builder: (BuildContext context) {
                               return AlertDialog(
                                 title: const Text('Supprimer la parcelle'),
-                                content: Text('Êtes-vous sûr de vouloir supprimer "${parcelle.name}" ?'),
+                                content: Text(
+                                  'Êtes-vous sûr de vouloir supprimer "${parcelle.name}" ?',
+                                ),
                                 actions: [
                                   TextButton(
-                                    onPressed: () => Navigator.of(context).pop(),
+                                    onPressed: () =>
+                                        Navigator.of(context).pop(),
                                     child: const Text('Annuler'),
                                   ),
                                   TextButton(
                                     onPressed: () async {
                                       Navigator.of(context).pop();
                                       try {
-                                        await ref.read(deleteParcelleProvider(parcelle.id).future);
-                                        ref.invalidate(parcellesProvider(champ.id));
+                                        await ref.read(
+                                          deleteParcelleProvider(
+                                            parcelle.id,
+                                          ).future,
+                                        );
+                                        ref.invalidate(
+                                          parcellesProvider(champ.id),
+                                        );
                                         if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('${parcelle.name} supprimé')),
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                '${parcelle.name} supprimé',
+                                              ),
+                                            ),
                                           );
                                         }
                                       } catch (e) {
-                                        debugPrint('ParcellesListPage: Error deleting parcelle ${parcelle.name} (ID: ${parcelle.id}): $e');
+                                        debugPrint(
+                                          'ParcellesListPage: Error deleting parcelle ${parcelle.name} (ID: ${parcelle.id}): $e',
+                                        );
                                         if (context.mounted) {
                                           // Check if the error is due to unauthorized access
-                                          String errorMessage = 'Erreur lors de la suppression: $e';
-                                          if (e.toString().contains('Unauthorized') || e.toString().contains('failed')) {
-                                            errorMessage = 'Accès non autorisé. Veuillez vous reconnecter.';
+                                          String errorMessage =
+                                              'Erreur lors de la suppression: $e';
+                                          if (e.toString().contains(
+                                                'Unauthorized',
+                                              ) ||
+                                              e.toString().contains('failed')) {
+                                            errorMessage =
+                                                'Accès non autorisé. Veuillez vous reconnecter.';
                                           }
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text(errorMessage)),
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(errorMessage),
+                                            ),
                                           );
                                         }
                                       }
                                     },
-                                    child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+                                    child: const Text(
+                                      'Supprimer',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
                                   ),
                                 ],
                               );
@@ -725,8 +806,10 @@ class ParcellesListPage extends ConsumerWidget {
                       );
                     },
                   ),
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (error, stack) => Center(child: Text('Erreur: $error')),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) =>
+                      Center(child: Text('Erreur: $error')),
                 ),
               ),
               const SizedBox(height: 12),
@@ -746,7 +829,7 @@ class ParcellesListPage extends ConsumerWidget {
         shape: const CircleBorder(),
         elevation: 8,
         child: const Icon(Icons.add, color: Colors.white),
-      )
+      ),
     );
   }
 }

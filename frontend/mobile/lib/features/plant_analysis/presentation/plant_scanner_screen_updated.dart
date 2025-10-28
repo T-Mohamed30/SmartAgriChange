@@ -4,9 +4,7 @@ import 'dart:typed_data';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:dio/dio.dart';
 import 'package:smartagrichange_mobile/core/network/dio_client.dart';
 import 'package:smartagrichange_mobile/features/plant_analysis/models/anomaly_analysis_models.dart';
 import 'package:smartagrichange_mobile/features/plant_analysis/services/plant_analysis_service.dart';
@@ -24,7 +22,6 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
   CameraController? _controller;
   List<CameraDescription>? cameras;
   PlantAnalysisService? _plantAnalysisService;
-  final ImagePicker _imagePicker = ImagePicker();
 
   bool _isCapturing = false;
   bool _isAnalyzing = false;
@@ -98,34 +95,6 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
       setState(() {
         _isCapturing = false;
       });
-    }
-  }
-
-  Future<void> _onGalleryPressed() async {
-    if (_isCapturing || _isAnalyzing) return;
-
-    try {
-      final pickedFile = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 1920,
-        maxHeight: 1080,
-        imageQuality: 85,
-      );
-
-      if (pickedFile != null) {
-        final bytes = await pickedFile.readAsBytes();
-        setState(() {
-          _capturedImageBytes = bytes;
-          _isCapturing = true;
-        });
-
-        // Start analysis
-        await _analyzeImage(File(pickedFile.path));
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la sélection: $e')),
-      );
     }
   }
 
@@ -279,7 +248,12 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
                     children: [
                       // Gallery icon button
                       GestureDetector(
-                        onTap: _onGalleryPressed,
+                        onTap: () {
+                          // TODO: Open gallery picker
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Ouvrir la galerie')),
+                          );
+                        },
                         child: Container(
                           width: 48,
                           height: 48,

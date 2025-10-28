@@ -41,14 +41,14 @@ class FieldSelectionSheet extends ConsumerWidget {
                 ),
               ),
             ),
-            
+
             // Titre
             const Text(
               'Sélectionner un champ',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            
+
             // Liste des champs
             Expanded(
               child: fieldsAsync.when(
@@ -85,13 +85,13 @@ class FieldSelectionSheet extends ConsumerWidget {
                       ),
                     );
                   }
-                  
+
                   return ListView.builder(
                     itemCount: fields.length,
                     itemBuilder: (context, index) {
                       final champ = fields[index];
                       final isSelected = selectedField?.id == champ.id;
-                      
+
                       return Card(
                         elevation: 2,
                         margin: const EdgeInsets.symmetric(vertical: 4),
@@ -101,9 +101,14 @@ class FieldSelectionSheet extends ConsumerWidget {
                             champ.name,
                             style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
-                          subtitle: Text(champ.location),
-                          trailing: isSelected 
-                              ? const Icon(Icons.check_circle, color: Colors.green)
+                          subtitle: Text(
+                            '${champ.location} - ${champ.superficie} ha',
+                          ),
+                          trailing: isSelected
+                              ? const Icon(
+                                  Icons.check_circle,
+                                  color: Colors.green,
+                                )
                               : null,
                           onTap: () {
                             onFieldSelected(champ);
@@ -116,12 +121,10 @@ class FieldSelectionSheet extends ConsumerWidget {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) => Center(
-                  child: Text('Erreur: $error'),
-                ),
+                error: (error, stack) => Center(child: Text('Erreur: $error')),
               ),
             ),
-            
+
             // Bouton pour créer un nouveau champ
             Padding(
               padding: const EdgeInsets.only(top: 16, bottom: 8),
@@ -138,50 +141,77 @@ class FieldSelectionSheet extends ConsumerWidget {
       ),
     );
   }
-  
+
   void _showCreateFieldDialog(BuildContext context, WidgetRef ref) {
     final nameController = TextEditingController();
     final locationController = TextEditingController();
+    final superficieController = TextEditingController();
     final formKey = GlobalKey<FormState>();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Nouveau champ'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nom du champ',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer un nom';
-                  }
-                  return null;
-                },
+        content: Container(
+          width: double.maxFinite,
+          height: 400,
+          child: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Nom du champ',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Veuillez entrer un nom';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: locationController,
+                    decoration: const InputDecoration(
+                      labelText: 'Localisation',
+                      border: OutlineInputBorder(),
+                      hintText: 'Ex: Région, ville, etc.',
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Veuillez entrer une localisation';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: superficieController,
+                    decoration: const InputDecoration(
+                      labelText: 'Superficie (ha)',
+                      border: OutlineInputBorder(),
+                      suffixText: 'ha',
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Veuillez entrer une superficie';
+                      }
+                      final superficie = double.tryParse(value);
+                      if (superficie == null || superficie <= 0) {
+                        return 'Veuillez entrer une superficie valide';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: locationController,
-                decoration: const InputDecoration(
-                  labelText: 'Localisation',
-                  border: OutlineInputBorder(),
-                  hintText: 'Ex: Région, ville, etc.',
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Veuillez entrer une localisation';
-                  }
-                  return null;
-                },
-              ),
-            ],
+            ),
           ),
         ),
         actions: [
@@ -199,7 +229,9 @@ class FieldSelectionSheet extends ConsumerWidget {
                         createChampProvider({
                           'name': nameController.text,
                           'location': locationController.text,
-                        }).future
+                          'superficie':
+                              double.tryParse(superficieController.text) ?? 0.0,
+                        }).future,
                       );
 
                       if (newField != null && context.mounted) {
@@ -270,14 +302,14 @@ class ParcelleSelectionSheet extends ConsumerWidget {
                 ),
               ),
             ),
-            
+
             // Titre
             const Text(
               'Sélectionner une parcelle',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
-            
+
             // Liste des parcelles
             Expanded(
               child: parcellesAsync.when(
@@ -287,13 +319,13 @@ class ParcelleSelectionSheet extends ConsumerWidget {
                       child: Text('Aucune parcelle trouvée pour ce champ'),
                     );
                   }
-                  
+
                   return ListView.builder(
                     itemCount: parcelles.length,
                     itemBuilder: (context, index) {
                       final parcelle = parcelles[index];
                       final isSelected = selectedParcelle?.id == parcelle.id;
-                      
+
                       return Card(
                         elevation: 2,
                         margin: const EdgeInsets.symmetric(vertical: 4),
@@ -304,8 +336,11 @@ class ParcelleSelectionSheet extends ConsumerWidget {
                             style: const TextStyle(fontWeight: FontWeight.w500),
                           ),
                           subtitle: Text('${parcelle.superficie} ha'),
-                          trailing: isSelected 
-                              ? const Icon(Icons.check_circle, color: Colors.green)
+                          trailing: isSelected
+                              ? const Icon(
+                                  Icons.check_circle,
+                                  color: Colors.green,
+                                )
                               : null,
                           onTap: () {
                             onParcelleSelected(parcelle);
@@ -319,12 +354,10 @@ class ParcelleSelectionSheet extends ConsumerWidget {
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stack) => Center(
-                  child: Text('Erreur: $error'),
-                ),
+                error: (error, stack) => Center(child: Text('Erreur: $error')),
               ),
             ),
-            
+
             // Bouton pour créer une nouvelle parcelle
             Padding(
               padding: const EdgeInsets.only(top: 16, bottom: 8),
@@ -343,12 +376,16 @@ class ParcelleSelectionSheet extends ConsumerWidget {
       ),
     );
   }
-  
-  void _showCreateParcelleDialog(BuildContext context, WidgetRef ref, String champId) {
+
+  void _showCreateParcelleDialog(
+    BuildContext context,
+    WidgetRef ref,
+    String champId,
+  ) {
     final nameController = TextEditingController();
     final superficieController = TextEditingController();
     final formKey = GlobalKey<FormState>();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -410,7 +447,7 @@ class ParcelleSelectionSheet extends ConsumerWidget {
                           'champId': champId,
                           'name': nameController.text,
                           'superficie': double.parse(superficieController.text),
-                        }).future
+                        }).future,
                       );
 
                       if (newParcelle != null && context.mounted) {

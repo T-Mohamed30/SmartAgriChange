@@ -11,26 +11,34 @@ class EditChampBottomSheet extends ConsumerStatefulWidget {
   const EditChampBottomSheet({super.key, required this.champ});
 
   @override
-  ConsumerState<EditChampBottomSheet> createState() => _EditChampBottomSheetState();
+  ConsumerState<EditChampBottomSheet> createState() =>
+      _EditChampBottomSheetState();
 }
 
 class _EditChampBottomSheetState extends ConsumerState<EditChampBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
   late TextEditingController _locationController;
+  late TextEditingController _superficieController;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.champ.name);
-    _locationController = TextEditingController(text: widget.champ.location);
+    _locationController = TextEditingController(
+      text: '${widget.champ.latitude},${widget.champ.longitude}',
+    );
+    _superficieController = TextEditingController(
+      text: widget.champ.superficie.toString(),
+    );
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _locationController.dispose();
+    _superficieController.dispose();
     super.dispose();
   }
 
@@ -42,19 +50,26 @@ class _EditChampBottomSheetState extends ConsumerState<EditChampBottomSheet> {
     debugPrint('EditChamp: Starting champ update for ID: ${widget.champ.id}');
 
     try {
-      await ref.read(updateChampProvider({
-        'id': widget.champ.id,
-        'name': _nameController.text.trim(),
-        'location': _locationController.text.trim(),
-      }).future);
+      await ref.read(
+        updateChampProvider({
+          'id': widget.champ.id,
+          'name': _nameController.text.trim(),
+          'location': _locationController.text.trim(),
+          'superficie': double.parse(_superficieController.text.trim()),
+        }).future,
+      );
 
-      debugPrint('EditChamp: Champ update successful for ID: ${widget.champ.id}');
+      debugPrint(
+        'EditChamp: Champ update successful for ID: ${widget.champ.id}',
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Champ modifié avec succès')),
         );
-        Navigator.of(context).pop(true); // Retourner true pour indiquer le succès
+        Navigator.of(
+          context,
+        ).pop(true); // Retourner true pour indiquer le succès
       }
     } catch (e) {
       debugPrint('EditChamp: Error updating champ ID ${widget.champ.id}: $e');
@@ -62,12 +77,13 @@ class _EditChampBottomSheetState extends ConsumerState<EditChampBottomSheet> {
       if (mounted) {
         // Check if the error is due to unauthorized access
         String errorMessage = 'Erreur lors de la modification: $e';
-        if (e.toString().contains('Unauthorized') || e.toString().contains('failed')) {
+        if (e.toString().contains('Unauthorized') ||
+            e.toString().contains('failed')) {
           errorMessage = 'Accès non autorisé. Veuillez vous reconnecter.';
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(errorMessage)));
       }
     } finally {
       if (mounted) {
@@ -81,7 +97,12 @@ class _EditChampBottomSheetState extends ConsumerState<EditChampBottomSheet> {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: bottomInset > 0 ? bottomInset + 16 : 24),
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: bottomInset > 0 ? bottomInset + 16 : 24,
+        ),
         child: SizedBox(
           height: MediaQuery.of(context).size.height * 0.6,
           child: Column(
@@ -89,12 +110,19 @@ class _EditChampBottomSheetState extends ConsumerState<EditChampBottomSheet> {
             children: [
               Center(
                 child: Container(
-                  width: 100, height: 5,
-                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(8)),
+                  width: 100,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
-              const Text('Modifier le champ', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const Text(
+                'Modifier le champ',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
               Expanded(
                 child: SingleChildScrollView(
@@ -119,6 +147,22 @@ class _EditChampBottomSheetState extends ConsumerState<EditChampBottomSheet> {
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'La localisation est requise';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: _superficieController,
+                          decoration: _inputDecoration('Superficie (ha)'),
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'La superficie est requise';
+                            }
+                            final superficie = double.tryParse(value);
+                            if (superficie == null || superficie <= 0) {
+                              return 'Veuillez entrer une superficie valide';
                             }
                             return null;
                           },

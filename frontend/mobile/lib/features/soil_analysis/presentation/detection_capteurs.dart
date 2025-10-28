@@ -10,6 +10,7 @@ import 'providers/selection_providers.dart' as selection_providers;
 import 'widgets/sensor_card.dart';
 import 'widgets/selector_card.dart';
 import 'widgets/action_button.dart';
+import 'widgets/map_picker.dart';
 import 'analysis_screen.dart';
 
 class DetectionCapteursPage extends ConsumerStatefulWidget {
@@ -93,13 +94,21 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          const Text('Prêt à analyser', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text(
+            'Prêt à analyser',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
-          const Text('Appuyez sur le bouton pour commencer la recherche de capteurs.', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+          const Text(
+            'Appuyez sur le bouton pour commencer la recherche de capteurs.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16),
+          ),
           const SizedBox(height: 32),
           ActionButton(
             text: 'Démarrer la détection',
-            onPressed: () => ref.read(sensorActionsProvider.notifier).startSensorDetection(),
+            onPressed: () =>
+                ref.read(sensorActionsProvider.notifier).startSensorDetection(),
           ),
         ],
       ),
@@ -111,11 +120,20 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
       padding: const EdgeInsets.all(20),
       child: const Column(
         children: [
-          Text('Recherche en cours...', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(
+            'Recherche en cours...',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           SizedBox(height: 24),
-          CircularProgressIndicator(valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF007F3D))),
+          CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF007F3D)),
+          ),
           SizedBox(height: 24),
-          Text('Recherche de capteurs dans votre zone.\nAssurez-vous que vos capteurs sont allumés.', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+          Text(
+            'Recherche de capteurs dans votre zone.\nAssurez-vous que vos capteurs sont allumés.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16),
+          ),
           SizedBox(height: 200),
         ],
       ),
@@ -125,7 +143,9 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
   Widget _buildFoundState() {
     final sensorsAsync = ref.watch(detectedSensorsStreamProvider);
     final selectedChamp = ref.watch(selection_providers.selectedChampProvider);
-    final selectedParcelle = ref.watch(selection_providers.selectedParcelleProvider);
+    final selectedParcelle = ref.watch(
+      selection_providers.selectedParcelleProvider,
+    );
 
     return sensorsAsync.when(
       data: (sensors) => Padding(
@@ -157,13 +177,21 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
         children: [
           Icon(Icons.sensors_off, size: 64, color: Colors.orange.shade400),
           const SizedBox(height: 16),
-          const Text('Aucun capteur détecté', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text(
+            'Aucun capteur détecté',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
-          const Text('Vérifiez que vos capteurs sont allumés et à proximité.', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+          const Text(
+            'Vérifiez que vos capteurs sont allumés et à proximité.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16),
+          ),
           const SizedBox(height: 32),
           ActionButton(
             text: 'Actualiser',
-            onPressed: () => ref.read(sensorActionsProvider.notifier).startSensorDetection(),
+            onPressed: () =>
+                ref.read(sensorActionsProvider.notifier).startSensorDetection(),
           ),
         ],
       ),
@@ -177,13 +205,21 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
         children: [
           Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
           const SizedBox(height: 16),
-          const Text('Erreur de détection', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          const Text(
+            'Erreur de détection',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 16),
-          const Text('Une erreur s\'est produite lors de la recherche de capteurs.', textAlign: TextAlign.center, style: TextStyle(fontSize: 16)),
+          const Text(
+            'Une erreur s\'est produite lors de la recherche de capteurs.',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 16),
+          ),
           const SizedBox(height: 32),
           ActionButton(
             text: 'Réessayer',
-            onPressed: () => ref.read(sensorActionsProvider.notifier).startSensorDetection(),
+            onPressed: () =>
+                ref.read(sensorActionsProvider.notifier).startSensorDetection(),
           ),
         ],
       ),
@@ -193,8 +229,12 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
   Widget _buildBottomButton() {
     final selectedSensor = ref.watch(selectedSensorProvider);
     final selectedChamp = ref.watch(selection_providers.selectedChampProvider);
-    final selectedParcelle = ref.watch(selection_providers.selectedParcelleProvider);
-    final canLaunch = selectedSensor != null && (selectedChamp == null || selectedParcelle != null);
+    final selectedParcelle = ref.watch(
+      selection_providers.selectedParcelleProvider,
+    );
+    final canLaunch =
+        selectedSensor != null &&
+        (selectedChamp == null || selectedParcelle != null);
 
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -202,7 +242,9 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
         text: "Lancer l'analyse",
         onPressed: canLaunch
             ? () {
-                ref.read(sensorActionsProvider.notifier).startAnalysis(
+                ref
+                    .read(sensorActionsProvider.notifier)
+                    .startAnalysis(
                       sensorId: selectedSensor.id,
                       parcelleId: selectedParcelle?.id,
                     );
@@ -220,7 +262,6 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
             : null, // ⚠️ onPressed = null si canLaunch = false
       ),
     );
-
   }
 
   Widget _buildChampSelector(BuildContext context, Champ? selectedChamp) {
@@ -228,7 +269,15 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
       title: 'Champ',
       label: selectedChamp?.name ?? 'Choisir un champ',
       isSelected: selectedChamp != null,
-      onRemove: selectedChamp != null ? () => ref.read(selection_providers.selectedChampProvider.notifier).state = null : null,
+      onRemove: selectedChamp != null
+          ? () =>
+                ref
+                        .read(
+                          selection_providers.selectedChampProvider.notifier,
+                        )
+                        .state =
+                    null
+          : null,
       onTap: () => _showChampSelectionSheet(context),
     );
   }
@@ -241,14 +290,27 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
     );
   }
 
-  Widget _buildParcelleSelector(BuildContext context, Parcelle? selectedParcelle) {
+  Widget _buildParcelleSelector(
+    BuildContext context,
+    Parcelle? selectedParcelle,
+  ) {
     return SelectorCard(
       title: 'Parcelle',
       label: selectedParcelle?.name ?? 'Choisir une parcelle',
       isSelected: selectedParcelle != null,
-      onRemove: selectedParcelle != null ? () => ref.read(selection_providers.selectedParcelleProvider.notifier).state = null : null,
+      onRemove: selectedParcelle != null
+          ? () =>
+                ref
+                        .read(
+                          selection_providers.selectedParcelleProvider.notifier,
+                        )
+                        .state =
+                    null
+          : null,
       onTap: () {
-        final selectedChamp = ref.read(selection_providers.selectedChampProvider);
+        final selectedChamp = ref.read(
+          selection_providers.selectedChampProvider,
+        );
         if (selectedChamp != null) {
           _showParcelleSelectionSheet(context, selectedChamp);
         }
@@ -272,12 +334,17 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Capteurs sélectionnés', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          const Text(
+            'Capteurs sélectionnés',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 8),
           selectedSensor == null
               ? const Text('Aucun capteur sélectionné')
@@ -294,18 +361,27 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)],
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Expanded(child: Text('Capteurs disponibles', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600))),
+              const Expanded(
+                child: Text(
+                  'Capteurs disponibles',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                ),
+              ),
               IconButton(
                 icon: const Icon(Icons.refresh),
                 tooltip: 'Actualiser',
-                onPressed: () => ref.read(sensorActionsProvider.notifier).startSensorDetection(),
+                onPressed: () => ref
+                    .read(sensorActionsProvider.notifier)
+                    .startSensorDetection(),
               ),
             ],
           ),
@@ -320,7 +396,9 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
                 return SensorCard(
                   sensor: sensor,
                   highlighted: selectedSensor?.id == sensor.id,
-                  onTap: () => ref.read(sensorActionsProvider.notifier).selectSensor(sensor),
+                  onTap: () => ref
+                      .read(sensorActionsProvider.notifier)
+                      .selectSensor(sensor),
                 );
               },
             ),
@@ -349,7 +427,8 @@ class _ChampSelectionSheet extends ConsumerWidget {
           },
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => const Center(child: Text('Erreur de chargement des champs')),
+        error: (e, s) =>
+            const Center(child: Text('Erreur de chargement des champs')),
       ),
       actionButton: ActionButton(
         text: 'Créer un champ',
@@ -375,8 +454,10 @@ class _ChampCard extends ConsumerWidget {
     final parcellesAsync = ref.watch(parcellesProvider(champ.id));
     return InkWell(
       onTap: () {
-        ref.read(selection_providers.selectedChampProvider.notifier).state = champ;
-        ref.read(selection_providers.selectedParcelleProvider.notifier).state = null;
+        ref.read(selection_providers.selectedChampProvider.notifier).state =
+            champ;
+        ref.read(selection_providers.selectedParcelleProvider.notifier).state =
+            null;
         Navigator.pop(context);
       },
       child: Container(
@@ -384,21 +465,38 @@ class _ChampCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)],
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(champ.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+            Text(
+              champ.name,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
             const SizedBox(height: 6),
             Row(
               children: [
-                Text('localité: ${champ.location}', style: const TextStyle(color: Colors.black54)),
+                Text(
+                  'localité: ${champ.latitude?.toStringAsFixed(4) ?? 'N/A'}, ${champ.longitude?.toStringAsFixed(4) ?? 'N/A'}',
+                  style: const TextStyle(color: Colors.black54),
+                ),
                 const SizedBox(width: 16),
                 parcellesAsync.when(
-                  data: (parcelles) => Text('parcelles: ${parcelles.length}', style: const TextStyle(color: Colors.black54)),
-                  loading: () => const Text('parcelles: ...', style: TextStyle(color: Colors.black54)),
-                  error: (e, _) => const Text('parcelles: ?', style: TextStyle(color: Colors.black54)),
+                  data: (parcelles) => Text(
+                    'parcelles: ${parcelles.length}',
+                    style: const TextStyle(color: Colors.black54),
+                  ),
+                  loading: () => const Text(
+                    'parcelles: ...',
+                    style: TextStyle(color: Colors.black54),
+                  ),
+                  error: (e, _) => const Text(
+                    'parcelles: ?',
+                    style: TextStyle(color: Colors.black54),
+                  ),
                 ),
               ],
             ),
@@ -428,7 +526,8 @@ class _ParcelleSelectionSheet extends ConsumerWidget {
           },
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => const Center(child: Text('Erreur de chargement des parcelles')),
+        error: (e, s) =>
+            const Center(child: Text('Erreur de chargement des parcelles')),
       ),
       actionButton: ActionButton(
         text: 'Créer une parcelle',
@@ -453,7 +552,8 @@ class _ParcelleCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return InkWell(
       onTap: () {
-        ref.read(selection_providers.selectedParcelleProvider.notifier).state = parcelle;
+        ref.read(selection_providers.selectedParcelleProvider.notifier).state =
+            parcelle;
         Navigator.pop(context);
       },
       child: Container(
@@ -461,14 +561,22 @@ class _ParcelleCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6)],
+          boxShadow: [
+            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 6),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(parcelle.name, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16)),
+            Text(
+              parcelle.name,
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
             const SizedBox(height: 6),
-            Text('superficie: ${parcelle.superficie} ha', style: const TextStyle(color: Colors.black54)),
+            Text(
+              'superficie: ${parcelle.superficie} ha',
+              style: const TextStyle(color: Colors.black54),
+            ),
           ],
         ),
       ),
@@ -479,27 +587,54 @@ class _ParcelleCard extends ConsumerWidget {
 class CreateChampBottomSheet extends ConsumerStatefulWidget {
   const CreateChampBottomSheet({super.key});
   @override
-  ConsumerState<CreateChampBottomSheet> createState() => _CreateChampBottomSheetState();
+  ConsumerState<CreateChampBottomSheet> createState() =>
+      _CreateChampBottomSheetState();
 }
 
-class _CreateChampBottomSheetState extends ConsumerState<CreateChampBottomSheet> {
+class _CreateChampBottomSheetState
+    extends ConsumerState<CreateChampBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _locationController = TextEditingController();
+  final _superficieController = TextEditingController();
+  double? _selectedLatitude;
+  double? _selectedLongitude;
 
   @override
   void dispose() {
     _nameController.dispose();
-    _locationController.dispose();
+    _superficieController.dispose();
     super.dispose();
+  }
+
+  void _onLocationSelected(double latitude, double longitude) {
+    setState(() {
+      _selectedLatitude = latitude;
+      _selectedLongitude = longitude;
+    });
   }
 
   void _saveChamp() async {
     if (_formKey.currentState!.validate()) {
+      if (_selectedLatitude == null || _selectedLongitude == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Veuillez sélectionner un emplacement sur la carte'),
+          ),
+        );
+        return;
+      }
+
       final name = _nameController.text;
-      final location = _locationController.text;
+      final superficie = double.tryParse(_superficieController.text) ?? 0.0;
       try {
-        await ref.read(createChampProvider({'name': name, 'location': location}).future);
+        await ref.read(
+          createChampProvider({
+            'name': name,
+            'latitude': _selectedLatitude,
+            'longitude': _selectedLongitude,
+            'superficie': superficie,
+          }).future,
+        );
         ref.refresh(champsProvider);
         if (mounted) Navigator.pop(context);
       } catch (e) {
@@ -524,13 +659,32 @@ class _CreateChampBottomSheetState extends ConsumerState<CreateChampBottomSheet>
             TextFormField(
               controller: _nameController,
               decoration: _inputDecoration('Nom du champ'),
-              validator: (v) => (v == null || v.isEmpty) ? 'Veuillez entrer un nom' : null,
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Veuillez entrer un nom' : null,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              height: 400,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.shade300),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: MapPicker(onLocationSelected: _onLocationSelected),
+              ),
             ),
             const SizedBox(height: 16),
             TextFormField(
-              controller: _locationController,
-              decoration: _inputDecoration('Localité'),
-              validator: (v) => (v == null || v.isEmpty) ? 'Veuillez entrer une localité' : null,
+              controller: _superficieController,
+              decoration: _inputDecoration('Superficie (ha)'),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              validator: (v) =>
+                  (v == null || v.isEmpty || double.tryParse(v) == null)
+                  ? 'Veuillez entrer un nombre valide'
+                  : null,
             ),
           ],
         ),
@@ -545,10 +699,12 @@ class CreateParcelleBottomSheet extends ConsumerStatefulWidget {
   const CreateParcelleBottomSheet({required this.champId, super.key});
 
   @override
-  ConsumerState<CreateParcelleBottomSheet> createState() => _CreateParcelleBottomSheetState();
+  ConsumerState<CreateParcelleBottomSheet> createState() =>
+      _CreateParcelleBottomSheetState();
 }
 
-class _CreateParcelleBottomSheetState extends ConsumerState<CreateParcelleBottomSheet> {
+class _CreateParcelleBottomSheetState
+    extends ConsumerState<CreateParcelleBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _superficieController = TextEditingController();
@@ -565,18 +721,22 @@ class _CreateParcelleBottomSheetState extends ConsumerState<CreateParcelleBottom
       final name = _nameController.text;
       final superficie = double.tryParse(_superficieController.text) ?? 0.0;
       try {
-        await ref.read(createParcelleProvider({
-          'name': name,
-          'superficie': superficie,
-          'champId': widget.champId,
-        }).future);
+        await ref.read(
+          createParcelleProvider({
+            'name': name,
+            'superficie': superficie,
+            'champId': widget.champId,
+          }).future,
+        );
         ref.refresh(parcellesProvider(widget.champId));
         if (mounted) Navigator.pop(context);
       } catch (e) {
         debugPrint('DetectionCapteursPage: Error creating parcelle $name: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur lors de la création de la parcelle: $e')),
+            SnackBar(
+              content: Text('Erreur lors de la création de la parcelle: $e'),
+            ),
           );
         }
       }
@@ -594,14 +754,20 @@ class _CreateParcelleBottomSheetState extends ConsumerState<CreateParcelleBottom
             TextFormField(
               controller: _nameController,
               decoration: _inputDecoration('Nom de la parcelle'),
-              validator: (v) => (v == null || v.isEmpty) ? 'Veuillez entrer un nom' : null,
+              validator: (v) =>
+                  (v == null || v.isEmpty) ? 'Veuillez entrer un nom' : null,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _superficieController,
               decoration: _inputDecoration('Superficie (ha)'),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              validator: (v) => (v == null || v.isEmpty || double.tryParse(v) == null) ? 'Veuillez entrer un nombre valide' : null,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              validator: (v) =>
+                  (v == null || v.isEmpty || double.tryParse(v) == null)
+                  ? 'Veuillez entrer un nombre valide'
+                  : null,
             ),
           ],
         ),
@@ -636,12 +802,22 @@ class _ModalSheet extends StatelessWidget {
             children: [
               Center(
                 child: Container(
-                  width: 100, height: 5, 
-                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(8)),
+                  width: 100,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
-              Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 12),
               Expanded(child: body),
               const SizedBox(height: 12),
@@ -670,7 +846,12 @@ class _FormSheet extends StatelessWidget {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return SafeArea(
       child: Padding(
-        padding: EdgeInsets.only(left: 16, right: 16, top: 16, bottom: bottomInset > 0 ? bottomInset + 16 : 24),
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: bottomInset > 0 ? bottomInset + 16 : 24,
+        ),
         child: SizedBox(
           height: MediaQuery.of(context).size.height * 0.6,
           child: Column(
@@ -678,12 +859,22 @@ class _FormSheet extends StatelessWidget {
             children: [
               Center(
                 child: Container(
-                  width: 100, height: 5,
-                  decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(8)),
+                  width: 100,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
-              Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 12),
               Expanded(child: SingleChildScrollView(child: form)),
               const SizedBox(height: 20),

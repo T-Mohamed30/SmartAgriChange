@@ -10,9 +10,9 @@ import '../../domain/entities/parcelle.dart';
 final champParcelleRepositoryProvider = Provider<ChampParcelleRepositoryImpl>((
   ref,
 ) {
-  final dio = ref.read(dioClientProvider);
+  final dio = DioClient();
   return ChampParcelleRepositoryImpl(
-    dio: dio,
+    dio: dio.dio,
     baseUrl: ApiEndpoints.baseUrl,
   );
 });
@@ -34,13 +34,19 @@ final parcellesProvider = FutureProvider.family<List<Parcelle>, String>((
   return parcelles;
 });
 
-final createChampProvider = FutureProvider.family<Champ, Map<String, String>>((
+final createChampProvider = FutureProvider.family<Champ, Map<String, dynamic>>((
   ref,
   params,
 ) async {
   final repo = ref.read(champParcelleRepositoryProvider);
-  final champ = await repo.createChamp(params['name']!, params['location']!);
-  debugPrint('Created champ: ${champ.name} at ${champ.location}');
+  final champ = await repo.createChamp(
+    params['name'] as String,
+    params['location'] as String,
+    superficie: params['superficie'] as double?,
+  );
+  debugPrint(
+    'Created champ: ${champ.name} at ${champ.location} (${champ.superficie} ha)',
+  );
   return champ;
 });
 
@@ -52,7 +58,9 @@ final createParcelleProvider =
         params['superficie'] as double,
         params['champId'] as String,
       );
-      debugPrint('Created parcelle: ${parcelle.name} (${parcelle.superficie} ha) for champ ${params['champId']}');
+      debugPrint(
+        'Created parcelle: ${parcelle.name} (${parcelle.superficie} ha) for champ ${params['champId']}',
+      );
       return parcelle;
     });
 
@@ -65,8 +73,11 @@ final updateChampProvider = FutureProvider.family<Champ, Map<String, dynamic>>((
     params['id'] as String,
     params['name'] as String,
     params['location'] as String,
+    superficie: params['superficie'] as double?,
   );
-  debugPrint('Updated champ ${params['id']}: ${champ.name} at ${champ.location}');
+  debugPrint(
+    'Updated champ ${params['id']}: ${champ.name} at ${champ.location} (${champ.superficie} ha)',
+  );
   return champ;
 });
 
@@ -88,7 +99,9 @@ final updateParcelleProvider =
         params['superficie'] as double,
         params['champId'] as String,
       );
-      debugPrint('Updated parcelle ${params['id']}: ${parcelle.name} (${parcelle.superficie} ha)');
+      debugPrint(
+        'Updated parcelle ${params['id']}: ${parcelle.name} (${parcelle.superficie} ha)',
+      );
       return parcelle;
     });
 
