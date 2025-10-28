@@ -48,7 +48,7 @@ class ClassifierPrediction {
 
   factory ClassifierPrediction.fromJson(Map<String, dynamic> json) {
     return ClassifierPrediction(
-      prediction: json['prediction'],
+      prediction: json['class_name'] ?? json['prediction'] ?? '',
       confidence: json['confidence'].toDouble(),
       details: json['details'],
     );
@@ -92,8 +92,9 @@ class Plant {
   factory Plant.fromJson(Map<String, dynamic> json) {
     return Plant(
       id: json['id'],
-      nomScientifique: json['nom_scientifique'],
-      nomCommun: json['nom_commun'],
+      nomScientifique:
+          json['scientific_name'] ?? json['nom_scientifique'] ?? '',
+      nomCommun: json['common_name'] ?? json['nom_commun'] ?? '',
       description: json['description'],
       familleBotanique: json['famille_botanique'],
       type: json['type'],
@@ -121,7 +122,7 @@ class Plant {
 
 /// Rubric model for plant information
 class Rubric {
-  final int id;
+  final String id;
   final int plantId;
   final String name;
   final List<RubricInfo>? infos;
@@ -157,8 +158,8 @@ class Rubric {
 
 /// Rubric info model
 class RubricInfo {
-  final int id;
-  final int rubricId;
+  final String id;
+  final String rubricId;
   final String title;
   final String content;
   final String? imageUrl;
@@ -179,8 +180,8 @@ class RubricInfo {
     return RubricInfo(
       id: json['id'],
       rubricId: json['rubric_id'],
-      title: json['title'],
-      content: json['content'],
+      title: json['key'] ?? json['title'] ?? '',
+      content: json['value'] ?? json['content'] ?? '',
       imageUrl: json['image_url'],
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
@@ -226,15 +227,21 @@ class Anomaly {
     return Anomaly(
       id: json['id'],
       plantId: json['plant_id'],
-      nom: json['nom'],
+      nom: json['name'] ?? json['nom'] ?? '',
       description: json['description'],
-      symptomes: json['symptomes'] != null
+      symptomes: json['symptoms'] != null
+          ? (json['symptoms'] as String).split('\n')
+          : json['symptomes'] != null
           ? List<String>.from(json['symptomes'])
           : null,
-      causes: json['causes'] != null ? List<String>.from(json['causes']) : null,
-      traitement: json['traitement'],
-      prevention: json['prevention'],
-      gravite: json['gravite'],
+      causes: json['causes'] != null
+          ? (json['causes'] is String
+                ? [json['causes']]
+                : List<String>.from(json['causes']))
+          : null,
+      traitement: json['solutions'] ?? json['traitement'],
+      prevention: json['preventions'] ?? json['prevention'],
+      gravite: json['category'] ?? json['gravite'],
       images: json['images'] != null ? List<String>.from(json['images']) : null,
       createdAt: json['created_at'] != null
           ? DateTime.parse(json['created_at'])
