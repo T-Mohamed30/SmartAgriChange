@@ -62,9 +62,9 @@ class AppConfig {
   static const bool enableOfflineMode = true;
   static const Duration syncInterval = Duration(minutes: 15);
   
-  // Configuration des notifications
-  static const bool enablePushNotifications = true;
-  static const Duration notificationPollingInterval = Duration(minutes: 5);
+  // // Configuration des notifications
+  // static const bool enablePushNotifications = true;
+  // static const Duration notificationPollingInterval = Duration(minutes: 5);
   
   // Configuration de la sécurité
   static const bool enableCertificatePinning = !kDebugMode;

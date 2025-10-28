@@ -14,7 +14,7 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/network/api_endpoints.dart';
-import 'notification_service.dart';
+// import 'notification_service.dart';
 
 // PROVIDERS
 final detectionStateProvider = StateProvider<SensorDetectionState>(
@@ -211,9 +211,7 @@ class AnalysisService {
 
           _ref.read(soilDataProvider.notifier).state = soilData;
 
-          // Check for critical conditions and send alerts
-          final alertManager = _ref.read(alertManagerProvider);
-          await alertManager.checkSoilConditions(soilData);
+          
 
           // Check cache first
           final cachedAnalysis = await _getCachedAnalysis(soilData);
@@ -252,6 +250,7 @@ class AnalysisService {
       final headers = await ApiEndpoints.getAuthHeaders();
       final sensor = _ref.read(selectedSensorProvider);
 
+      final selectedSensor = _ref.read(selectedSensorProvider);
       final payload = {
         'ph': soilData.ph,
         'temperature': soilData.temperature,
@@ -260,7 +259,7 @@ class AnalysisService {
         'n': soilData.nitrogen,
         'p': soilData.phosphorus,
         'k': soilData.potassium,
-        'sensor_model': "AgroSense-X200",
+        if (selectedSensor != null) 'sensor_model': selectedSensor.name,
       };
 
       final response = await dioClient.dio.post(

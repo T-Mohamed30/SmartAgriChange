@@ -24,14 +24,11 @@ import 'features/plant_analysis/presentation/plant_scanner_screen.dart';
 import 'features/plant_analysis/presentation/plant_detail_page.dart';
 
 import 'features/plant_analysis/presentation/plant_full_detail_page.dart';
-import 'package:smartagrichange_mobile/features/soil_analysis/application/notification_service.dart';
+// import 'package:smartagrichange_mobile/features/soil_analysis/application/notification_service.dart';
 
 void main() async {
   // Clear all stored data on app start for clean authentication state
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize notifications
-  await NotificationService.initialize();
 
   // Force synchronous clearing of all stored data
   final prefs = await SharedPreferences.getInstance();

@@ -260,7 +260,6 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
                   context,
                   '/soil_analysis/analysis',
                   arguments: AnalysisArgs(
-                    sensorId: selectedSensor.id,
                     sensorName: selectedSensor.name,
                     champName: selectedChamp?.name,
                     parcelleName: selectedParcelle?.name,

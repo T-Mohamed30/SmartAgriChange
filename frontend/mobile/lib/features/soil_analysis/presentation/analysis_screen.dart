@@ -16,12 +16,10 @@ import 'package:smartagrichange_mobile/features/soil_analysis/presentation/provi
 import 'widgets/error_boundary.dart';
 
 class AnalysisArgs {
-  final String sensorId;
   final String sensorName;
   final String? champName;
   final String? parcelleName;
   const AnalysisArgs({
-    required this.sensorId,
     required this.sensorName,
     this.champName,
     this.parcelleName,
