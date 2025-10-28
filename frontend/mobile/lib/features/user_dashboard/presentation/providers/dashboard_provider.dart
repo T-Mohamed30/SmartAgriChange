@@ -53,9 +53,9 @@ final dashboardStatsProvider = Provider<AsyncValue<Map<String, int>>>((ref) {
   return champsAsync.when(
     data: (champs) {
       return AsyncValue.data({
-        'capteurs': 5,  // Nombre de capteurs actifs
+        'capteurs': 1,  // Nombre de capteurs actifs
         'champs': champs.length,  // Nombre réel de champs enregistrés
-        'alertes': 2,   // Nombre d'alertes non lues
+        'alertes': 0   // Nombre d'alertes non lues
       });
     },
     loading: () => const AsyncValue.loading(),

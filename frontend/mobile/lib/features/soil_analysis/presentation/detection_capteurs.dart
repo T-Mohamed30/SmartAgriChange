@@ -118,23 +118,31 @@ class _DetectionCapteursPageState extends ConsumerState<DetectionCapteursPage> {
   Widget _buildSearchingState() {
     return Padding(
       padding: const EdgeInsets.all(20),
-      child: const Column(
+      child: Column(
         children: [
-          Text(
+          const Text(
             'Recherche en cours...',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 24),
-          CircularProgressIndicator(
+          const SizedBox(height: 24),
+          const CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF007F3D)),
           ),
-          SizedBox(height: 24),
-          Text(
+          const SizedBox(height: 24),
+          const Text(
             'Recherche de capteurs dans votre zone.\nAssurez-vous que vos capteurs sont allumés.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 16),
           ),
-          SizedBox(height: 200),
+          const SizedBox(height: 32),
+          ActionButton(
+            text: 'Annuler la recherche',
+            onPressed: () {
+              ref.read(detectionStateProvider.notifier).state =
+                  SensorDetectionState.notFound;
+            },
+          ),
+          const SizedBox(height: 200),
         ],
       ),
     );

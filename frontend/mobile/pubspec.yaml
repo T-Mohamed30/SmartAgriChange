@@ -50,6 +50,10 @@ dependencies:
   flutter_blue_plus: ^1.32.8
   usb_serial: ^0.5.0
   js: ^0.6.7
+  flutter_local_notifications: ^17.2.2
+  pdf: ^3.10.7
+  printing: ^5.12.0
+  csv: ^6.0.0
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

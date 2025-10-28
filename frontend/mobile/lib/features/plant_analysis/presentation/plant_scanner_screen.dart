@@ -229,6 +229,7 @@ class _PlantScannerScreenState extends State<PlantScannerScreen> {
           arguments: {
             'analysisResult': analysisResult,
             'imageBytes': _capturedImageBytes,
+            'showHealthyMessage': !hasAnomaly,
           },
         );
       }

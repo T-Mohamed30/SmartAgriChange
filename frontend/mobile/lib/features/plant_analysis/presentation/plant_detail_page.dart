@@ -123,6 +123,7 @@ class PlantDetailPage extends StatelessWidget {
                         arguments: {
                           'analysisResult': analysisResult,
                           'imageBytes': imageBytes,
+                          'showHealthyMessage': false,
                         },
                       );
                     },

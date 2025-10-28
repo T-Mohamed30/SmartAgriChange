@@ -39,13 +39,24 @@ class SensorActions extends StateNotifier<void> {
   final Ref ref;
   SensorActions(this.ref) : super(null);
   StreamSubscription? _detectionSubscription;
+  Timer? _detectionTimeout;
 
   void startSensorDetection() {
-    // Cancel any existing subscription
+    // Cancel any existing subscription and timeout
     _detectionSubscription?.cancel();
+    _detectionTimeout?.cancel();
 
     ref.read(detectionStateProvider.notifier).state =
         SensorDetectionState.searching;
+
+    // Set a timeout for detection (10 seconds)
+    _detectionTimeout = Timer(const Duration(seconds: 10), () {
+      if (ref.read(detectionStateProvider) == SensorDetectionState.searching) {
+        print("Sensor detection timeout - no sensors found");
+        ref.read(detectionStateProvider.notifier).state =
+            SensorDetectionState.notFound;
+      }
+    });
 
     // écouter le stream et mettre à jour l'état quand on a data
     _detectionSubscription = ref
@@ -53,6 +64,7 @@ class SensorActions extends StateNotifier<void> {
         .listen(
           (sensors) {
             print("Sensor detection stream received ${sensors.length} sensors");
+            _detectionTimeout?.cancel(); // Cancel timeout if we found sensors
             if (sensors.isEmpty) {
               ref.read(detectionStateProvider.notifier).state =
                   SensorDetectionState.notFound;
@@ -63,6 +75,7 @@ class SensorActions extends StateNotifier<void> {
           },
           onError: (err) {
             print("Sensor detection error: $err");
+            _detectionTimeout?.cancel();
             ref.read(detectionStateProvider.notifier).state =
                 SensorDetectionState.error;
           },
@@ -72,6 +85,7 @@ class SensorActions extends StateNotifier<void> {
   @override
   void dispose() {
     _detectionSubscription?.cancel();
+    _detectionTimeout?.cancel();
     super.dispose();
   }
 

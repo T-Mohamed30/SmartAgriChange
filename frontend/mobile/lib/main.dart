@@ -22,12 +22,16 @@ import 'features/soil_analysis/presentation/crop_calendar_screen.dart';
 import 'features/account/presentation/account_page.dart';
 import 'features/plant_analysis/presentation/plant_scanner_screen.dart';
 import 'features/plant_analysis/presentation/plant_detail_page.dart';
-import 'features/plant_analysis/presentation/healthy_plant_detail_page.dart';
+
 import 'features/plant_analysis/presentation/plant_full_detail_page.dart';
+import 'package:smartagrichange_mobile/features/soil_analysis/application/notification_service.dart';
 
 void main() async {
   // Clear all stored data on app start for clean authentication state
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize notifications
+  await NotificationService.initialize();
 
   // Force synchronous clearing of all stored data
   final prefs = await SharedPreferences.getInstance();
@@ -158,21 +162,7 @@ class MyApp extends StatelessWidget {
             ),
           );
         },
-        '/plant_analysis/healthy_detail': (context) {
-          final args =
-              ModalRoute.of(context)?.settings.arguments
-                  as Map<String, dynamic>? ??
-              {};
-          final analysisResult =
-              args['analysisResult'] as AnomalyAnalysisResponse?;
-          final imageBytes = args['imageBytes'] as Uint8List?;
-          return AuthGuard(
-            child: HealthyPlantDetailPage(
-              analysisResult: analysisResult,
-              imageBytes: imageBytes,
-            ),
-          );
-        },
+
         '/plant_analysis/full_detail': (context) {
           final args =
               ModalRoute.of(context)?.settings.arguments

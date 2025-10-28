@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:math' as math;
 import 'package:share_plus/share_plus.dart';
+import '../application/export_service.dart';
 
 import '../application/analysis_service.dart'
     show
@@ -9,6 +11,9 @@ import '../application/analysis_service.dart'
         recommendationsProvider,
         soilDataProvider,
         AnalysisService;
+import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/npk_data.dart';
+import 'package:smartagrichange_mobile/features/soil_analysis/presentation/providers/sensor_provider.dart';
+import 'widgets/error_boundary.dart';
 
 class AnalysisArgs {
   final String sensorId;
@@ -34,6 +39,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   bool _showResults = false;
+  StreamSubscription<NPKData>? _npkSubscription;
 
   @override
   void initState() {
@@ -43,6 +49,9 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
       duration: const Duration(seconds: 3),
     )..repeat();
 
+    // Listen to real sensor data
+    _setupSensorDataListener();
+
     // Auto-redirect to data display after loading
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
@@ -50,8 +59,62 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
         _showResults = true;
       });
       _controller.stop();
-      // Trigger data simulation and AI call
-      ref.read(analysisServiceProvider).fetchDataAndAnalyze();
+      // Trigger data analysis with real sensor data
+      _triggerAnalysisWithSensorData();
+    });
+  }
+
+  void _setupSensorDataListener() {
+    final args = ModalRoute.of(context)?.settings.arguments as AnalysisArgs?;
+    if (args != null) {
+      // Listen to NPK data stream
+      _npkSubscription = ref
+          .read(npkDataStreamProvider.stream)
+          .listen(
+            (npkData) {
+              if (mounted) {
+                try {
+                  // Update analysis with real sensor data
+                  ref
+                      .read(analysisServiceProvider)
+                      .fetchDataAndAnalyze(npkData: npkData);
+                } catch (e) {
+                  print('Error processing sensor data: $e');
+                  // Show error message to user
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Erreur lors du traitement des données du capteur: $e',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            onError: (error) {
+              print('Error receiving NPK data: $error');
+              // Show error message to user
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Erreur de réception des données du capteur: $error',
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+          );
+    }
+  }
+
+  void _triggerAnalysisWithSensorData() {
+    // Get latest NPK data if available
+    final npkDataAsync = ref.read(npkDataStreamProvider);
+    npkDataAsync.whenData((npkData) {
+      ref.read(analysisServiceProvider).fetchDataAndAnalyze(npkData: npkData);
     });
   }
 
@@ -64,175 +127,57 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
   Widget _buildDataDisplay(AnalysisArgs? args) {
     final recommendations = ref.watch(recommendationsProvider);
     final soilData = ref.watch(soilDataProvider);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (args != null) ...[
-            Text(
-              args.champName == null
-                  ? 'Capteur: ${args.sensorName}'
-                  : 'Capteur: ${args.sensorName} • Champ: ${args.champName}${args.parcelleName != null ? ' • Parcelle: ${args.parcelleName}' : ''}',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+    return ErrorBoundary(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (args != null) ...[
+              Text(
+                args.champName == null
+                    ? 'Capteur: ${args.sensorName}'
+                    : 'Capteur: ${args.sensorName} • Champ: ${args.champName}${args.parcelleName != null ? ' • Parcelle: ${args.parcelleName}' : ''}',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Colors.black54),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            _metricRow(
+              'Conductivité',
+              soilData != null
+                  ? '${soilData.ec.toStringAsFixed(1)} us/cm'
+                  : '0 us/cm',
+              'assets/icons/renewable-energy 1.png',
             ),
             const SizedBox(height: 16),
-          ],
+            _metricRow(
+              'Température',
+              soilData != null
+                  ? '${soilData.temperature.toStringAsFixed(1)} °C'
+                  : '0 °C',
+              'assets/icons/celsius 1.png',
+            ),
+            const SizedBox(height: 16),
+            _metricRow(
+              'Humidité',
+              soilData != null
+                  ? '${soilData.humidity.toStringAsFixed(1)} %'
+                  : '0 %',
+              'assets/icons/humidity 1.png',
+            ),
+            const SizedBox(height: 16),
+            _metricRow(
+              'Ph',
+              soilData != null ? soilData.ph.toStringAsFixed(1) : '0',
+              'assets/icons/ph.png',
+            ),
 
-          _metricRow(
-            'Conductivité',
-            soilData != null
-                ? '${soilData.ec.toStringAsFixed(1)} us/cm'
-                : '0 us/cm',
-            'assets/icons/renewable-energy 1.png',
-          ),
-          const SizedBox(height: 16),
-          _metricRow(
-            'Température',
-            soilData != null
-                ? '${soilData.temperature.toStringAsFixed(1)} °C'
-                : '0 °C',
-            'assets/icons/celsius 1.png',
-          ),
-          const SizedBox(height: 16),
-          _metricRow(
-            'Humidité',
-            soilData != null
-                ? '${soilData.humidity.toStringAsFixed(1)} %'
-                : '0 %',
-            'assets/icons/humidity 1.png',
-          ),
-          const SizedBox(height: 16),
-          _metricRow(
-            'Ph',
-            soilData != null ? soilData.ph.toStringAsFixed(1) : '0',
-            'assets/icons/ph.png',
-          ),
+            const SizedBox(height: 24),
 
-          const SizedBox(height: 24),
-
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/icons/npk-illustration.png',
-                      width: 24,
-                      height: 24,
-                      fit: BoxFit.contain,
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Nutriments',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text('Azote (N)'),
-                          SizedBox(height: 4),
-                          Text(
-                            soilData != null
-                                ? '${soilData.nitrogen.toStringAsFixed(0)} mg/kg'
-                                : '0 mg/kg',
-                            style: TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text('Phosphore (P)'),
-                          SizedBox(height: 4),
-                          Text(
-                            soilData != null
-                                ? '${soilData.phosphorus.toStringAsFixed(0)} mg/kg'
-                                : '0 mg/kg',
-                            style: TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text('Potassium (K)'),
-                          SizedBox(height: 4),
-                          Text(
-                            soilData != null
-                                ? '${soilData.potassium.toStringAsFixed(0)} mg/kg'
-                                : '0 mg/kg',
-                            style: TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Consumer(
-              builder: (context, ref, _) {
-                final soilData = ref.watch(soilDataProvider);
-                if (soilData == null) {
-                  return const Text('Description du sol non disponible.');
-                }
-                final description = ref
-                    .read(analysisServiceProvider)
-                    .generateSoilDescription(soilData);
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Description',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      description,
-                      style: const TextStyle(color: Colors.black87),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: Container(
+            Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -241,79 +186,252 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Nos Recommendations',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        'assets/icons/npk-illustration.png',
+                        width: 24,
+                        height: 24,
+                        fit: BoxFit.contain,
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Nutriments',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 12),
-                  Expanded(
-                    child: recommendations.isEmpty
-                        ? const Center(
-                            child: Text('Chargement des recommandations...'),
-                          )
-                        : ListView.separated(
-                            itemCount: recommendations.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(height: 8),
-                            itemBuilder: (context, index) {
-                              final item = recommendations[index];
-                              return Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE5F8EC),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            item['crop'],
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w700,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Text(
-                                            'compatibilité: ${item.compatibilityScore.toStringAsFixed(1)}%',
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    InkWell(
-                                      borderRadius: BorderRadius.circular(16),
-                                      onTap: () {
-                                        Navigator.pushNamed(
-                                          context,
-                                          '/soil_analysis/crop_detail',
-                                          arguments: item['probability'],
-                                        );
-                                      },
-                                      child: const Padding(
-                                        padding: EdgeInsets.all(4.0),
-                                        child: Icon(
-                                          Icons.chevron_right,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text('Azote (N)'),
+                            SizedBox(height: 4),
+                            Text(
+                              soilData != null
+                                  ? '${soilData.nitrogen.toStringAsFixed(0)} mg/kg'
+                                  : '0 mg/kg',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text('Phosphore (P)'),
+                            SizedBox(height: 4),
+                            Text(
+                              soilData != null
+                                  ? '${soilData.phosphorus.toStringAsFixed(0)} mg/kg'
+                                  : '0 mg/kg',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text('Potassium (K)'),
+                            SizedBox(height: 4),
+                            Text(
+                              soilData != null
+                                  ? '${soilData.potassium.toStringAsFixed(0)} mg/kg'
+                                  : '0 mg/kg',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Consumer(
+                builder: (context, ref, _) {
+                  final soilData = ref.watch(soilDataProvider);
+                  if (soilData == null) {
+                    return const Text('Description du sol non disponible.');
+                  }
+                  final description = ref
+                      .read(analysisServiceProvider)
+                      .generateSoilDescription(soilData);
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Description',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        description,
+                        style: const TextStyle(color: Colors.black87),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Nos Recommendations',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: recommendations.isEmpty
+                          ? const Center(
+                              child: Text('Chargement des recommandations...'),
+                            )
+                          : ListView.builder(
+                              itemCount: (recommendations.length / 2).ceil(),
+                              itemBuilder: (context, rowIndex) {
+                                final startIndex = rowIndex * 2;
+                                final endIndex =
+                                    (startIndex + 2) > recommendations.length
+                                    ? recommendations.length
+                                    : startIndex + 2;
+
+                                final rowItems = recommendations.sublist(
+                                  startIndex,
+                                  endIndex,
+                                );
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: Row(
+                                    children: rowItems.map((item) {
+                                      return Expanded(
+                                        child: Container(
+                                          margin: const EdgeInsets.symmetric(
+                                            horizontal: 4.0,
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 10,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFE5F8EC),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                item['crop'] ??
+                                                    'Culture inconnue',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                'compatibilité: ${(item['compatibilityScore'] ?? 0.0).toStringAsFixed(1)}%',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.black54,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Align(
+                                                alignment:
+                                                    Alignment.centerRight,
+                                                child: InkWell(
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                  onTap: () {
+                                                    try {
+                                                      Navigator.pushNamed(
+                                                        context,
+                                                        '/soil_analysis/crop_detail',
+                                                        arguments:
+                                                            item['crop'] ??
+                                                            'Culture inconnue',
+                                                      );
+                                                    } catch (e) {
+                                                      print(
+                                                        'Error navigating to crop detail: $e',
+                                                      );
+                                                      ScaffoldMessenger.of(
+                                                        context,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            'Erreur lors de la navigation: $e',
+                                                          ),
+                                                          backgroundColor:
+                                                              Colors.red,
+                                                        ),
+                                                      );
+                                                    }
+                                                  },
+                                                  child: const Padding(
+                                                    padding: EdgeInsets.all(
+                                                      4.0,
+                                                    ),
+                                                    child: Icon(
+                                                      Icons.chevron_right,
+                                                      size: 16,
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -385,18 +503,26 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
     buffer.writeln();
     buffer.writeln('Paramètres du sol:');
     buffer.writeln('Conductivité: ${soilData.ec.toStringAsFixed(1)} us/cm');
-    buffer.writeln('Température: ${soilData.temperature.toStringAsFixed(1)} °C');
+    buffer.writeln(
+      'Température: ${soilData.temperature.toStringAsFixed(1)} °C',
+    );
     buffer.writeln('Humidité: ${soilData.humidity.toStringAsFixed(1)} %');
     buffer.writeln('pH: ${soilData.ph.toStringAsFixed(1)}');
     buffer.writeln();
     buffer.writeln('Nutriments:');
     buffer.writeln('Azote (N): ${soilData.nitrogen.toStringAsFixed(0)} mg/kg');
-    buffer.writeln('Phosphore (P): ${soilData.phosphorus.toStringAsFixed(0)} mg/kg');
-    buffer.writeln('Potassium (K): ${soilData.potassium.toStringAsFixed(0)} mg/kg');
+    buffer.writeln(
+      'Phosphore (P): ${soilData.phosphorus.toStringAsFixed(0)} mg/kg',
+    );
+    buffer.writeln(
+      'Potassium (K): ${soilData.potassium.toStringAsFixed(0)} mg/kg',
+    );
     buffer.writeln();
     buffer.writeln('Recommandations:');
     for (final rec in recommendations) {
-      buffer.writeln('- ${rec.culture.name}: ${rec.compatibilityScore.toStringAsFixed(1)}% de compatibilité');
+      buffer.writeln(
+        '- ${rec.culture.name}: ${rec.compatibilityScore.toStringAsFixed(1)}% de compatibilité',
+      );
     }
     buffer.writeln();
     buffer.writeln('Partagé depuis SmartAgriChange');
@@ -440,19 +566,96 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                 ),
               ),
               actions: [
-                IconButton(
-                  icon: const Icon(Icons.share, color: Colors.black),
-                  onPressed: () async {
+                PopupMenuButton<String>(
+                  onSelected: (value) async {
                     final soilData = ref.read(soilDataProvider);
                     final recommendations = ref.read(recommendationsProvider);
+                    final args =
+                        ModalRoute.of(context)?.settings.arguments
+                            as AnalysisArgs?;
+
                     if (soilData != null && recommendations.isNotEmpty) {
-                      final shareText = _generateShareText(
-                        soilData,
-                        recommendations,
-                      );
-                      await Share.share(shareText);
+                      switch (value) {
+                        case 'share':
+                          final shareText = _generateShareText(
+                            soilData,
+                            recommendations,
+                          );
+                          await Share.share(shareText);
+                          break;
+                        case 'pdf':
+                          await ExportService.exportToPDF(
+                            soilData: soilData,
+                            recommendations: recommendations,
+                            sensorName: args?.sensorName ?? 'Capteur',
+                            champName: args?.champName,
+                            parcelleName: args?.parcelleName,
+                          );
+                          break;
+                        case 'csv':
+                          await ExportService.exportToCSV(
+                            soilData: soilData,
+                            recommendations: recommendations,
+                            sensorName: args?.sensorName ?? 'Capteur',
+                            champName: args?.champName,
+                            parcelleName: args?.parcelleName,
+                          );
+                          break;
+                        case 'print':
+                          await ExportService.printReport(
+                            soilData: soilData,
+                            recommendations: recommendations,
+                            sensorName: args?.sensorName ?? 'Capteur',
+                            champName: args?.champName,
+                            parcelleName: args?.parcelleName,
+                          );
+                          break;
+                      }
                     }
                   },
+                  itemBuilder: (BuildContext context) => [
+                    const PopupMenuItem<String>(
+                      value: 'share',
+                      child: Row(
+                        children: [
+                          Icon(Icons.share, size: 20),
+                          SizedBox(width: 8),
+                          Text('Partager'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'pdf',
+                      child: Row(
+                        children: [
+                          Icon(Icons.picture_as_pdf, size: 20),
+                          SizedBox(width: 8),
+                          Text('Exporter PDF'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'csv',
+                      child: Row(
+                        children: [
+                          Icon(Icons.table_chart, size: 20),
+                          SizedBox(width: 8),
+                          Text('Exporter CSV'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'print',
+                      child: Row(
+                        children: [
+                          Icon(Icons.print, size: 20),
+                          SizedBox(width: 8),
+                          Text('Imprimer'),
+                        ],
+                      ),
+                    ),
+                  ],
+                  icon: const Icon(Icons.more_vert, color: Colors.black),
                 ),
               ],
               iconTheme: const IconThemeData(color: Colors.black),
