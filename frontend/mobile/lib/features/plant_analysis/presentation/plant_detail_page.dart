@@ -171,7 +171,7 @@ class PlantDetailPage extends StatelessWidget {
                           ),
                           if (modelResult != null)
                             Text(
-                              'Confiance: ${(modelResult.confidence * 100).toStringAsFixed(1)}%',
+                              'Confiance: ${(modelResult.confidence * 100).toStringAsFixed(2)}%',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 14,

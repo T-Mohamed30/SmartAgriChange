@@ -210,46 +210,49 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
   }
 
   Widget _buildRubricSection(Rubric rubric) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: ExpansionTile(
-        title: Text(
-          rubric.name,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              rubric.name,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            Column(
+              children: rubric.infos?.map((info) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          info.title,
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          info.content,
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(color: Colors.black87),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList() ?? [],
+            ),
+          ],
         ),
-        children: rubric.infos?.map((info) => Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                info.title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                info.content,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                  height: 1.4,
-                ),
-              ),
-            ],
-          ),
-        )).toList() ?? [],
       ),
     );
   }
@@ -276,7 +279,6 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
   Widget _buildMorphology() {
     final List<String> items = [
       'Racines',
-      'Tronc',
       'Feuilles',
       'Fleurs',
       'Fruits',
@@ -414,6 +416,76 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
     );
   }
 
+  void _showCareDetail(String careType) {
+    final plant = widget.analysisResult?.plant;
+    final searchTerms = {
+      'Eau': ['arrosage', 'eau', 'water', 'watering', 'irrigation'],
+      'Fertilisation': ['fertilisation', 'fertilizer', 'engrais', 'nutrition'],
+      'Taille / entretien': ['taille', 'pruning', 'entretien', 'maintenance'],
+    };
+
+    final terms = searchTerms[careType] ?? [careType.toLowerCase()];
+    Rubric? careRubric;
+    for (final rubric in plant?.rubrics ?? []) {
+      final rubricNameLower = rubric.name.toLowerCase();
+      if (terms.any((term) => rubricNameLower.contains(term) || term.contains(rubricNameLower))) {
+        careRubric = rubric;
+        break;
+      }
+    }
+
+    if (careRubric == null || careRubric.infos == null || careRubric.infos!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Informations sur $careType non disponibles')),
+      );
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(careType),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: careRubric.infos!.map((info) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      info.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      info.content,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.black87,
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fermer'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPhotoGallery() {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -472,7 +544,7 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
     );
   }
 
-  Widget _buildCareItem(String title, String subtitle) {
+  Widget _buildCareItem(String title, String subtitle, {VoidCallback? onTap}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -494,7 +566,7 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
           size: 16,
           color: Colors.grey.shade400,
         ),
-        onTap: () {
+        onTap: onTap ?? () {
           // Handle tap for each care item
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Section "$title" - Bientôt disponible')),
@@ -688,9 +760,9 @@ class _PlantFullDetailPageState extends State<PlantFullDetailPage>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildCareItem('Eau', 'Arrosage et besoins hydriques'),
-                            _buildCareItem('Fertilisation', 'Engrais et nutrition'),
-                            _buildCareItem('Taille / entretien', 'Techniques de taille et maintenance'),
+                            _buildCareItem('Eau', 'Arrosage et besoins hydriques', onTap: () => _showCareDetail('Eau')),
+                            _buildCareItem('Fertilisation', 'Engrais et nutrition', onTap: () => _showCareDetail('Fertilisation')),
+                            _buildCareItem('Taille / entretien', 'Techniques de taille et maintenance', onTap: () => _showCareDetail('Taille / entretien')),
                             _buildCareItem('Propagation', 'Multiplication et bouturage'),
                             _buildCareItem('Calendrier cultural', 'Périodes optimales pour chaque soin'),
                           ],
