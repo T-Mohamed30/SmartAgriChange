@@ -371,12 +371,12 @@ class ChampCard extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
             ),
             const SizedBox(height: 6),
+            ParcelleCount(champId: champ.id),
+            const SizedBox(height: 6),
             Text(
-              'Localité: ${champ.location}',
+              '${champ.superficie} ha',
               style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
             ),
-            const SizedBox(height: 10),
-            ParcelleCount(champId: champ.id),
           ],
         ),
       ),
@@ -562,7 +562,7 @@ class ChampsListPage extends ConsumerWidget {
                                     Row(
                                       children: [
                                         Text(
-                                          'Localité: ${champ.location}',
+                                          'Superficie: ${champ.superficie} ha',
                                           style: const TextStyle(
                                             color: Colors.black54,
                                           ),
@@ -665,10 +665,19 @@ class ParcellesListPage extends ConsumerWidget {
             ),
           ),
         ),
-        title: Text(
-          champ.name,
-          textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        title: Column(
+          children: [
+            Text(
+              champ.name,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Lat: ${champ.latitude.toStringAsFixed(4)}, Lng: ${champ.longitude.toStringAsFixed(4)}',
+              style: const TextStyle(fontSize: 12, color: Colors.white70),
+            ),
+          ],
         ),
         centerTitle: true,
       ),
@@ -798,7 +807,7 @@ class ParcellesListPage extends ConsumerWidget {
                               const SizedBox(height: 6),
                               Text(
                                 'Superficie: ${parcelle.superficie} ha',
-                                style: const TextStyle(color: Colors.black54),
+                                style: const TextStyle(color: Colors.black),
                               ),
                             ],
                           ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/champ.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/presentation/providers/champ_parcelle_provider.dart';
 import 'widgets/action_button.dart';
+import 'widgets/map_picker.dart';
 
 class EditChampBottomSheet extends ConsumerStatefulWidget {
   final Champ champ;
@@ -18,32 +19,47 @@ class EditChampBottomSheet extends ConsumerStatefulWidget {
 class _EditChampBottomSheetState extends ConsumerState<EditChampBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _nameController;
-  late TextEditingController _locationController;
   late TextEditingController _superficieController;
+  double? _selectedLatitude;
+  double? _selectedLongitude;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.champ.name);
-    _locationController = TextEditingController(
-      text: '${widget.champ.latitude},${widget.champ.longitude}',
-    );
     _superficieController = TextEditingController(
       text: widget.champ.superficie.toString(),
     );
+    _selectedLatitude = widget.champ.latitude;
+    _selectedLongitude = widget.champ.longitude;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _locationController.dispose();
     _superficieController.dispose();
     super.dispose();
   }
 
+  void _onLocationSelected(double latitude, double longitude) {
+    setState(() {
+      _selectedLatitude = latitude;
+      _selectedLongitude = longitude;
+    });
+  }
+
   void _updateChamp() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (_selectedLatitude == null || _selectedLongitude == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez sélectionner un emplacement sur la carte'),
+        ),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -54,8 +70,10 @@ class _EditChampBottomSheetState extends ConsumerState<EditChampBottomSheet> {
         updateChampProvider({
           'id': widget.champ.id,
           'name': _nameController.text.trim(),
-          'location': _locationController.text.trim(),
-          'superficie': double.parse(_superficieController.text.trim()),
+          'location': '', // City not in UI, send empty
+          'latitude': _selectedLatitude,
+          'longitude': _selectedLongitude,
+          'area': double.parse(_superficieController.text.trim()),
         }).future,
       );
 
@@ -104,7 +122,7 @@ class _EditChampBottomSheetState extends ConsumerState<EditChampBottomSheet> {
           bottom: bottomInset > 0 ? bottomInset + 16 : 24,
         ),
         child: SizedBox(
-          height: MediaQuery.of(context).size.height * 0.6,
+          height: MediaQuery.of(context).size.height * 0.8,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -141,15 +159,20 @@ class _EditChampBottomSheetState extends ConsumerState<EditChampBottomSheet> {
                           },
                         ),
                         const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _locationController,
-                          decoration: _inputDecoration('Localisation'),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'La localisation est requise';
-                            }
-                            return null;
-                          },
+                        Container(
+                          height: 300,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: MapPicker(
+                              onLocationSelected: _onLocationSelected,
+                              initialLatitude: _selectedLatitude,
+                              initialLongitude: _selectedLongitude,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 16),
                         TextFormField(

@@ -195,6 +195,31 @@ class _EditParcelleBottomSheetState
                               final nouvelleSuperficieTotale =
                                   totalSuperficieParcelles + superficie;
                               if (nouvelleSuperficieTotale > champ.superficie) {
+                                // Show popup dialog
+                                WidgetsBinding.instance.addPostFrameCallback((
+                                  _,
+                                ) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text(
+                                          'Superficie dépassée',
+                                        ),
+                                        content: Text(
+                                          'La superficie totale des parcelles (${nouvelleSuperficieTotale.toStringAsFixed(2)} ha) ne peut pas dépasser celle du champ (${champ.superficie.toStringAsFixed(2)} ha).',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.of(context).pop(),
+                                            child: const Text('OK'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                });
                                 return 'La superficie totale des parcelles (${nouvelleSuperficieTotale.toStringAsFixed(2)} ha) ne peut pas dépasser celle du champ (${champ.superficie.toStringAsFixed(2)} ha)';
                               }
                             }

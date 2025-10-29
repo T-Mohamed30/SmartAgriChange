@@ -12,6 +12,8 @@ import 'package:smartagrichange_mobile/features/user_dashboard/presentation/prov
     show dashboardStatsProvider, recentAnalysesProvider;
 import '../soil_analysis/presentation/champs_list_page.dart';
 import '../account/presentation/account_page.dart';
+import 'presentation/screens/historique_screen.dart';
+import '../soil_analysis/presentation/widgets/action_button.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -27,6 +29,11 @@ class _HomePageState extends ConsumerState<HomePage> {
     setState(() {
       _selectedIndex = index;
     });
+    // Navigate to HistoriqueScreen when Historique tab is tapped
+    if (index == 2) {
+      // Historique is index 2
+      Navigator.pushReplacementNamed(context, '/historique');
+    }
   }
 
   void _showAnalyzeBottomSheet() {
@@ -80,7 +87,12 @@ class _HomePageState extends ConsumerState<HomePage> {
               backgroundColor: Color(0xFF007F3D),
               shape: CircleBorder(),
               elevation: 8,
-              child: Image.asset('assets/icons/analyse.png', color: Colors.white),
+              child: Image.asset(
+                'assets/icons/analyse.png',
+                color: Colors.white,
+                height: 24,
+                width: 24,
+              ),
             )
           : null,
       bottomNavigationBar: Theme(
@@ -219,20 +231,20 @@ class _HomePageState extends ConsumerState<HomePage> {
 
                               return Image.asset(
                                 weatherIcon,
-                                height: 64,
-                                width: 64,
+                                height: 80,
+                                width: 80,
                                 errorBuilder: (context, error, stackTrace) =>
                                     Image.asset(
                                       'assets/icons/temps_1.png',
-                                      height: 64,
-                                      width: 64,
+                                      height: 80,
+                                      width: 80,
                                     ),
                               );
                             } catch (e) {
                               return Image.asset(
                                 'assets/icons/temps_1.png',
-                                height: 64,
-                                width: 64,
+                                height: 80,
+                                width: 80,
                               );
                             }
                           },
@@ -299,40 +311,6 @@ class _HomePageState extends ConsumerState<HomePage> {
               );
             },
           ),
-          const SizedBox(height: 16),
-
-          // Irrigation Reminder
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.red.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border(
-                left: BorderSide(color: Colors.red.shade400, width: 4),
-              ),
-            ),
-            height: 60,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              children: [
-                Image.asset(
-                  'assets/icons/interface-alert-information-circle--information-frame-info-more-help-point-circle--Streamline-Core.png',
-                  height: 20,
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'Penser à irriguer la parcelle 2 ce soir.',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
 
           // Stats
           Consumer(
@@ -814,71 +792,21 @@ class _HomePageState extends ConsumerState<HomePage> {
 
             // Analyze soil button
             Center(
-              child: SizedBox(
-                width: 400,
-                height: 60,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF007F3D),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  onPressed: goToDetectionCapteurs,
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.science_outlined, size: 20),
-                      SizedBox(width: 12),
-                      Text(
-                        'Analyser le sol',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              child: ActionButton(
+                text: 'Analyser le sol',
+                onPressed: goToDetectionCapteurs,
               ),
             ),
             const SizedBox(height: 12),
 
             // Scan plant button
             Center(
-              child: SizedBox(
-                width: 400,
-                height: 60,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/plant_analysis/scanner');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE5F8EC),
-                    foregroundColor: const Color(0xFF007F3D),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.camera_alt_outlined, size: 20),
-                      SizedBox(width: 12),
-                      Text(
-                        'Scanner la plante',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+              child: ActionButton(
+                text: 'Scanner la plante',
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.pushNamed(context, '/plant_analysis/scanner');
+                },
               ),
             ),
           ],

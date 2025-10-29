@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/repositories/champ_parcelle_repository_impl.dart';
 import '../../../../core/network/api_endpoints.dart';
 import '../../../../core/network/dio_client.dart';
@@ -11,14 +12,28 @@ final champParcelleRepositoryProvider = Provider<ChampParcelleRepositoryImpl>((
   ref,
 ) {
   final dio = DioClient();
-  return ChampParcelleRepositoryImpl(dio: dio.dio, baseUrl: ApiEndpoints.baseUrl);
+  return ChampParcelleRepositoryImpl(
+    dio: dio.dio,
+    baseUrl: ApiEndpoints.baseUrl,
+  );
 });
 
 final champsProvider = FutureProvider<List<Champ>>((ref) async {
   final repo = ref.read(champParcelleRepositoryProvider);
+  // Récupérer l'ID utilisateur depuis SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  final userId = prefs.getInt('user_id');
+
+  if (userId == null) return [];
+
   final champs = await repo.fetchChamps();
   debugPrint('Fetched champs: ${champs.length}');
-  return champs;
+
+  // Filtrer les champs par utilisateur connecté
+  final userChamps = champs.where((champ) => champ.userId == userId).toList();
+  debugPrint('Filtered champs for user $userId: ${userChamps.length}');
+
+  return userChamps;
 });
 
 final parcellesProvider = FutureProvider.family<List<Parcelle>, String>((
@@ -39,7 +54,9 @@ final createChampProvider = FutureProvider.family<Champ, Map<String, dynamic>>((
   final champ = await repo.createChamp(
     params['name'] as String,
     params['location'] as String,
-    superficie: params['superficie'] as double?,
+    params['latitude'] as double,
+    params['longitude'] as double,
+    area: params['area'] as double?,
   );
   debugPrint(
     'Created champ: ${champ.name} at ${champ.location} (${champ.superficie} ha)',
@@ -70,7 +87,9 @@ final updateChampProvider = FutureProvider.family<Champ, Map<String, dynamic>>((
     params['id'] as String,
     params['name'] as String,
     params['location'] as String,
-    superficie: params['superficie'] as double?,
+    params['latitude'] as double,
+    params['longitude'] as double,
+    area: params['area'] as double?,
   );
   debugPrint(
     'Updated champ ${params['id']}: ${champ.name} at ${champ.location} (${champ.superficie} ha)',

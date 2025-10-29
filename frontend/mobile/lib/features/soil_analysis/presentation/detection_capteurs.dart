@@ -425,14 +425,22 @@ class _ChampSelectionSheet extends ConsumerWidget {
     return _ModalSheet(
       title: 'Liste des champs',
       body: champsAsync.when(
-        data: (champs) => ListView.separated(
-          itemCount: champs.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final champ = champs[index];
-            return _ChampCard(champ: champ);
-          },
-        ),
+        data: (champs) => champs.isEmpty
+            ? const Center(
+                child: Text(
+                  'Il n\'y a pas encore de champs enregistrés',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+              )
+            : ListView.separated(
+                itemCount: champs.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final champ = champs[index];
+                  return _ChampCard(champ: champ);
+                },
+              ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, s) =>
             const Center(child: Text('Erreur de chargement des champs')),
@@ -524,14 +532,22 @@ class _ParcelleSelectionSheet extends ConsumerWidget {
     return _ModalSheet(
       title: 'Liste des parcelles de ${champ.name}',
       body: parcellesAsync.when(
-        data: (parcelles) => ListView.separated(
-          itemCount: parcelles.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final parcelle = parcelles[index];
-            return _ParcelleCard(parcelle: parcelle);
-          },
-        ),
+        data: (parcelles) => parcelles.isEmpty
+            ? const Center(
+                child: Text(
+                  'Il n\'y a pas encore de parcelles enregistrées',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+              )
+            : ListView.separated(
+                itemCount: parcelles.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final parcelle = parcelles[index];
+                  return _ParcelleCard(parcelle: parcelle);
+                },
+              ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, s) =>
             const Center(child: Text('Erreur de chargement des parcelles')),
@@ -637,9 +653,10 @@ class _CreateChampBottomSheetState
         await ref.read(
           createChampProvider({
             'name': name,
+            'location': '',
             'latitude': _selectedLatitude,
             'longitude': _selectedLongitude,
-            'superficie': superficie,
+            'area': superficie,
           }).future,
         );
         ref.refresh(champsProvider);
@@ -771,10 +788,67 @@ class _CreateParcelleBottomSheetState
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              validator: (v) =>
-                  (v == null || v.isEmpty || double.tryParse(v) == null)
-                  ? 'Veuillez entrer un nombre valide'
-                  : null,
+              validator: (v) {
+                if (v == null || v.isEmpty || double.tryParse(v) == null) {
+                  return 'Veuillez entrer un nombre valide';
+                }
+                final superficie = double.tryParse(v);
+                if (superficie == null || superficie <= 0) {
+                  return 'Veuillez entrer une superficie valide';
+                }
+                // Validation de la superficie totale des parcelles par rapport au champ
+                final champs = ref.watch(champsProvider);
+                final champ = champs.maybeWhen(
+                  data: (champsList) => champsList.firstWhere(
+                    (c) => c.id == widget.champId,
+                    orElse: () => Champ(
+                      id: '',
+                      name: '',
+                      latitude: 0.0,
+                      longitude: 0.0,
+                      superficie: 0.0,
+                    ),
+                  ),
+                  orElse: () => null,
+                );
+                if (champ != null) {
+                  final totalSuperficieParcelles = ref
+                      .watch(parcellesProvider(widget.champId))
+                      .maybeWhen(
+                        data: (parcelles) => parcelles.fold<double>(
+                          0,
+                          (sum, p) => sum + p.superficie,
+                        ),
+                        orElse: () => 0,
+                      );
+                  final nouvelleSuperficieTotale =
+                      totalSuperficieParcelles + superficie;
+                  if (nouvelleSuperficieTotale > champ.superficie) {
+                    // Show popup dialog
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Superficie dépassée'),
+                            content: Text(
+                              'La superficie totale des parcelles (${nouvelleSuperficieTotale.toStringAsFixed(2)} ha) ne peut pas dépasser celle du champ (${champ.superficie.toStringAsFixed(2)} ha).',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('OK'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    });
+                    return 'La superficie totale des parcelles (${nouvelleSuperficieTotale.toStringAsFixed(2)} ha) ne peut pas dépasser celle du champ (${champ.superficie.toStringAsFixed(2)} ha)';
+                  }
+                }
+                return null;
+              },
             ),
           ],
         ),

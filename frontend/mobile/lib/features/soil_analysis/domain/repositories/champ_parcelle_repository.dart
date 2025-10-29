@@ -4,7 +4,13 @@ import '../entities/parcelle.dart';
 abstract class ChampParcelleRepository {
   Future<List<Champ>> fetchChamps();
   Future<List<Parcelle>> fetchParcelles({required String champId});
-  Future<Champ> createChamp(String name, String location, {double? superficie});
+  Future<Champ> createChamp(
+    String name,
+    String location,
+    double latitude,
+    double longitude, {
+    double? area,
+  });
   Future<Parcelle> createParcelle(
     String name,
     double superficie,
@@ -13,8 +19,10 @@ abstract class ChampParcelleRepository {
   Future<Champ> updateChamp(
     String id,
     String name,
-    String location, {
-    double? superficie,
+    String location,
+    double latitude,
+    double longitude, {
+    double? area,
   });
   Future<void> deleteChamp(String id);
   Future<Parcelle> updateParcelle(

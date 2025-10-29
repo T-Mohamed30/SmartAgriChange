@@ -4,6 +4,7 @@ class Champ {
   final double latitude;
   final double longitude;
   final double superficie;
+  final int? userId;
 
   Champ({
     required this.id,
@@ -11,6 +12,7 @@ class Champ {
     required this.latitude,
     required this.longitude,
     required this.superficie,
+    this.userId,
   });
 
   String get location =>
@@ -22,6 +24,7 @@ class Champ {
     double? latitude,
     double? longitude,
     double? superficie,
+    int? userId,
   }) {
     return Champ(
       id: id ?? this.id,
@@ -29,6 +32,7 @@ class Champ {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       superficie: superficie ?? this.superficie,
+      userId: userId ?? this.userId,
     );
   }
 }

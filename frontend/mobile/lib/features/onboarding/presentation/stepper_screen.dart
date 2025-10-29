@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../soil_analysis/presentation/widgets/action_button.dart';
 
 class StepperScreen extends StatefulWidget {
   const StepperScreen({super.key});
@@ -113,7 +114,9 @@ class _StepperScreenState extends State<StepperScreen> {
                         Expanded(
                           flex: 2,
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24.0,
+                            ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -166,29 +169,17 @@ class _StepperScreenState extends State<StepperScreen> {
                       height: 10,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(5),
-                        color: index == currentIndex ? Colors.green : Colors.grey.shade300,
+                        color: index == currentIndex
+                            ? Colors.green
+                            : Colors.grey.shade300,
                       ),
                     ),
                   ),
-                )
+                ),
               ],
             ),
             const SizedBox(height: 20),
-            SizedBox(
-              width: MediaQuery.of(context).size.width * 0.6,
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                onPressed: goToAuth,
-                child: const Text('Continuer', style: TextStyle(color: Colors.white)),
-              ),
-            ),
+            ActionButton(text: 'Sauter', onPressed: goToAuth),
             const SizedBox(height: 30),
           ],
         ),

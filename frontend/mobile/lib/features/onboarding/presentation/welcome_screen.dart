@@ -5,6 +5,7 @@ import 'package:smartagrichange_mobile/features/onboarding/presentation/stepper_
 import 'package:smartagrichange_mobile/features/auth/presentation/providers/auth_provider.dart';
 import 'package:smartagrichange_mobile/features/auth/domain/entities/user.dart';
 import 'package:smartagrichange_mobile/features/user_dashboard/home.dart';
+import '../../soil_analysis/presentation/widgets/action_button.dart';
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
@@ -31,13 +32,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
       CurvedAnimation(parent: _animationController, curve: Curves.easeIn),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0.0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutBack,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0.0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutBack,
+          ),
+        );
 
     _animationController.forward();
 
@@ -66,7 +67,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
               password: '',
             );
             ref.read(userProvider.notifier).state = user;
-            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              '/home',
+              (route) => false,
+            );
           }
         } catch (e) {
           // Token is invalid, clear it and reset user state
@@ -101,7 +106,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
             FadeTransition(
               opacity: _fadeAnimation,
               child: Image.asset(
-                'assets/images/logo.png', 
+                'assets/images/logo.png',
                 height: MediaQuery.of(context).size.height * 0.15,
                 semanticLabel: 'Logo SmartAgriChange',
               ),
@@ -137,25 +142,14 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
               position: _slideAnimation,
               child: FadeTransition(
                 opacity: _fadeAnimation,
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.6,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const StepperScreen()),
-                      );
-                    },
-                    child: const Text('Commencer', style: TextStyle(color: Colors.white)),
-                  ),
+                child: ActionButton(
+                  text: 'Commencer',
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const StepperScreen()),
+                    );
+                  },
                 ),
               ),
             ),

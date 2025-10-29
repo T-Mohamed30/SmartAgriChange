@@ -31,7 +31,7 @@ class Analysis {
   };
 
   factory Analysis.fromJson(Map<String, dynamic> json) => Analysis(
-    id: json['id'],
+    id: json['id'].toString(),
     name: json['name'],
     location: json['location'],
     type: json['type'],
@@ -42,8 +42,4 @@ class Analysis {
   );
 }
 
-enum AnalysisStatus {
-  pending,
-  completed,
-  failed,
-} 
+enum AnalysisStatus { pending, completed, failed }

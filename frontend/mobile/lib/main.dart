@@ -24,6 +24,7 @@ import 'features/plant_analysis/presentation/plant_scanner_screen.dart';
 import 'features/plant_analysis/presentation/plant_detail_page.dart';
 
 import 'features/plant_analysis/presentation/plant_full_detail_page.dart';
+import 'features/user_dashboard/presentation/screens/historique_screen.dart';
 // import 'package:smartagrichange_mobile/features/soil_analysis/application/notification_service.dart';
 
 void main() async {
@@ -125,6 +126,7 @@ class MyApp extends StatelessWidget {
           return const OtpPage(phone: '');
         },
         '/account': (context) => const AccountPage(),
+        '/historique': (context) => const AuthGuard(child: HistoriqueScreen()),
 
         // Routes protégées
         '/home': (context) => const AuthGuard(child: HomePage()),

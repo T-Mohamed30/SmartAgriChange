@@ -26,32 +26,46 @@ class ChampParcelleRepositoryImpl implements ChampParcelleRepository {
         return fieldsData
             .where((json) => json['id'] != null) // Filter out invalid entries
             .map((json) {
-              final locationParts =
-                  json['location']?.toString().split(',') ?? ['0', '0'];
               return Champ(
                 id: json['id']?.toString() ?? '',
                 name: json['name']?.toString() ?? '',
-                latitude: double.tryParse(locationParts[0]) ?? 0.0,
-                longitude: double.tryParse(locationParts[1]) ?? 0.0,
+                latitude:
+                    double.tryParse(json['latitude']?.toString() ?? '0.0') ??
+                    0.0,
+                longitude:
+                    double.tryParse(json['longitude']?.toString() ?? '0.0') ??
+                    0.0,
                 superficie:
                     double.tryParse(json['area']?.toString() ?? '0.0') ?? 0.0,
+                userId: json['user_id'] != null
+                    ? int.tryParse(json['user_id'].toString())
+                    : null,
               );
             })
             .toList();
       } else if (fieldsData is Map<String, dynamic>) {
         // If it's a single object, wrap it in a list
         if (fieldsData['id'] != null) {
-          final locationParts =
-              fieldsData['location']?.toString().split(',') ?? ['0', '0'];
           return [
             Champ(
               id: fieldsData['id']?.toString() ?? '',
               name: fieldsData['name']?.toString() ?? '',
-              latitude: double.tryParse(locationParts[0]) ?? 0.0,
-              longitude: double.tryParse(locationParts[1]) ?? 0.0,
+              latitude:
+                  double.tryParse(
+                    fieldsData['latitude']?.toString() ?? '0.0',
+                  ) ??
+                  0.0,
+              longitude:
+                  double.tryParse(
+                    fieldsData['longitude']?.toString() ?? '0.0',
+                  ) ??
+                  0.0,
               superficie:
                   double.tryParse(fieldsData['area']?.toString() ?? '0.0') ??
                   0.0,
+              userId: fieldsData['user_id'] != null
+                  ? int.tryParse(fieldsData['user_id'].toString())
+                  : null,
             ),
           ];
         } else {
@@ -65,31 +79,38 @@ class ChampParcelleRepositoryImpl implements ChampParcelleRepository {
       return data
           .where((json) => json['id'] != null) // Filter out invalid entries
           .map((json) {
-            final locationParts =
-                json['location']?.toString().split(',') ?? ['0', '0'];
             return Champ(
               id: json['id']?.toString() ?? '',
               name: json['name']?.toString() ?? '',
-              latitude: double.tryParse(locationParts[0]) ?? 0.0,
-              longitude: double.tryParse(locationParts[1]) ?? 0.0,
+              latitude:
+                  double.tryParse(json['latitude']?.toString() ?? '0.0') ?? 0.0,
+              longitude:
+                  double.tryParse(json['longitude']?.toString() ?? '0.0') ??
+                  0.0,
               superficie:
                   double.tryParse(json['area']?.toString() ?? '0.0') ?? 0.0,
+              userId: json['user_id'] != null
+                  ? int.tryParse(json['user_id'].toString())
+                  : null,
             );
           })
           .toList();
     } else if (data is Map<String, dynamic>) {
       // If it's a single object, wrap it in a list
       if (data['id'] != null) {
-        final locationParts =
-            data['location']?.toString().split(',') ?? ['0', '0'];
         return [
           Champ(
             id: data['id']?.toString() ?? '',
             name: data['name']?.toString() ?? '',
-            latitude: double.tryParse(locationParts[0]) ?? 0.0,
-            longitude: double.tryParse(locationParts[1]) ?? 0.0,
+            latitude:
+                double.tryParse(data['latitude']?.toString() ?? '0.0') ?? 0.0,
+            longitude:
+                double.tryParse(data['longitude']?.toString() ?? '0.0') ?? 0.0,
             superficie:
                 double.tryParse(data['area']?.toString() ?? '0.0') ?? 0.0,
+            userId: data['user_id'] != null
+                ? int.tryParse(data['user_id'].toString())
+                : null,
           ),
         ];
       } else {
@@ -165,21 +186,27 @@ class ChampParcelleRepositoryImpl implements ChampParcelleRepository {
 
   Future<Champ> createChamp(
     String name,
-    String location, {
-    double? superficie,
+    String location,
+    double latitude,
+    double longitude, {
+    double? area,
   }) async {
-    final Map<String, dynamic> data = {'name': name, 'location': location};
-    if (superficie != null) {
-      data['area'] = superficie;
+    final Map<String, dynamic> data = {
+      'name': name,
+      'location': location,
+      'latitude': latitude,
+      'longitude': longitude,
+    };
+    if (area != null) {
+      data['area'] = area;
     }
     final response = await dio.post('$baseUrl/fields', data: data);
     final json = response.data;
-    final locationParts = json['location']?.toString().split(',') ?? ['0', '0'];
     return Champ(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
-      latitude: double.tryParse(locationParts[0]) ?? 0.0,
-      longitude: double.tryParse(locationParts[1]) ?? 0.0,
+      latitude: double.tryParse(json['latitude']?.toString() ?? '0.0') ?? 0.0,
+      longitude: double.tryParse(json['longitude']?.toString() ?? '0.0') ?? 0.0,
       superficie: double.tryParse(json['area']?.toString() ?? '0.0') ?? 0.0,
     );
   }
@@ -220,13 +247,21 @@ class ChampParcelleRepositoryImpl implements ChampParcelleRepository {
   Future<Champ> updateChamp(
     String id,
     String name,
-    String location, {
-    double? superficie,
+    String location,
+    double latitude,
+    double longitude, {
+    double? area,
   }) async {
-    final response = await dio.put(
-      '$baseUrl/fields/$id',
-      data: {'name': name, 'location': location},
-    );
+    final Map<String, dynamic> updateData = {
+      'name': name,
+      'location': location,
+      'latitude': latitude,
+      'longitude': longitude,
+    };
+    if (area != null) {
+      updateData['area'] = area;
+    }
+    final response = await dio.put('$baseUrl/fields/$id', data: updateData);
     final data = response.data;
     debugPrint('Update champ response: $data');
 
@@ -238,25 +273,24 @@ class ChampParcelleRepositoryImpl implements ChampParcelleRepository {
           champData['status'] == 'failed') {
         throw Exception(champData['message'] ?? 'Update failed');
       }
-      final locationParts =
-          champData['location']?.toString().split(',') ?? ['0', '0'];
       return Champ(
         id: champData['id']?.toString() ?? '',
         name: champData['name']?.toString() ?? '',
-        latitude: double.tryParse(locationParts[0]) ?? 0.0,
-        longitude: double.tryParse(locationParts[1]) ?? 0.0,
+        latitude:
+            double.tryParse(champData['latitude']?.toString() ?? '0.0') ?? 0.0,
+        longitude:
+            double.tryParse(champData['longitude']?.toString() ?? '0.0') ?? 0.0,
         superficie:
             double.tryParse(champData['area']?.toString() ?? '0.0') ?? 0.0,
       );
     }
 
     // Fallback for direct response
-    final locationParts = data['location']?.toString().split(',') ?? ['0', '0'];
     return Champ(
       id: data['id']?.toString() ?? '',
       name: data['name']?.toString() ?? '',
-      latitude: double.tryParse(locationParts[0]) ?? 0.0,
-      longitude: double.tryParse(locationParts[1]) ?? 0.0,
+      latitude: double.tryParse(data['latitude']?.toString() ?? '0.0') ?? 0.0,
+      longitude: double.tryParse(data['longitude']?.toString() ?? '0.0') ?? 0.0,
       superficie: double.tryParse(data['area']?.toString() ?? '0.0') ?? 0.0,
     );
   }
