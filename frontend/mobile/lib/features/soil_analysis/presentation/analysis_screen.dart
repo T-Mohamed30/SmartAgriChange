@@ -38,6 +38,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
   late final AnimationController _controller;
   bool _showResults = false;
   StreamSubscription<NPKData>? _npkSubscription;
+  bool _isInitialized = false;
 
   @override
   void initState() {
@@ -46,9 +47,6 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
       vsync: this,
       duration: const Duration(seconds: 3),
     )..repeat();
-
-    // Listen to real sensor data
-    _setupSensorDataListener();
 
     // Auto-redirect to data display after loading
     Future.delayed(const Duration(seconds: 3), () {
@@ -60,6 +58,16 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
       // Trigger data analysis with real sensor data
       _triggerAnalysisWithSensorData();
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isInitialized) {
+      // Listen to real sensor data
+      _setupSensorDataListener();
+      _isInitialized = true;
+    }
   }
 
   void _setupSensorDataListener() {
