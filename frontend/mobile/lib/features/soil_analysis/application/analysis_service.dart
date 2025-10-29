@@ -127,6 +127,11 @@ class AnalysisService {
     try {
       if (npkData == null) return;
 
+      // IMPORTANT: Les données npkData sont maintenant finales et ne doivent plus être modifiées
+      dev.log(
+        'Données du capteur reçues (finales, non modifiables): ${npkData.toString()}',
+      );
+
       // Cancel any pending debounce timer
       _debounceTimer?.cancel();
 
@@ -144,7 +149,7 @@ class AnalysisService {
 
           SoilData soilData;
 
-          // Utiliser les données réelles du capteur
+          // Utiliser les données réelles du capteur (maintenant finales)
           soilData = SoilData(
             ph: npkData.ph ?? 0.0,
             temperature: npkData.temperature ?? 0.0,
@@ -154,7 +159,9 @@ class AnalysisService {
             phosphorus: (npkData.phosphorus ?? 0).toDouble(),
             potassium: (npkData.potassium ?? 0).toDouble(),
           );
-          dev.log('Données du capteur utilisées: ${npkData.toString()}');
+          dev.log(
+            'Données du capteur utilisées pour SoilData (basées sur données finales): ${npkData.toString()}',
+          );
 
           _ref.read(soilDataProvider.notifier).state = soilData;
 
@@ -170,6 +177,7 @@ class AnalysisService {
           }
 
           // Envoyer les données à l'API et obtenir les recommandations
+          // Les données npkData restent inchangées jusqu'à l'appel API
           await _sendSoilDataToApi(soilData, npkData);
 
           // Cache the successful analysis

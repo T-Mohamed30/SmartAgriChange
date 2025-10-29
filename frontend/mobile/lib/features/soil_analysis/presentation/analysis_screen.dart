@@ -39,6 +39,9 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
   bool _showResults = false;
   StreamSubscription<NPKData>? _npkSubscription;
   bool _isInitialized = false;
+  Timer? _dataCollectionTimer;
+  NPKData? _collectedData;
+  bool _apiCallTriggered = false;
 
   @override
   void initState() {
@@ -77,45 +80,65 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
           .read(npkDataStreamProvider.stream)
           .listen(
             (npkData) {
-              if (mounted) {
-                try {
-                  // Update analysis with real sensor data
-                  ref
-                      .read(analysisServiceProvider)
-                      .fetchDataAndAnalyze(npkData: npkData);
-                } catch (e) {
-                  print('Erreur lors du traitement des données du capteur: $e');
-                  // Check if it's an API failed error
-                  if (e.toString().contains('API_FAILED')) {
-                    // Extract error message
-                    final errorMessage = e.toString().replaceFirst(
-                      'Exception: API_FAILED: ',
-                      '',
-                    );
-                    // Show error and navigate back
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Erreur d\'analyse: $errorMessage'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                    // Navigate back to detection_capteurs.dart
-                    Future.delayed(const Duration(seconds: 2), () {
-                      if (mounted) {
-                        Navigator.pop(context);
-                      }
-                    });
-                  } else {
-                    // Show generic error message
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
+              if (mounted && !_apiCallTriggered) {
+                // Collect the latest sensor data
+                _collectedData = npkData;
+                print('Données du capteur collectées: $npkData');
+
+                // Start the 10-second timer if not already started
+                if (_dataCollectionTimer == null) {
+                  print(
+                    'Démarrage de la collecte de données pendant 10 secondes...',
+                  );
+                  _dataCollectionTimer = Timer(const Duration(seconds: 10), () {
+                    if (mounted && !_apiCallTriggered) {
+                      _apiCallTriggered = true;
+                      print(
+                        'Fin de la collecte de données. Données finales utilisées: $_collectedData',
+                      );
+                      try {
+                        // Use the collected data for API call
+                        ref
+                            .read(analysisServiceProvider)
+                            .fetchDataAndAnalyze(npkData: _collectedData);
+                      } catch (e) {
+                        print(
                           'Erreur lors du traitement des données du capteur: $e',
-                        ),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
+                        );
+                        // Check if it's an API failed error
+                        if (e.toString().contains('API_FAILED')) {
+                          // Extract error message
+                          final errorMessage = e.toString().replaceFirst(
+                            'Exception: API_FAILED: ',
+                            '',
+                          );
+                          // Show error and navigate back
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Erreur d\'analyse: $errorMessage'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          // Navigate back to detection_capteurs.dart
+                          Future.delayed(const Duration(seconds: 2), () {
+                            if (mounted) {
+                              Navigator.pop(context);
+                            }
+                          });
+                        } else {
+                          // Show generic error message
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Erreur lors du traitement des données du capteur: $e',
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      }
+                    }
+                  });
                 }
               }
             },
@@ -149,16 +172,15 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
   }
 
   void _triggerAnalysisWithSensorData() {
-    // Get latest NPK data if available
-    final npkDataAsync = ref.read(npkDataStreamProvider);
-    npkDataAsync.whenData((npkData) {
-      ref.read(analysisServiceProvider).fetchDataAndAnalyze(npkData: npkData);
-    });
+    // This method is no longer needed as data collection is handled in the stream listener
+    // The 10-second collection period ensures stable data before API call
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _npkSubscription?.cancel();
+    _dataCollectionTimer?.cancel();
     super.dispose();
   }
 

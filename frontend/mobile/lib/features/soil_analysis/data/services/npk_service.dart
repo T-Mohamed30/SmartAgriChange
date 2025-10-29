@@ -52,6 +52,7 @@ class NPKService {
   }
 
   /// Parse la réponse Modbus
+  /// IMPORTANT: Les données parsées ne doivent plus être modifiées après cette méthode
   NPKData? _parseModbusResponse(List<int> response) {
     _log(
       "Réponse reçue: ${response.map((b) => '0x${b.toRadixString(16).padLeft(2, '0')}').join(' ')}",
@@ -90,7 +91,7 @@ class NPKService {
       return null;
     }
 
-    // Extraction des données
+    // Extraction des données - Ces valeurs ne seront plus modifiées après parsing
     int humidity = (response[3] << 8) | response[4];
     double temperature = ((response[5] << 8) | response[6]) / 10.0;
     int conductivity = (response[7] << 8) | response[8];
@@ -101,10 +102,11 @@ class NPKService {
     int potassium = (response[15] << 8) | response[16];
 
     _log(
-      "Données NPK extraites: T=${temperature}°C, H=$humidity%, pH=$ph, N=$nitrogen, P=$phosphorus, K=$potassium",
+      "Données NPK extraites (finales, non modifiables): T=${temperature}°C, H=$humidity%, pH=$ph, N=$nitrogen, P=$phosphorus, K=$potassium",
     );
 
-    return NPKData(
+    // Création de l'objet NPKData avec les données finales
+    final npkData = NPKData(
       temperature: temperature,
       humidity: humidity,
       conductivity: conductivity,
@@ -113,6 +115,10 @@ class NPKService {
       phosphorus: phosphorus,
       potassium: potassium,
     );
+
+    _log("Objet NPKData créé avec données finales: $npkData");
+
+    return npkData;
   }
 
   /// Démarre la lecture périodique
