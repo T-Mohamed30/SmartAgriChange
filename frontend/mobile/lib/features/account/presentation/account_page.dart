@@ -23,6 +23,7 @@ class AccountPage extends ConsumerWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       // Removed appBar as requested
+      bottomNavigationBar: _buildBottomNavigationBar(),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -155,15 +156,21 @@ class AccountPage extends ConsumerWidget {
                           context: context,
                           builder: (context) => AlertDialog(
                             title: const Text('Déconnexion'),
-                            content: const Text('Êtes-vous sûr de vouloir vous déconnecter ?'),
+                            content: const Text(
+                              'Êtes-vous sûr de vouloir vous déconnecter ?',
+                            ),
                             actions: [
                               TextButton(
-                                onPressed: () => Navigator.of(context).pop(false),
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
                                 child: const Text('Annuler'),
                               ),
                               TextButton(
-                                onPressed: () => Navigator.of(context).pop(true),
-                                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.red,
+                                ),
                                 child: const Text('Se déconnecter'),
                               ),
                             ],
@@ -173,7 +180,8 @@ class AccountPage extends ConsumerWidget {
                         if (shouldLogout == true) {
                           // Clear all stored authentication data
                           final prefs = await SharedPreferences.getInstance();
-                          await prefs.clear(); // Clear all preferences to be safe
+                          await prefs
+                              .clear(); // Clear all preferences to be safe
 
                           // Clear user provider state
                           ref.read(userProvider.notifier).state = null;
@@ -301,6 +309,113 @@ class AccountPage extends ConsumerWidget {
       horizontalTitleGap: 0,
       minVerticalPadding: 0,
       dense: true,
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return Consumer(
+      builder: (context, ref, child) {
+        return BottomNavigationBar(
+          backgroundColor: Colors.white,
+          currentIndex: 3, // Account tab is selected
+          onTap: (index) {
+            // Handle navigation
+            switch (index) {
+              case 0:
+                Navigator.pushReplacementNamed(context, '/home');
+                break;
+              case 1:
+                Navigator.pushReplacementNamed(context, '/champs');
+                break;
+              case 2:
+                Navigator.pushReplacementNamed(context, '/historique');
+                break;
+              case 3:
+                // Already on account page
+                break;
+            }
+          },
+          type: BottomNavigationBarType.fixed,
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          items: [
+            BottomNavigationBarItem(
+              icon: _navTile('assets/icons/home.png', 'Accueil'),
+              activeIcon: _navTileActive('assets/icons/home.png', 'Accueil'),
+              label: 'Accueil',
+            ),
+            BottomNavigationBarItem(
+              icon: _navTile('assets/icons/map.png', 'Champs'),
+              activeIcon: _navTileActive('assets/icons/map.png', 'Champs'),
+              label: 'Champs',
+            ),
+            BottomNavigationBarItem(
+              icon: _navTile('assets/icons/historique.png', 'Historique'),
+              activeIcon: _navTileActive(
+                'assets/icons/historique.png',
+                'Historique',
+              ),
+              label: 'Historique',
+            ),
+            BottomNavigationBarItem(
+              icon: _navTile('assets/icons/profil.png', 'Compte'),
+              activeIcon: _navTileActive('assets/icons/profil.png', 'Compte'),
+              label: 'Compte',
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _navTile(String asset, String label) {
+    return Container(
+      width: 72,
+      height: 72,
+      color: Colors.white,
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(asset, height: 24),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _navTileActive(String asset, String label) {
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: const Color(0xFF007F3D),
+      ),
+      alignment: Alignment.center,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(asset, height: 24, color: Colors.white),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

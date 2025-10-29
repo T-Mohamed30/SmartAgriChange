@@ -10,7 +10,6 @@ import 'domain/entities/analysis_simple.dart';
 import 'package:smartagrichange_mobile/features/user_dashboard/presentation/providers/dashboard_provider.dart';
 import 'package:smartagrichange_mobile/features/user_dashboard/presentation/providers/dashboard_provider.dart'
     show dashboardStatsProvider, recentAnalysesProvider;
-import '../soil_analysis/presentation/champs_list_page.dart';
 import '../account/presentation/account_page.dart';
 import 'presentation/screens/historique_screen.dart';
 import '../soil_analysis/presentation/widgets/action_button.dart';
@@ -90,8 +89,8 @@ class _HomePageState extends ConsumerState<HomePage> {
               child: Image.asset(
                 'assets/icons/analyse.png',
                 color: Colors.white,
-                height: 24,
-                width: 24,
+                height: 32,
+                width: 32,
               ),
             )
           : null,
@@ -231,20 +230,20 @@ class _HomePageState extends ConsumerState<HomePage> {
 
                               return Image.asset(
                                 weatherIcon,
-                                height: 80,
-                                width: 80,
+                                height: 104,
+                                width: 104,
                                 errorBuilder: (context, error, stackTrace) =>
                                     Image.asset(
                                       'assets/icons/temps_1.png',
-                                      height: 80,
-                                      width: 80,
+                                      height: 104,
+                                      width: 104,
                                     ),
                               );
                             } catch (e) {
                               return Image.asset(
                                 'assets/icons/temps_1.png',
-                                height: 80,
-                                width: 80,
+                                height: 104,
+                                width: 104,
                               );
                             }
                           },
