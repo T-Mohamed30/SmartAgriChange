@@ -41,7 +41,7 @@ class NPKService {
       0x01, // Adresse esclave
       0x03, // Fonction Read Holding Registers
       0x00, 0x00, // Adresse registre
-      0x00, 0x06, // Nombre de registres (6 - removed fertility)
+      0x00, 0x07, // <-- Lecture de 7 registres (inclut fertility)
     ];
 
     int crc = _calculateCRC16(request);
@@ -52,16 +52,12 @@ class NPKService {
   }
 
   /// Parse la réponse Modbus
-  /// IMPORTANT: Les données parsées ne doivent plus être modifiées après cette méthode
   NPKData? _parseModbusResponse(List<int> response) {
     _log(
       "Réponse reçue: ${response.map((b) => '0x${b.toRadixString(16).padLeft(2, '0')}').join(' ')}",
     );
 
-    if (response.length < 5) {
-      _log("Réponse trop courte (${response.length} bytes)");
-      return null;
-    }
+    if (response.length < 5) return null;
 
     int address = response[0];
     int function = response[1];
@@ -78,20 +74,13 @@ class NPKService {
       int receivedCRC =
           response[response.length - 2] | (response[response.length - 1] << 8);
       int calculatedCRC = _calculateCRC16(dataWithoutCRC);
-
-      if (receivedCRC != calculatedCRC) {
-        _log("CRC invalide!");
-        return null;
-      }
+      if (receivedCRC != calculatedCRC) return null;
     }
 
     int numRegisters = byteCount ~/ 2;
-    if (numRegisters < 6) {
-      _log("Nombre de registres insuffisant: $numRegisters");
-      return null;
-    }
+    if (numRegisters < 7) return null;
 
-    // Extraction des données - Ces valeurs ne seront plus modifiées après parsing
+    // Extraction des données (valeurs brutes)
     int humidity = (response[3] << 8) | response[4];
     double temperature = ((response[5] << 8) | response[6]) / 10.0;
     int conductivity = (response[7] << 8) | response[8];
@@ -101,11 +90,17 @@ class NPKService {
     int phosphorus = (response[13] << 8) | response[14];
     int potassium = (response[15] << 8) | response[16];
 
+    int? fertility;
+    if (numRegisters >= 8 && response.length >= 19) {
+      fertility = (response[17] << 8) | response[18];
+    } else {
+      fertility = ((nitrogen + phosphorus + potassium) / 3).round();
+    }
+
     _log(
-      "Données NPK extraites (finales, non modifiables): T=${temperature}°C, H=$humidity%, pH=$ph, N=$nitrogen, P=$phosphorus, K=$potassium",
+      "Données NPK (finales): T=$temperature°C, H=$humidity%, pH=$ph, N=$nitrogen, P=$phosphorus, K=$potassium, F=$fertility",
     );
 
-    // Création de l'objet NPKData avec les données finales
     final npkData = NPKData(
       temperature: temperature,
       humidity: humidity,
@@ -114,36 +109,24 @@ class NPKService {
       nitrogen: nitrogen,
       phosphorus: phosphorus,
       potassium: potassium,
+      fertility: fertility,
     );
-
-    _log("Objet NPKData créé avec données finales: $npkData");
 
     return npkData;
   }
 
-  /// Démarre la lecture périodique
   void startPolling({Duration interval = const Duration(seconds: 3)}) {
-    // Écoute des données USB
     _usbDataSubscription = _usbService.dataStream?.listen((data) {
       NPKData? npkData = _parseModbusResponse(data);
-      if (npkData != null) {
-        _dataController.add(npkData);
-      }
+      if (npkData != null) _dataController.add(npkData);
     });
 
-    // Polling périodique
     _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(interval, (timer) {
-      sendRequest();
-    });
+    _pollTimer = Timer.periodic(interval, (timer) => sendRequest());
 
-    // Première requête immédiate
-    Future.delayed(const Duration(milliseconds: 500), () {
-      sendRequest();
-    });
+    Future.delayed(const Duration(milliseconds: 500), sendRequest);
   }
 
-  /// Envoie une requête NPK
   Future<void> sendRequest() async {
     try {
       Uint8List request = _createModbusRequest();
@@ -153,12 +136,9 @@ class NPKService {
     }
   }
 
-  /// Arrête le polling
   void stopPolling() {
     _pollTimer?.cancel();
-    _pollTimer = null;
     _usbDataSubscription?.cancel();
-    _usbDataSubscription = null;
   }
 
   void dispose() {

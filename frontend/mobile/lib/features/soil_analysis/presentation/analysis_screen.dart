@@ -90,7 +90,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                   print(
                     'Démarrage de la collecte de données pendant 10 secondes...',
                   );
-                  _dataCollectionTimer = Timer(const Duration(seconds: 10), () {
+                  _dataCollectionTimer = Timer(const Duration(seconds: 5), () {
                     if (mounted && !_apiCallTriggered) {
                       _apiCallTriggered = true;
                       print(
