@@ -199,7 +199,7 @@ class RubricInfo {
 class Anomaly {
   final int id;
   final int plantId;
-  final String nom;
+  final String name;
   final String? description;
   final List<String>? symptomes;
   final List<String>? causes;
@@ -213,7 +213,7 @@ class Anomaly {
   Anomaly({
     required this.id,
     required this.plantId,
-    required this.nom,
+    required this.name,
     this.description,
     this.symptomes,
     this.causes,
@@ -229,7 +229,7 @@ class Anomaly {
     return Anomaly(
       id: json['id'],
       plantId: json['plant_id'],
-      nom: json['name'] ?? json['nom'] ?? '',
+      name: json['name'] ?? json['nom'] ?? '',
       description: json['description'],
       symptomes: json['symptoms'] != null
           ? (json['symptoms'] as String).split('\n')

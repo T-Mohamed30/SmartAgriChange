@@ -40,18 +40,9 @@ class ApiClient {
   Future<dynamic> get(String endpoint) async {
     try {
       final headers = await _getHeaders();
-      if (kDebugMode) {
-        print('GET $baseUrl/$endpoint');
-        print('Headers: $headers');
-      }
-      
-      final url = _buildUrl(endpoint);
-      final response = await http.get(
-        Uri.parse(url),
-        headers: headers,
       ).timeout(
         const Duration(seconds: 30),
-        onTimeout: () => throw TimeoutException(),
+        onTimeout: () => throw TimeoutException('Request timed out'),
       );
       
       if (kDebugMode) {
@@ -61,9 +52,9 @@ class ApiClient {
       
       return _handleResponse(response);
     } on SocketException {
-      throw const NetworkException('Network error: Unable to connect to the server');
+      throw NetworkException('Network error: Unable to connect to the server');
     } on TimeoutException {
-      throw TimeoutException();
+      throw TimeoutException('Request timed out');
     } catch (e) {
       if (kDebugMode) {
         print('Error in GET $endpoint: $e');
@@ -82,13 +73,9 @@ class ApiClient {
       }
       
       final url = _buildUrl(endpoint);
-      final response = await http.post(
-        Uri.parse(url),
-        headers: headers,
-        body: jsonEncode(body),
       ).timeout(
         const Duration(seconds: 30),
-        onTimeout: () => throw TimeoutException(),
+        onTimeout: () => throw TimeoutException('Request timed out'),
       );
       
       if (kDebugMode) {
@@ -98,9 +85,9 @@ class ApiClient {
       
       return _handleResponse(response);
     } on SocketException {
-      throw const NetworkException('Network error: Unable to connect to the server');
+      throw NetworkException('Network error: Unable to connect to the server');
     } on TimeoutException {
-      throw TimeoutException();
+      throw TimeoutException('Request timed out');
     } catch (e) {
       if (kDebugMode) {
         print('Error in POST $endpoint: $e');

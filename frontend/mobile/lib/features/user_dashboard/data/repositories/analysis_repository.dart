@@ -22,7 +22,7 @@ class AnalysisRepository {
           ? AnalysisStatus.completed
           : AnalysisStatus.pending,
       createdAt: anomaly.createdAt,
-      result: anomaly.anomaly?.nom ?? 'Aucune anomalie détectée',
+      result: anomaly.anomaly?.name ?? 'Aucune anomalie détectée',
       parcelle: anomaly.parcelId?.toString(),
       imageUrl: anomaly.images.isNotEmpty ? anomaly.images.first : null,
     );
@@ -75,17 +75,25 @@ class AnalysisRepository {
                     // Plant analysis
                     final modelResult =
                         analyzable?['model_result'] as Map<String, dynamic>?;
+                    final plant = analyzable?['plant'] as Map<String, dynamic>?;
+                    final anomaly =
+                        analyzable?['anomaly'] as Map<String, dynamic>?;
                     return Analysis(
                       id: item['id'].toString(),
-                      name: modelResult?['class_name'] ?? 'Unknown Plant',
+                      name: plant?['nom_commun'] ?? 'Unknown Plant',
                       location: 'Parcelle ${item['parcel_id'] ?? 'N/A'}',
                       type: 'plant',
                       status: AnalysisStatus.completed,
                       createdAt: DateTime.parse(item['created_at']),
-                      result:
-                          modelResult?['class_name'] ??
-                          'Aucune anomalie détectée',
+                      result: anomaly != null
+                          ? anomaly['name'] ?? 'Aucune anomalie détectée'
+                          : 'Aucune anomalie détectée',
                       parcelle: item['parcel_id']?.toString(),
+                      imageUrl:
+                          analyzable?['images'] != null &&
+                              (analyzable!['images'] as List).isNotEmpty
+                          ? analyzable['images'][0]
+                          : null,
                     );
                   } else if (type == 'soil_analysis') {
                     // Soil analysis
@@ -139,17 +147,25 @@ class AnalysisRepository {
                   // Plant analysis
                   final modelResult =
                       analyzable?['model_result'] as Map<String, dynamic>?;
+                  final plant = analyzable?['plant'] as Map<String, dynamic>?;
+                  final anomaly =
+                      analyzable?['anomaly'] as Map<String, dynamic>?;
                   return Analysis(
                     id: item['id'].toString(),
-                    name: modelResult?['class_name'] ?? 'Unknown Plant',
+                    name: plant?['nom_commun'] ?? 'Unknown Plant',
                     location: 'Parcelle ${item['parcel_id'] ?? 'N/A'}',
                     type: 'plant',
                     status: AnalysisStatus.completed,
                     createdAt: DateTime.parse(item['created_at']),
-                    result:
-                        modelResult?['class_name'] ??
-                        'Aucune anomalie détectée',
+                    result: anomaly != null
+                        ? anomaly['name'] ?? 'Aucune anomalie détectée'
+                        : 'Aucune anomalie détectée',
                     parcelle: item['parcel_id']?.toString(),
+                    imageUrl:
+                        analyzable?['images'] != null &&
+                            (analyzable!['images'] as List).isNotEmpty
+                        ? analyzable['images'][0]
+                        : null,
                   );
                 } else if (type == 'soil_analysis') {
                   // Soil analysis

@@ -179,7 +179,10 @@ class _StepperScreenState extends State<StepperScreen> {
               ],
             ),
             const SizedBox(height: 20),
-            ActionButton(text: 'Sauter', onPressed: goToAuth),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: ActionButton(text: 'Sauter', onPressed: goToAuth),
+            ),
             const SizedBox(height: 30),
           ],
         ),

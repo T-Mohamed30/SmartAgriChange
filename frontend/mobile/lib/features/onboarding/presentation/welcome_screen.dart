@@ -142,14 +142,19 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
               position: _slideAnimation,
               child: FadeTransition(
                 opacity: _fadeAnimation,
-                child: ActionButton(
-                  text: 'Commencer',
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const StepperScreen()),
-                    );
-                  },
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: ActionButton(
+                    text: 'Commencer',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const StepperScreen(),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),

@@ -159,7 +159,7 @@ class PlantDetailPage extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            anomaly?.nom ??
+                            anomaly?.name ??
                                 (modelResult?.prediction.contains('___') == true
                                     ? modelResult!.prediction.split('___').last
                                     : modelResult?.prediction) ??
