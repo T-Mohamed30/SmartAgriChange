@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/entities/champ.dart';
 import '../domain/entities/parcelle.dart';
 import '../application/analysis_service.dart'
-    show soilDataProvider, analysisServiceProvider;
+    show npkDataProvider, analysisServiceProvider;
 import 'providers/champ_parcelle_provider.dart';
 import 'providers/selection_providers.dart' as selection_providers;
 import 'widgets/selector_card.dart';
@@ -25,7 +25,7 @@ class CropDetailScreen extends ConsumerWidget {
         _conditionsByCrop[cropName.toLowerCase()] ?? _defaultConditions;
 
     // Get soil data from provider
-    final soilData = ref.watch(soilDataProvider);
+    final npkData = ref.watch(npkDataProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -111,32 +111,33 @@ class CropDetailScreen extends ConsumerWidget {
                                 _resultRow(
                                   'assets/icons/renewable-energy 1.png',
                                   'Conductivité',
-                                  soilData != null
-                                      ? '${soilData.ec.toStringAsFixed(1)} us/cm'
+                                  npkData != null &&
+                                          npkData.conductivity != null
+                                      ? '${npkData.conductivity} us/cm'
                                       : '0 us/cm',
                                 ),
                                 const SizedBox(height: 16),
                                 _resultRow(
                                   'assets/icons/celsius 1.png',
                                   'Température',
-                                  soilData != null
-                                      ? '${soilData.temperature.toStringAsFixed(1)} °C'
+                                  npkData != null && npkData.temperature != null
+                                      ? '${npkData.temperature!.toStringAsFixed(1)} °C'
                                       : '0 °C',
                                 ),
                                 const SizedBox(height: 16),
                                 _resultRow(
                                   'assets/icons/humidity 1.png',
                                   'Humidité',
-                                  soilData != null
-                                      ? '${soilData.humidity.toStringAsFixed(1)} %'
+                                  npkData != null && npkData.humidity != null
+                                      ? '${npkData.humidity} %'
                                       : '0 %',
                                 ),
                                 const SizedBox(height: 16),
                                 _resultRow(
                                   'assets/icons/ph.png',
                                   'PH',
-                                  soilData != null
-                                      ? soilData.ph.toStringAsFixed(1)
+                                  npkData != null && npkData.ph != null
+                                      ? npkData.ph!.toStringAsFixed(1)
                                       : '0',
                                 ),
                                 const SizedBox(height: 16),
@@ -170,20 +171,23 @@ class CropDetailScreen extends ConsumerWidget {
                                   children: [
                                     _nutrientColumn(
                                       'Azote (N)',
-                                      soilData != null
-                                          ? '${soilData.nitrogen.toStringAsFixed(0)} mg/kg'
+                                      npkData != null &&
+                                              npkData.nitrogen != null
+                                          ? '${npkData.nitrogen} mg/kg'
                                           : '0 mg/kg',
                                     ),
                                     _nutrientColumn(
                                       'Phosphore (P)',
-                                      soilData != null
-                                          ? '${soilData.phosphorus.toStringAsFixed(0)} mg/kg'
+                                      npkData != null &&
+                                              npkData.phosphorus != null
+                                          ? '${npkData.phosphorus} mg/kg'
                                           : '0 mg/kg',
                                     ),
                                     _nutrientColumn(
                                       'Potassium (K)',
-                                      soilData != null
-                                          ? '${soilData.potassium.toStringAsFixed(0)} mg/kg'
+                                      npkData != null &&
+                                              npkData.potassium != null
+                                          ? '${npkData.potassium} mg/kg'
                                           : '0 mg/kg',
                                     ),
                                   ],
@@ -233,8 +237,8 @@ class CropDetailScreen extends ConsumerWidget {
                           const Divider(height: 1, thickness: 1),
                           Builder(
                             builder: (context) {
-                              final soilData = ref.watch(soilDataProvider);
-                              if (soilData == null) {
+                              final npkData = ref.watch(npkDataProvider);
+                              if (npkData == null) {
                                 return const Padding(
                                   padding: EdgeInsets.all(16.0),
                                   child: Text(
@@ -245,7 +249,7 @@ class CropDetailScreen extends ConsumerWidget {
                               final recommendations = ref
                                   .read(analysisServiceProvider)
                                   .generateSoilRecommendations(
-                                    soilData,
+                                    npkData,
                                     cropName,
                                   );
                               if (recommendations.isEmpty) {

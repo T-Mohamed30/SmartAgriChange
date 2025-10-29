@@ -7,11 +7,11 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/soil_data.dart';
+import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/npk_data.dart';
 
 class ExportService {
   static Future<void> exportToPDF({
-    required SoilData soilData,
+    required NPKData npkData,
     required List<dynamic> recommendations,
     required String sensorName,
     String? champName,
@@ -134,22 +134,22 @@ class ExportService {
                     pw.SizedBox(height: 12),
                     _buildParameterRow(
                       'Conductivité Électrique',
-                      '${soilData.ec.toStringAsFixed(1)} μS/cm',
+                      '${npkData.conductivity ?? 0} μS/cm',
                       font,
                     ),
                     _buildParameterRow(
                       'Température',
-                      '${soilData.temperature.toStringAsFixed(1)} °C',
+                      '${npkData.temperature?.toStringAsFixed(1) ?? '0'} °C',
                       font,
                     ),
                     _buildParameterRow(
                       'Humidité',
-                      '${soilData.humidity.toStringAsFixed(1)} %',
+                      '${npkData.humidity ?? 0} %',
                       font,
                     ),
                     _buildParameterRow(
                       'pH',
-                      soilData.ph.toStringAsFixed(1),
+                      npkData.ph?.toStringAsFixed(1) ?? '0',
                       font,
                     ),
                   ],
@@ -179,17 +179,17 @@ class ExportService {
                     pw.SizedBox(height: 12),
                     _buildParameterRow(
                       'Azote (N)',
-                      '${soilData.nitrogen.toStringAsFixed(0)} mg/kg',
+                      '${npkData.nitrogen ?? 0} mg/kg',
                       font,
                     ),
                     _buildParameterRow(
                       'Phosphore (P)',
-                      '${soilData.phosphorus.toStringAsFixed(0)} mg/kg',
+                      '${npkData.phosphorus ?? 0} mg/kg',
                       font,
                     ),
                     _buildParameterRow(
                       'Potassium (K)',
-                      '${soilData.potassium.toStringAsFixed(0)} mg/kg',
+                      '${npkData.potassium ?? 0} mg/kg',
                       font,
                     ),
                   ],
@@ -325,7 +325,7 @@ class ExportService {
   }
 
   static Future<void> exportToCSV({
-    required SoilData soilData,
+    required NPKData npkData,
     required List<dynamic> recommendations,
     required String sensorName,
     String? champName,
@@ -343,17 +343,17 @@ class ExportService {
 
     // Soil Parameters
     rows.add(['Paramètres du Sol']);
-    rows.add(['Conductivité Électrique (μS/cm)', soilData.ec]);
-    rows.add(['Température (°C)', soilData.temperature]);
-    rows.add(['Humidité (%)', soilData.humidity]);
-    rows.add(['pH', soilData.ph]);
+    rows.add(['Conductivité Électrique (μS/cm)', npkData.conductivity ?? 0]);
+    rows.add(['Température (°C)', npkData.temperature ?? 0]);
+    rows.add(['Humidité (%)', npkData.humidity ?? 0]);
+    rows.add(['pH', npkData.ph ?? 0]);
     rows.add([]);
 
     // Nutrients
     rows.add(['Nutriments (mg/kg)']);
-    rows.add(['Azote (N)', soilData.nitrogen]);
-    rows.add(['Phosphore (P)', soilData.phosphorus]);
-    rows.add(['Potassium (K)', soilData.potassium]);
+    rows.add(['Azote (N)', npkData.nitrogen ?? 0]);
+    rows.add(['Phosphore (P)', npkData.phosphorus ?? 0]);
+    rows.add(['Potassium (K)', npkData.potassium ?? 0]);
     rows.add([]);
 
     // Recommendations
@@ -380,7 +380,7 @@ class ExportService {
   }
 
   static Future<void> printReport({
-    required SoilData soilData,
+    required NPKData npkData,
     required List<dynamic> recommendations,
     required String sensorName,
     String? champName,
@@ -417,27 +417,31 @@ class ExportService {
                   pw.Table.fromTextArray(
                     headers: ['Paramètre', 'Valeur', 'Unité'],
                     data: [
-                      ['Conductivité', soilData.ec.toStringAsFixed(1), 'μS/cm'],
+                      [
+                        'Conductivité',
+                        (npkData.conductivity ?? 0).toString(),
+                        'μS/cm',
+                      ],
                       [
                         'Température',
-                        soilData.temperature.toStringAsFixed(1),
+                        (npkData.temperature ?? 0).toStringAsFixed(1),
                         '°C',
                       ],
-                      ['Humidité', soilData.humidity.toStringAsFixed(1), '%'],
-                      ['pH', soilData.ph.toStringAsFixed(1), ''],
+                      ['Humidité', (npkData.humidity ?? 0).toString(), '%'],
+                      ['pH', (npkData.ph ?? 0).toStringAsFixed(1), ''],
                       [
                         'Azote (N)',
-                        soilData.nitrogen.toStringAsFixed(0),
+                        (npkData.nitrogen ?? 0).toString(),
                         'mg/kg',
                       ],
                       [
                         'Phosphore (P)',
-                        soilData.phosphorus.toStringAsFixed(0),
+                        (npkData.phosphorus ?? 0).toString(),
                         'mg/kg',
                       ],
                       [
                         'Potassium (K)',
-                        soilData.potassium.toStringAsFixed(0),
+                        (npkData.potassium ?? 0).toString(),
                         'mg/kg',
                       ],
                     ],

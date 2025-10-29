@@ -9,7 +9,7 @@ import '../application/analysis_service.dart'
     show
         analysisServiceProvider,
         recommendationsProvider,
-        soilDataProvider,
+        npkDataProvider,
         AnalysisService;
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/npk_data.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/presentation/providers/sensor_provider.dart';
@@ -161,9 +161,9 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
   }
 
   void _checkIfAnalysisComplete() {
-    final soilData = ref.read(soilDataProvider);
+    final npkData = ref.read(npkDataProvider);
     final recommendations = ref.read(recommendationsProvider);
-    if (soilData != null && recommendations.isNotEmpty && !_showResults) {
+    if (npkData != null && recommendations.isNotEmpty && !_showResults) {
       setState(() {
         _showResults = true;
       });
@@ -186,7 +186,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
 
   Widget _buildDataDisplay(AnalysisArgs? args) {
     final recommendations = ref.watch(recommendationsProvider);
-    final soilData = ref.watch(soilDataProvider);
+    final npkData = ref.watch(npkDataProvider);
     return ErrorBoundary(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
@@ -207,31 +207,33 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
 
             _metricRow(
               'Conductivité',
-              soilData != null
-                  ? '${soilData.ec.toStringAsFixed(1)} us/cm'
+              npkData != null && npkData.conductivity != null
+                  ? '${npkData.conductivity} us/cm'
                   : '0 us/cm',
               'assets/icons/renewable-energy 1.png',
             ),
             const SizedBox(height: 16),
             _metricRow(
               'Température',
-              soilData != null
-                  ? '${soilData.temperature.toStringAsFixed(1)} °C'
+              npkData != null && npkData.temperature != null
+                  ? '${npkData.temperature!.toStringAsFixed(1)} °C'
                   : '0 °C',
               'assets/icons/celsius 1.png',
             ),
             const SizedBox(height: 16),
             _metricRow(
               'Humidité',
-              soilData != null
-                  ? '${soilData.humidity.toStringAsFixed(1)} %'
+              npkData != null && npkData.humidity != null
+                  ? '${npkData.humidity} %'
                   : '0 %',
               'assets/icons/humidity 1.png',
             ),
             const SizedBox(height: 16),
             _metricRow(
               'Ph',
-              soilData != null ? soilData.ph.toStringAsFixed(1) : '0',
+              npkData != null && npkData.ph != null
+                  ? npkData.ph!.toStringAsFixed(1)
+                  : '0',
               'assets/icons/ph.png',
             ),
 
@@ -275,8 +277,8 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                             Text('Azote (N)'),
                             SizedBox(height: 4),
                             Text(
-                              soilData != null
-                                  ? '${soilData.nitrogen.toStringAsFixed(0)} mg/kg'
+                              npkData != null && npkData.nitrogen != null
+                                  ? '${npkData.nitrogen} mg/kg'
                                   : '0 mg/kg',
                               style: TextStyle(fontWeight: FontWeight.w700),
                             ),
@@ -290,8 +292,8 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                             Text('Phosphore (P)'),
                             SizedBox(height: 4),
                             Text(
-                              soilData != null
-                                  ? '${soilData.phosphorus.toStringAsFixed(0)} mg/kg'
+                              npkData != null && npkData.phosphorus != null
+                                  ? '${npkData.phosphorus} mg/kg'
                                   : '0 mg/kg',
                               style: TextStyle(fontWeight: FontWeight.w700),
                             ),
@@ -305,8 +307,8 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                             Text('Potassium (K)'),
                             SizedBox(height: 4),
                             Text(
-                              soilData != null
-                                  ? '${soilData.potassium.toStringAsFixed(0)} mg/kg'
+                              npkData != null && npkData.potassium != null
+                                  ? '${npkData.potassium} mg/kg'
                                   : '0 mg/kg',
                               style: TextStyle(fontWeight: FontWeight.w700),
                             ),
@@ -327,13 +329,13 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
               ),
               child: Consumer(
                 builder: (context, ref, _) {
-                  final soilData = ref.watch(soilDataProvider);
-                  if (soilData == null) {
+                  final npkData = ref.watch(npkDataProvider);
+                  if (npkData == null) {
                     return const Text('Description du sol non disponible.');
                   }
                   final description = ref
                       .read(analysisServiceProvider)
-                      .generateSoilDescription(soilData);
+                      .generateSoilDescription(npkData);
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -557,31 +559,27 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
     );
   }
 
-  String _generateShareText(dynamic soilData, List<dynamic> recommendations) {
+  String _generateShareText(NPKData npkData, List<dynamic> recommendations) {
     final buffer = StringBuffer();
     buffer.writeln('Résultats de l\'analyse du sol - SmartAgriChange');
     buffer.writeln();
     buffer.writeln('Paramètres du sol:');
-    buffer.writeln('Conductivité: ${soilData.ec.toStringAsFixed(1)} us/cm');
+    buffer.writeln('Conductivité: ${npkData.conductivity ?? 0} us/cm');
     buffer.writeln(
-      'Température: ${soilData.temperature.toStringAsFixed(1)} °C',
+      'Température: ${npkData.temperature?.toStringAsFixed(1) ?? '0'} °C',
     );
-    buffer.writeln('Humidité: ${soilData.humidity.toStringAsFixed(1)} %');
-    buffer.writeln('pH: ${soilData.ph.toStringAsFixed(1)}');
+    buffer.writeln('Humidité: ${npkData.humidity ?? 0} %');
+    buffer.writeln('pH: ${npkData.ph?.toStringAsFixed(1) ?? '0'}');
     buffer.writeln();
     buffer.writeln('Nutriments:');
-    buffer.writeln('Azote (N): ${soilData.nitrogen.toStringAsFixed(0)} mg/kg');
-    buffer.writeln(
-      'Phosphore (P): ${soilData.phosphorus.toStringAsFixed(0)} mg/kg',
-    );
-    buffer.writeln(
-      'Potassium (K): ${soilData.potassium.toStringAsFixed(0)} mg/kg',
-    );
+    buffer.writeln('Azote (N): ${npkData.nitrogen ?? 0} mg/kg');
+    buffer.writeln('Phosphore (P): ${npkData.phosphorus ?? 0} mg/kg');
+    buffer.writeln('Potassium (K): ${npkData.potassium ?? 0} mg/kg');
     buffer.writeln();
     buffer.writeln('Recommandations:');
     for (final rec in recommendations) {
       buffer.writeln(
-        '- ${rec.culture.name}: ${rec.compatibilityScore.toStringAsFixed(1)}% de compatibilité',
+        '- ${rec['crop'] ?? 'Culture inconnue'}: ${(rec['compatibilityScore'] ?? 0.0).toStringAsFixed(1)}% de compatibilité',
       );
     }
     buffer.writeln();
@@ -628,24 +626,24 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
               actions: [
                 PopupMenuButton<String>(
                   onSelected: (value) async {
-                    final soilData = ref.read(soilDataProvider);
+                    final npkData = ref.read(npkDataProvider);
                     final recommendations = ref.read(recommendationsProvider);
                     final args =
                         ModalRoute.of(context)?.settings.arguments
                             as AnalysisArgs?;
 
-                    if (soilData != null && recommendations.isNotEmpty) {
+                    if (npkData != null && recommendations.isNotEmpty) {
                       switch (value) {
                         case 'share':
                           final shareText = _generateShareText(
-                            soilData,
+                            npkData,
                             recommendations,
                           );
                           await Share.share(shareText);
                           break;
                         case 'pdf':
                           await ExportService.exportToPDF(
-                            soilData: soilData,
+                            npkData: npkData,
                             recommendations: recommendations,
                             sensorName: args?.sensorName ?? 'Capteur',
                             champName: args?.champName,
@@ -654,7 +652,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                           break;
                         case 'csv':
                           await ExportService.exportToCSV(
-                            soilData: soilData,
+                            npkData: npkData,
                             recommendations: recommendations,
                             sensorName: args?.sensorName ?? 'Capteur',
                             champName: args?.champName,
@@ -663,7 +661,7 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                           break;
                         case 'print':
                           await ExportService.printReport(
-                            soilData: soilData,
+                            npkData: npkData,
                             recommendations: recommendations,
                             sensorName: args?.sensorName ?? 'Capteur',
                             champName: args?.champName,
