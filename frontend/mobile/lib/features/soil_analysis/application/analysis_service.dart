@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/culture.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/recommendation.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/sensor.dart';
-import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/sensor_detection_state.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/soil_data.dart';
 import 'package:smartagrichange_mobile/features/soil_analysis/domain/entities/npk_data.dart';
 import 'package:dio/dio.dart';
@@ -17,11 +16,6 @@ import '../../../core/network/api_endpoints.dart';
 // import 'notification_service.dart';
 
 // PROVIDERS
-final detectionStateProvider = StateProvider<SensorDetectionState>(
-  (ref) => SensorDetectionState.idle,
-);
-final detectedSensorsProvider = StateProvider<List<Sensor>>((ref) => []);
-final selectedSensorProvider = StateProvider<Sensor?>((ref) => null);
 final soilDataProvider = StateProvider<SoilData?>((ref) => null);
 final recommendationsProvider = StateProvider<List<dynamic>>((ref) => []);
 
@@ -129,53 +123,6 @@ class AnalysisService {
     }
   }
 
-  Future<void> startSensorDetection() async {
-    _ref.read(detectionStateProvider.notifier).state =
-        SensorDetectionState.searching;
-    dev.log('Recherche de capteurs en cours...');
-
-    await Future.delayed(const Duration(seconds: 2));
-
-    // Simulate sensor detection - randomly decide if sensors are found
-    final random = Random();
-    final sensorsFound = random.nextBool(); // 50% chance of finding sensors
-
-    List<Sensor> detectedSensors = [];
-    if (sensorsFound) {
-      detectedSensors = List.generate(
-        3,
-        (i) => Sensor(
-          id: 'sensor_$i',
-          name: 'Capteur Agri-0${i + 1}',
-          status: SensorStatus.online,
-          batteryLevel: 90 - i * 10,
-        ),
-      );
-      // Cache the detected sensors
-      await _setCachedSensors(detectedSensors);
-      dev.log(
-        'Détection terminée. ${detectedSensors.length} capteurs trouvés.',
-      );
-    } else {
-      // Clear cache when no sensors are found
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_sensorsCacheKey);
-      dev.log('Détection terminée. Aucun capteur trouvé.');
-    }
-
-    _ref.read(detectedSensorsProvider.notifier).state = detectedSensors;
-    _ref
-        .read(detectionStateProvider.notifier)
-        .state = detectedSensors.isNotEmpty
-        ? SensorDetectionState.found
-        : SensorDetectionState.notFound;
-  }
-
-  void selectSensor(Sensor sensor) {
-    _ref.read(selectedSensorProvider.notifier).state = sensor;
-    dev.log('Capteur sélectionné: ${sensor.name}');
-  }
-
   Future<void> fetchDataAndAnalyze({NPKData? npkData}) async {
     try {
       if (npkData == null) return;
@@ -211,8 +158,6 @@ class AnalysisService {
 
           _ref.read(soilDataProvider.notifier).state = soilData;
 
-          
-
           // Check cache first
           final cachedAnalysis = await _getCachedAnalysis(soilData);
           if (cachedAnalysis != null) {
@@ -226,6 +171,12 @@ class AnalysisService {
 
           // Envoyer les données à l'API et obtenir les recommandations
           await _sendSoilDataToApi(soilData, npkData);
+
+          // Cache the successful analysis
+          await _setCachedAnalysis(
+            soilData,
+            _ref.read(recommendationsProvider),
+          );
         } finally {
           _isApiCallInProgress = false;
         }
@@ -248,9 +199,6 @@ class AnalysisService {
 
       final dioClient = DioClient();
       final headers = await ApiEndpoints.getAuthHeaders();
-      final sensor = _ref.read(selectedSensorProvider);
-
-      final selectedSensor = _ref.read(selectedSensorProvider);
       final payload = {
         'ph': soilData.ph,
         'temperature': soilData.temperature,
@@ -259,8 +207,9 @@ class AnalysisService {
         'n': soilData.nitrogen,
         'p': soilData.phosphorus,
         'k': soilData.potassium,
-        if (selectedSensor != null) 'sensor_model': selectedSensor.name,
       };
+
+      dev.log('Payload envoyé à l\'API: $payload');
 
       final response = await dioClient.dio.post(
         ApiEndpoints.buildUrl(ApiEndpoints.soilAnalyses),
@@ -272,35 +221,77 @@ class AnalysisService {
         final data = response.data;
         dev.log('Réponse API reçue: $data');
 
-        // Parser la réponse et créer les recommandations
-        try {
-          final dynamic soilAnalysisData = data;
-          final dynamic recommendations = data["crops_recommanded"] ?? [];
-
-          // Validate recommendations data structure
-          if (recommendations is List) {
-            _ref.read(recommendationsProvider.notifier).state = recommendations;
-            dev.log(
-              'Recommandations reçues de l\'API: ${recommendations.length} cultures.',
+        // Vérifier le status de la réponse
+        final status = data['status'];
+        if (status == 'success') {
+          // Utiliser les données du capteur depuis la réponse API
+          final sensorData = data['data']['sensor_data'];
+          if (sensorData != null) {
+            final apiSoilData = SoilData(
+              ph: (sensorData['ph'] as num?)?.toDouble() ?? soilData.ph,
+              temperature:
+                  (sensorData['temperature'] as num?)?.toDouble() ??
+                  soilData.temperature,
+              humidity:
+                  (sensorData['humidity'] as num?)?.toDouble() ??
+                  soilData.humidity,
+              ec: (sensorData['ec'] as num?)?.toDouble() ?? soilData.ec,
+              nitrogen:
+                  (sensorData['n'] as num?)?.toDouble() ?? soilData.nitrogen,
+              phosphorus:
+                  (sensorData['p'] as num?)?.toDouble() ?? soilData.phosphorus,
+              potassium:
+                  (sensorData['k'] as num?)?.toDouble() ?? soilData.potassium,
             );
-          } else {
+            _ref.read(soilDataProvider.notifier).state = apiSoilData;
             dev.log(
-              'Format de recommandations invalide, utilisation de la logique locale',
-            );
-            await _callCropRecommendationApi(
-              soilData,
-              _ref.read(selectedSensorProvider),
+              'Données du capteur mises à jour depuis l\'API: $sensorData',
             );
           }
-        } catch (parseError) {
-          dev.log('Erreur lors du parsing de la réponse API: $parseError');
-          // Fallback vers la logique locale en cas d'erreur de parsing
-          await _callCropRecommendationApi(
-            soilData,
-            _ref.read(selectedSensorProvider),
-          );
+
+          // Parser les recommandations
+          try {
+            final dynamic recommendations =
+                data['data']["crops_recommanded"] ?? [];
+
+            // Validate recommendations data structure
+            if (recommendations is List) {
+              // Transform API response to match expected format
+              final transformedRecommendations = recommendations.map((rec) {
+                return {
+                  'crop': rec['crop'],
+                  'compatibilityScore':
+                      rec['probability'] * 100, // Convert to percentage
+                };
+              }).toList();
+
+              _ref.read(recommendationsProvider.notifier).state =
+                  transformedRecommendations;
+              dev.log(
+                'Recommandations reçues de l\'API: ${transformedRecommendations.length} cultures.',
+              );
+            } else {
+              dev.log(
+                'Format de recommandations invalide, utilisation de la logique locale',
+              );
+              await _callCropRecommendationApi(soilData, null);
+            }
+          } catch (parseError) {
+            dev.log('Erreur lors du parsing de la réponse API: $parseError');
+            // Fallback vers la logique locale en cas d'erreur de parsing
+            await _callCropRecommendationApi(soilData, null);
+          }
+        } else if (status == 'failed') {
+          // Status failed - throw exception pour gérer le retour
+          final errorMessage = data['message'] ?? 'Erreur API inconnue';
+          dev.log('API returned failed status: $errorMessage');
+          throw Exception('API_FAILED: $errorMessage');
+        } else {
+          dev.log('Status API non reconnu: $status');
+          throw Exception('Status API non reconnu: $status');
         }
       } else {
+        dev.log('Erreur HTTP: ${response.statusCode} - ${response.data}');
         throw Exception(
           'Erreur API: ${response.statusCode} - ${response.data}',
         );
@@ -308,10 +299,7 @@ class AnalysisService {
     } catch (e) {
       dev.log('Erreur lors de l\'appel API: $e');
       // Fallback vers la logique locale en cas d'erreur API
-      await _callCropRecommendationApi(
-        soilData,
-        _ref.read(selectedSensorProvider),
-      );
+      await _callCropRecommendationApi(soilData, null);
     }
   }
 

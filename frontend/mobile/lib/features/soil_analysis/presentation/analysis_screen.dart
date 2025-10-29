@@ -48,15 +48,14 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
       duration: const Duration(seconds: 3),
     )..repeat();
 
-    // Auto-redirect to data display after loading
-    Future.delayed(const Duration(seconds: 3), () {
-      if (!mounted) return;
-      setState(() {
-        _showResults = true;
-      });
-      _controller.stop();
-      // Trigger data analysis with real sensor data
-      _triggerAnalysisWithSensorData();
+    // Listen to recommendations provider to stop animation when API responds
+    ref.listenManual(recommendationsProvider, (previous, next) {
+      if (next.isNotEmpty && !_showResults) {
+        setState(() {
+          _showResults = true;
+        });
+        _controller.stop();
+      }
     });
   }
 
@@ -85,21 +84,43 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
                       .read(analysisServiceProvider)
                       .fetchDataAndAnalyze(npkData: npkData);
                 } catch (e) {
-                  print('Error processing sensor data: $e');
-                  // Show error message to user
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Erreur lors du traitement des données du capteur: $e',
+                  print('Erreur lors du traitement des données du capteur: $e');
+                  // Check if it's an API failed error
+                  if (e.toString().contains('API_FAILED')) {
+                    // Extract error message
+                    final errorMessage = e.toString().replaceFirst(
+                      'Exception: API_FAILED: ',
+                      '',
+                    );
+                    // Show error and navigate back
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Erreur d\'analyse: $errorMessage'),
+                        backgroundColor: Colors.red,
                       ),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
+                    );
+                    // Navigate back to detection_capteurs.dart
+                    Future.delayed(const Duration(seconds: 2), () {
+                      if (mounted) {
+                        Navigator.pop(context);
+                      }
+                    });
+                  } else {
+                    // Show generic error message
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Erreur lors du traitement des données du capteur: $e',
+                        ),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 }
               }
             },
             onError: (error) {
-              print('Error receiving NPK data: $error');
+              print('Erreur de réception des données du capteur: $error');
               // Show error message to user
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -113,6 +134,17 @@ class _AnalysisScreenState extends ConsumerState<AnalysisScreen>
               }
             },
           );
+    }
+  }
+
+  void _checkIfAnalysisComplete() {
+    final soilData = ref.read(soilDataProvider);
+    final recommendations = ref.read(recommendationsProvider);
+    if (soilData != null && recommendations.isNotEmpty && !_showResults) {
+      setState(() {
+        _showResults = true;
+      });
+      _controller.stop();
     }
   }
 

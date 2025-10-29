@@ -46,18 +46,36 @@ class SensorRepositoryImpl implements SensorRepository {
       // Convert USB devices to Sensor entities
       for (final device in devices) {
         print("Device: ${device.productName} (ID: ${device.deviceId})");
-        final sensor = Sensor(
-          id: device.deviceId.toString(),
-          name: device.productName ?? 'USB NPK Sensor',
-          status: SensorStatus.online,
-          batteryLevel: null, // USB devices don't have battery
-          location: null,
-          lastAnalysisAt: null,
-        );
-        _detectedSensors.add(sensor);
+
+        // Check if device is actually connected by attempting to connect briefly
+        bool isConnected = false;
+        try {
+          isConnected = await _usbService!.connect(device);
+          if (isConnected) {
+            // Disconnect immediately after test
+            await _usbService!.disconnect();
+          }
+        } catch (e) {
+          print("Device ${device.deviceId} is not responding: $e");
+          isConnected = false;
+        }
+
+        if (isConnected) {
+          final sensor = Sensor(
+            id: device.deviceId.toString(),
+            name: device.productName ?? 'USB NPK Sensor',
+            status: SensorStatus.online,
+            batteryLevel: null, // USB devices don't have battery
+            location: null,
+            lastAnalysisAt: null,
+          );
+          _detectedSensors.add(sensor);
+        } else {
+          print("Skipping disconnected device: ${device.deviceId}");
+        }
       }
 
-      // Emit current list of detected sensors
+      // Emit current list of detected sensors (only connected ones)
       _controller.add(List<Sensor>.from(_detectedSensors));
     } catch (e) {
       print("Error during USB scan: $e");
@@ -102,8 +120,6 @@ class SensorRepositoryImpl implements SensorRepository {
         );
         _controller.add(List<Sensor>.from(_detectedSensors));
       }
-
-      print("Connected to USB sensor: $sensorId");
     } catch (e) {
       print("Error connecting to USB sensor: $e");
       throw Exception("Failed to connect to sensor");
@@ -126,8 +142,6 @@ class SensorRepositoryImpl implements SensorRepository {
 
       // Listen to NPK data stream
       _usbSubscription = _npkService!.dataStream.listen((npkData) {
-        print("Received NPK data: $npkData");
-
         // Update sensor's last analysis time
         final sensorIndex = _detectedSensors.indexWhere(
           (s) => s.id == sensorId,

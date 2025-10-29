@@ -117,8 +117,6 @@ class NPKService {
 
   /// Démarre la lecture périodique
   void startPolling({Duration interval = const Duration(seconds: 3)}) {
-    _log("Démarrage du polling NPK");
-
     // Écoute des données USB
     _usbDataSubscription = _usbService.dataStream?.listen((data) {
       NPKData? npkData = _parseModbusResponse(data);
@@ -143,9 +141,6 @@ class NPKService {
   Future<void> sendRequest() async {
     try {
       Uint8List request = _createModbusRequest();
-      _log(
-        "Envoi requête: ${request.map((b) => '0x${b.toRadixString(16).padLeft(2, '0')}').join(' ')}",
-      );
       await _usbService.write(request);
     } catch (e) {
       _log("Erreur envoi: $e");
@@ -158,7 +153,6 @@ class NPKService {
     _pollTimer = null;
     _usbDataSubscription?.cancel();
     _usbDataSubscription = null;
-    _log("Polling arrêté");
   }
 
   void dispose() {
