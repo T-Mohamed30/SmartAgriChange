@@ -7,6 +7,7 @@ class Analysis {
   final DateTime createdAt;
   final String? result;
   final String? parcelle;
+  final String? imageUrl; // URL de l'image pour les analyses de plantes
 
   const Analysis({
     required this.id,
@@ -17,6 +18,7 @@ class Analysis {
     required this.createdAt,
     this.result,
     this.parcelle,
+    this.imageUrl,
   });
 
   Map<String, dynamic> toJson() => {
@@ -28,6 +30,7 @@ class Analysis {
     'createdAt': createdAt.toIso8601String(),
     'result': result,
     'parcelle': parcelle,
+    'imageUrl': imageUrl,
   };
 
   factory Analysis.fromJson(Map<String, dynamic> json) => Analysis(
@@ -39,6 +42,7 @@ class Analysis {
     createdAt: DateTime.parse(json['createdAt']),
     result: json['result'],
     parcelle: json['parcelle'],
+    imageUrl: json['imageUrl'],
   );
 }
 

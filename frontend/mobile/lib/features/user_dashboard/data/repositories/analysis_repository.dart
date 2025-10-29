@@ -24,6 +24,7 @@ class AnalysisRepository {
       createdAt: anomaly.createdAt,
       result: anomaly.anomaly?.nom ?? 'Aucune anomalie détectée',
       parcelle: anomaly.parcelId?.toString(),
+      imageUrl: anomaly.images.isNotEmpty ? anomaly.images.first : null,
     );
   }
 

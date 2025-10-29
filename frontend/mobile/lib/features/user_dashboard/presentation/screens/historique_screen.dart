@@ -279,20 +279,29 @@ class _HistoriqueScreenState extends ConsumerState<HistoriqueScreen> {
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(12), // Réduire le padding
-        leading: Container(
-          width: 40, // Réduire la taille
-          height: 40,
-          decoration: BoxDecoration(
-            color: itemColor,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Center(
-            child: Text(
-              icon,
-              style: const TextStyle(fontSize: 20),
-            ), // Réduire la taille de l'icône
-          ),
-        ),
+        leading: analysis.imageUrl != null && analysis.type == 'plant'
+            ? Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  image: DecorationImage(
+                    image: NetworkImage(analysis.imageUrl!),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              )
+            : Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: itemColor,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Text(icon, style: const TextStyle(fontSize: 20)),
+                ),
+              ),
         title: Text(
           analysis.name,
           style: const TextStyle(
